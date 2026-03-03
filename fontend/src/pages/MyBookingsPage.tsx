@@ -1,0 +1,135 @@
+import { useEffect, useState } from "react";
+import { apiRequest } from "../api/client";
+
+interface Booking {
+  _id: string;
+  status: string;
+  paymentStatus: string;
+  checkIn: string;
+  checkOut: string;
+  totalPrice: number;
+}
+
+interface BookingsResponse {
+  success: boolean;
+  data: Booking[];
+}
+
+const MyBookingsPage = () => {
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const loadBookings = async () => {
+    setError(null);
+    setMessage(null);
+    setLoading(true);
+    try {
+      const res = await apiRequest<BookingsResponse>(
+        "/api/bookings/me",
+        "GET",
+        undefined,
+        { auth: true }
+      );
+      setBookings(res.data);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadBookings();
+  }, []);
+
+  const handleCancel = async (id: string) => {
+    setError(null);
+    setMessage(null);
+    try {
+      await apiRequest(`/api/bookings/${id}/cancel`, "POST", null, {
+        auth: true
+      });
+      setMessage("Booking cancelled");
+      void loadBookings();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  const handlePay = async (id: string) => {
+    setError(null);
+    setMessage(null);
+    try {
+      await apiRequest(`/api/bookings/${id}/pay`, "POST", null, {
+        auth: true
+      });
+      setMessage("Payment successful");
+      void loadBookings();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  return (
+    <div>
+      <h1 className="text-2xl font-bold mb-4">Booking của tôi</h1>
+      {loading && <p>Đang tải...</p>}
+      {error && <p className="text-red-600 mb-2">{error}</p>}
+      {message && <p className="text-green-600 mb-2">{message}</p>}
+
+      <div className="space-y-3">
+        {bookings.map((b) => (
+          <div
+            key={b._id}
+            className="border border-gray-100 bg-white rounded-2xl p-4 flex justify-between shadow-sm"
+          >
+            <div>
+              <p className="font-semibold">
+                {new Date(b.checkIn).toLocaleDateString()} -{" "}
+                {new Date(b.checkOut).toLocaleDateString()}
+              </p>
+              <p className="text-sm text-gray-600">
+                Trạng thái: {b.status} · Thanh toán: {b.paymentStatus}
+              </p>
+              <p className="text-sm">
+                Tổng tiền:{" "}
+                <span className="font-semibold">
+                  {b.totalPrice.toFixed(2)} $
+                </span>
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 items-end">
+              {(b.status === "Pending" || b.status === "Confirmed") && (
+                <button
+                  onClick={() => handleCancel(b._id)}
+                  className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 transition"
+                >
+                  Huỷ booking
+                </button>
+              )}
+              {b.status === "Pending" && (
+                <button
+                  onClick={() => handlePay(b._id)}
+                  className="text-sm bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition"
+                >
+                  Thanh toán
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {!loading && bookings.length === 0 && (
+          <p className="text-gray-600">
+            Bạn chưa có booking nào. Hãy đặt phòng tại trang Rooms.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default MyBookingsPage;
+
