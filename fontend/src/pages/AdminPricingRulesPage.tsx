@@ -121,11 +121,11 @@ const AdminPricingRulesPage = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Admin · Pricing Rules</h1>
+      <h1 className="text-2xl font-bold mb-4">Admin · Giá theo mùa</h1>
 
-      <form className="border rounded p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4" onSubmit={submit}>
+      <form className="border border-gray-100 bg-white rounded-2xl p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 shadow-sm" onSubmit={submit}>
         <div>
-          <label className="block text-sm mb-1">Room type</label>
+          <label className="block text-sm mb-1">Loại phòng</label>
           <select
             className="w-full border p-2 rounded"
             value={roomType}
@@ -141,7 +141,7 @@ const AdminPricingRulesPage = () => {
         </div>
 
         <div>
-          <label className="block text-sm mb-1">Name</label>
+          <label className="block text-sm mb-1">Tên rule</label>
           <input
             className="w-full border p-2 rounded"
             value={name}
@@ -151,7 +151,7 @@ const AdminPricingRulesPage = () => {
         </div>
 
         <div>
-          <label className="block text-sm mb-1">Type</label>
+          <label className="block text-sm mb-1">Kiểu giá</label>
           <select
             className="w-full border p-2 rounded"
             value={priceType}
@@ -159,13 +159,13 @@ const AdminPricingRulesPage = () => {
               setPriceType(e.target.value as "fixed" | "percentage")
             }
           >
-            <option value="percentage">percentage</option>
-            <option value="fixed">fixed</option>
+            <option value="percentage">Tăng theo %</option>
+            <option value="fixed">Cộng cố định</option>
           </select>
         </div>
 
         <div>
-          <label className="block text-sm mb-1">Start</label>
+          <label className="block text-sm mb-1">Bắt đầu</label>
           <input
             type="date"
             className="w-full border p-2 rounded"
@@ -176,7 +176,7 @@ const AdminPricingRulesPage = () => {
         </div>
 
         <div>
-          <label className="block text-sm mb-1">End</label>
+          <label className="block text-sm mb-1">Kết thúc</label>
           <input
             type="date"
             className="w-full border p-2 rounded"
@@ -187,8 +187,8 @@ const AdminPricingRulesPage = () => {
         </div>
 
         <div>
-          <label className="block text-sm mb-1">Value</label>
-          <input
+          <label className="block text-sm mb-1">Giá trị</label>
+            <input
             type="number"
             className="w-full border p-2 rounded"
             value={value}
@@ -204,7 +204,7 @@ const AdminPricingRulesPage = () => {
               checked={applyWeekend}
               onChange={(e) => setApplyWeekend(e.target.checked)}
             />
-            Weekend
+            Áp dụng cuối tuần
           </label>
           <label className="flex items-center gap-2">
             <input
@@ -212,46 +212,46 @@ const AdminPricingRulesPage = () => {
               checked={applyHolidays}
               onChange={(e) => setApplyHolidays(e.target.checked)}
             />
-            Holiday
+            Áp dụng ngày lễ
           </label>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded" type="submit">
-            Create
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition" type="submit">
+            Tạo rule
           </button>
         </div>
       </form>
 
-      {loading && <p>Loading...</p>}
+      {loading && <p>Đang tải...</p>}
       {error && <p className="text-red-600 mb-2">{error}</p>}
       {message && <p className="text-green-600 mb-2">{message}</p>}
 
       <div className="space-y-3">
         {rules.map((r) => (
-          <div key={r._id} className="border rounded p-3 flex justify-between">
+          <div key={r._id} className="border border-gray-100 bg-white rounded-2xl p-3 flex justify-between shadow-sm">
             <div>
               <p className="font-semibold">{r.name}</p>
               <p className="text-sm text-gray-600">
-                {r.roomType?.name} · {r.priceType} {r.value} ·{" "}
+                {r.roomType?.name} · {r.priceType === "percentage" ? "Tăng %" : "Cộng cố định"} {r.value} ·{" "}
                 {new Date(r.startDate).toLocaleDateString()} -{" "}
                 {new Date(r.endDate).toLocaleDateString()}
               </p>
               <p className="text-xs text-gray-500">
-                Weekend: {String(r.applyWeekend)} · Holidays:{" "}
+                Cuối tuần: {String(r.applyWeekend)} · Ngày lễ:{" "}
                 {String(r.applyHolidays)}
               </p>
             </div>
             <div>
               <button
-                className="text-sm bg-red-600 text-white px-3 py-1 rounded"
+                className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg"
                 onClick={() => remove(r._id)}
               >
-                Delete
+                Xóa
               </button>
             </div>
           </div>
         ))}
 
         {!loading && rules.length === 0 && (
-          <p className="text-gray-600">No pricing rules yet.</p>
+          <p className="text-gray-600">Chưa có pricing rule nào.</p>
         )}
       </div>
     </div>

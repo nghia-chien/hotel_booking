@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../api/client";
 
 interface RoomType {

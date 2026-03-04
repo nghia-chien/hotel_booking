@@ -74,7 +74,7 @@ const AdminBookingsPage = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Admin · Booking Management</h1>
+      <h1 className="text-2xl font-bold mb-4">Admin · Quản lý booking</h1>
       {loading && <p>Đang tải...</p>}
       {error && <p className="text-red-600 mb-2">{error}</p>}
       {message && <p className="text-green-600 mb-2">{message}</p>}
@@ -91,15 +91,20 @@ const AdminBookingsPage = () => {
                 {new Date(b.checkOut).toLocaleDateString()}
               </p>
               <p className="text-sm text-gray-600">
-                Status: {b.status} | Payment: {b.paymentStatus}
+                Trạng thái: {b.status} · Thanh toán: {b.paymentStatus}
               </p>
-              <p className="text-sm">Total: {b.totalPrice.toFixed(2)} $</p>
+              <p className="text-sm">
+                Tổng tiền:{" "}
+                <span className="font-semibold">
+                  {b.totalPrice.toFixed(2)} $
+                </span>
+              </p>
             </div>
             <div className="flex flex-col gap-2 items-end">
               {b.status === "Confirmed" && (
                 <button
                   onClick={() => handleCheckIn(b._id)}
-                  className="text-sm bg-blue-600 text-white px-3 py-1 rounded"
+                  className="text-sm bg-blue-600 text-white px-3 py-1 rounded-lg"
                 >
                   Check-in
                 </button>
@@ -107,7 +112,7 @@ const AdminBookingsPage = () => {
               {b.status === "CheckedIn" && (
                 <button
                   onClick={() => handleCheckOut(b._id)}
-                  className="text-sm bg-green-600 text-white px-3 py-1 rounded"
+                  className="text-sm bg-green-600 text-white px-3 py-1 rounded-lg"
                 >
                   Check-out
                 </button>
@@ -117,7 +122,7 @@ const AdminBookingsPage = () => {
         ))}
 
         {!loading && bookings.length === 0 && (
-          <p className="text-gray-600">No bookings found.</p>
+          <p className="text-gray-600">Chưa có booking nào.</p>
         )}
       </div>
     </div>

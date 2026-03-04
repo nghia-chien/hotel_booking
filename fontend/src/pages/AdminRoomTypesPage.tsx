@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { apiRequest } from "../api/client";
 
 interface RoomType {
@@ -103,11 +103,11 @@ const AdminRoomTypesPage = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Admin · Room Types</h1>
+      <h1 className="text-2xl font-bold mb-4">Admin · Loại phòng</h1>
 
-      <form className="border rounded p-4 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={submit}>
+      <form className="border border-gray-100 bg-white rounded-2xl p-4 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 shadow-sm" onSubmit={submit}>
         <div>
-          <label className="block text-sm mb-1">Name</label>
+          <label className="block text-sm mb-1">Tên loại phòng</label>
           <input
             className="w-full border p-2 rounded"
             value={name}
@@ -116,7 +116,7 @@ const AdminRoomTypesPage = () => {
           />
         </div>
         <div>
-          <label className="block text-sm mb-1">Base price</label>
+          <label className="block text-sm mb-1">Giá cơ bản (1 đêm)</label>
           <input
             type="number"
             min={0}
@@ -127,7 +127,7 @@ const AdminRoomTypesPage = () => {
           />
         </div>
         <div>
-          <label className="block text-sm mb-1">Default capacity</label>
+          <label className="block text-sm mb-1">Sức chứa mặc định</label>
           <input
             type="number"
             min={1}
@@ -138,7 +138,7 @@ const AdminRoomTypesPage = () => {
           />
         </div>
         <div>
-          <label className="block text-sm mb-1">Description</label>
+          <label className="block text-sm mb-1">Mô tả</label>
           <input
             className="w-full border p-2 rounded"
             value={description}
@@ -147,32 +147,32 @@ const AdminRoomTypesPage = () => {
         </div>
 
         <div className="md:col-span-2 flex gap-2">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded" type="submit">
-            {editingId ? "Update" : "Create"}
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition" type="submit">
+            {editingId ? "Cập nhật loại phòng" : "Tạo loại phòng"}
           </button>
           {editingId && (
             <button
               type="button"
-              className="bg-gray-200 px-4 py-2 rounded"
+              className="bg-gray-200 px-4 py-2 rounded-lg"
               onClick={resetForm}
             >
-              Cancel
+              Hủy
             </button>
           )}
         </div>
       </form>
 
-      {loading && <p>Loading...</p>}
+      {loading && <p>Đang tải...</p>}
       {error && <p className="text-red-600 mb-2">{error}</p>}
       {message && <p className="text-green-600 mb-2">{message}</p>}
 
       <div className="space-y-3">
         {items.map((rt) => (
-          <div key={rt._id} className="border rounded p-3 flex justify-between items-start">
+          <div key={rt._id} className="border border-gray-100 bg-white rounded-2xl p-3 flex justify-between items-start shadow-sm">
             <div>
               <p className="font-semibold">{rt.name}</p>
               <p className="text-sm text-gray-600">
-                Base: {rt.basePrice} · Capacity: {rt.defaultCapacity}
+                Giá cơ bản: {rt.basePrice} · Sức chứa: {rt.defaultCapacity}
               </p>
               {rt.description && (
                 <p className="text-sm text-gray-500 mt-1">{rt.description}</p>
@@ -180,22 +180,22 @@ const AdminRoomTypesPage = () => {
             </div>
             <div className="flex gap-2">
               <button
-                className="text-sm bg-gray-200 px-3 py-1 rounded"
+                className="text-sm bg-gray-200 px-3 py-1 rounded-lg"
                 onClick={() => startEdit(rt)}
               >
-                Edit
+                Sửa
               </button>
               <button
-                className="text-sm bg-red-600 text-white px-3 py-1 rounded"
+                className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg"
                 onClick={() => remove(rt._id)}
               >
-                Delete
+                Xóa
               </button>
             </div>
           </div>
         ))}
         {!loading && items.length === 0 && (
-          <p className="text-gray-600">No room types yet.</p>
+          <p className="text-gray-600">Chưa có loại phòng nào.</p>
         )}
       </div>
     </div>
