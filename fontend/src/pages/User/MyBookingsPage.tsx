@@ -60,6 +60,19 @@ const MyBookingsPage = () => {
   const handlePay = async (id: string) => {
     setError(null);
     setMessage(null);
+    try {
+      await apiRequest(`/api/bookings/${id}/pay`, "POST", null, {
+        auth: true
+      });
+      setMessage("Payment successful");
+      void loadBookings();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  return (
+    <div className="p-6">
       {loading && <p>Đang tải...</p>}
       {error && <p className="text-red-600 mb-2">{error}</p>}
       {message && <p className="text-green-600 mb-2">{message}</p>}
@@ -85,11 +98,12 @@ const MyBookingsPage = () => {
                 </span>
               </p>
             </div>
+
             <div className="flex flex-col gap-2 items-end">
               {(b.status === "Pending" || b.status === "Confirmed") && (
                 <button
                   onClick={() => handleCancel(b._id)}
-                  className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 transition"
+                  className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg"
                 >
                   Huỷ booking
                 </button>
@@ -104,9 +118,8 @@ const MyBookingsPage = () => {
           </p>
         )}
       </div>
-
-      };
+    </div>
+  );
 };
 
 export default MyBookingsPage;
-

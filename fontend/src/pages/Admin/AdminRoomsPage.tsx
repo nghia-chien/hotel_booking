@@ -1,5 +1,5 @@
 import {  useEffect, useMemo, useState } from "react";
-import { API_BASE_URL, apiRequest } from "../api/client";
+import { API_BASE_URL, apiRequest } from "../../api/client";
 
 interface RoomType {
   _id: string;

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import {  useEffect, useState } from "react";
-import { apiRequest } from "../api/client";
+import { apiRequest } from "../../api/client";
 
 interface RoomType {
   _id: string;

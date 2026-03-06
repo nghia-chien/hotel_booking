@@ -8,9 +8,9 @@ import RoomDetail from "./pages/RoomDetail";
 import NotFoundPage from "./pages/NotFoundPage";
 import MyBookingsPage from "./pages/User/MyBookingsPage";
 import AdminBookingsPage from "./pages/Admin/AdminBookingsPage";
-import AdminRoomTypesPage from "./pages/AdminRoomTypesPage";
-import AdminRoomsPage from "./pages/AdminRoomsPage";
-import AdminPricingRulesPage from "./pages/AdminPricingRulesPage";
+import AdminRoomTypesPage from "./pages/Admin/AdminRoomTypesPage";
+import AdminRoomsPage from "./pages/Admin/AdminRoomsPage";
+import AdminPricingRulesPage from "./pages/Admin/AdminPricingRulesPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 
