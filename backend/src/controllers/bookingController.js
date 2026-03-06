@@ -1,5 +1,6 @@
 import Booking from "../models/Booking.js";
 import Room from "../models/Room.js";
+import Payment from "../models/Payment.js";
 import { buildPaginationOptions } from "../utils/pagination.js";
 import {
   createBookingSchema,
@@ -212,11 +213,33 @@ export const payBooking = async (req, res, next) => {
       });
     }
 
+    const { method = "mock", cardLast4 } = req.body || {};
+
+    const transactionId = `MOCK-${Date.now()}`;
+
+    const payment = await Payment.create({
+      booking: booking._id,
+      customer: booking.customer,
+      amount: booking.totalPrice,
+      method,
+      status: "SUCCESS",
+      transactionId,
+      metadata: {
+        cardLast4
+      }
+    });
+
     booking.status = "Confirmed";
     booking.paymentStatus = "Paid";
     await booking.save();
 
-    res.json({ success: true, data: booking });
+    res.json({
+      success: true,
+      data: {
+        booking,
+        payment
+      }
+    });
   } catch (error) {
     next(error);
   }

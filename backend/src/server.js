@@ -9,6 +9,7 @@ import roomTypeRoutes from "./routes/roomTypeRoutes.js";
 import roomRoutes from "./routes/roomRoutes.js";
 import pricingRuleRoutes from "./routes/pricingRuleRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
+import publicRoomRoutes from "./routes/publicRoomRoutes.js";
 import { notFound, errorHandler } from "./middlewares/errorHandler.js";
 
 dotenv.config();
@@ -48,6 +49,7 @@ app.use("/api/room-types", roomTypeRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/pricing-rules", pricingRuleRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/public/rooms", publicRoomRoutes);
 
 // 404 & error handler
 app.use(notFound);

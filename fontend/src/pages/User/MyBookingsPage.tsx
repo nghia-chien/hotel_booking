@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { apiRequest } from "../api/client";
+import { apiRequest } from "../../api/client";
 
 interface Booking {
   _id: string;
   status: string;
-  paymentStatus: string;
   checkIn: string;
   checkOut: string;
   totalPrice: number;
@@ -15,7 +14,7 @@ interface BookingsResponse {
   data: Booking[];
 }
 
-const AdminBookingsPage = () => {
+const MyBookingsPage = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +26,7 @@ const AdminBookingsPage = () => {
     setLoading(true);
     try {
       const res = await apiRequest<BookingsResponse>(
-        "/api/bookings",
+        "/api/bookings/me",
         "GET",
         undefined,
         { auth: true }
@@ -44,37 +43,23 @@ const AdminBookingsPage = () => {
     void loadBookings();
   }, []);
 
-  const handleCheckIn = async (id: string) => {
+  const handleCancel = async (id: string) => {
     setError(null);
     setMessage(null);
     try {
-      await apiRequest(`/api/bookings/${id}/check-in`, "POST", null, {
+      await apiRequest(`/api/bookings/${id}/cancel`, "POST", null, {
         auth: true
       });
-      setMessage("Checked in");
+      setMessage("Booking cancelled");
       void loadBookings();
     } catch (err) {
       setError((err as Error).message);
     }
   };
 
-  const handleCheckOut = async (id: string) => {
+  const handlePay = async (id: string) => {
     setError(null);
     setMessage(null);
-    try {
-      await apiRequest(`/api/bookings/${id}/check-out`, "POST", null, {
-        auth: true
-      });
-      setMessage("Checked out");
-      void loadBookings();
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  };
-
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Admin · Quản lý booking</h1>
       {loading && <p>Đang tải...</p>}
       {error && <p className="text-red-600 mb-2">{error}</p>}
       {message && <p className="text-green-600 mb-2">{message}</p>}
@@ -91,7 +76,7 @@ const AdminBookingsPage = () => {
                 {new Date(b.checkOut).toLocaleDateString()}
               </p>
               <p className="text-sm text-gray-600">
-                Trạng thái: {b.status} · Thanh toán: {b.paymentStatus}
+                Trạng thái: {b.status}
               </p>
               <p className="text-sm">
                 Tổng tiền:{" "}
@@ -101,20 +86,12 @@ const AdminBookingsPage = () => {
               </p>
             </div>
             <div className="flex flex-col gap-2 items-end">
-              {b.status === "Confirmed" && (
+              {(b.status === "Pending" || b.status === "Confirmed") && (
                 <button
-                  onClick={() => handleCheckIn(b._id)}
-                  className="text-sm bg-blue-600 text-white px-3 py-1 rounded-lg"
+                  onClick={() => handleCancel(b._id)}
+                  className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 transition"
                 >
-                  Check-in
-                </button>
-              )}
-              {b.status === "CheckedIn" && (
-                <button
-                  onClick={() => handleCheckOut(b._id)}
-                  className="text-sm bg-green-600 text-white px-3 py-1 rounded-lg"
-                >
-                  Check-out
+                  Huỷ booking
                 </button>
               )}
             </div>
@@ -122,12 +99,14 @@ const AdminBookingsPage = () => {
         ))}
 
         {!loading && bookings.length === 0 && (
-          <p className="text-gray-600">Chưa có booking nào.</p>
+          <p className="text-gray-600">
+            Bạn chưa có booking nào. Hãy đặt phòng tại trang Rooms.
+          </p>
         )}
       </div>
-    </div>
-  );
+
+      };
 };
 
-export default AdminBookingsPage;
+export default MyBookingsPage;
 

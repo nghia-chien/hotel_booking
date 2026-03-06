@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import {  useEffect, useState } from "react";
 import { apiRequest } from "../api/client";
 
 interface RoomType {
@@ -64,7 +64,7 @@ const AdminRoomTypesPage = () => {
     setError(null);
   };
 
-  const submit = async (e: FormEvent) => {
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setMessage(null);

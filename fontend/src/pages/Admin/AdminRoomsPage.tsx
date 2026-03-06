@@ -1,5 +1,5 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { apiRequest } from "../api/client";
+import {  useEffect, useMemo, useState } from "react";
+import { API_BASE_URL, apiRequest } from "../api/client";
 
 interface RoomType {
   _id: string;
@@ -97,7 +97,7 @@ const AdminRoomsPage = () => {
     setError(null);
   };
 
-  const submit = async (e: FormEvent) => {
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setMessage(null);
@@ -255,7 +255,11 @@ const AdminRoomsPage = () => {
                 <div className="w-28">
                   <div className="aspect-[4/3] overflow-hidden rounded-lg bg-gray-100">
                     <img
-                      src={room.images[0]}
+                      src={
+                        room.images[0].startsWith("/")
+                          ? `${API_BASE_URL}${room.images[0]}`
+                          : room.images[0]
+                      }
                       alt={`Phòng ${room.roomNumber}`}
                       className="w-full h-full object-cover"
                     />

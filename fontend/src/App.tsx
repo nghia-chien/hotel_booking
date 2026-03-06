@@ -3,10 +3,11 @@ import MainLayout from "./layouts/MainLayout";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import RoomsPage from "./pages/RoomsPage";
+import RoomsPage from "./pages/SearchRoom";
+import RoomDetail from "./pages/RoomDetail";
 import NotFoundPage from "./pages/NotFoundPage";
-import MyBookingsPage from "./pages/MyBookingsPage";
-import AdminBookingsPage from "./pages/AdminBookingsPage";
+import MyBookingsPage from "./pages/User/MyBookingsPage";
+import AdminBookingsPage from "./pages/Admin/AdminBookingsPage";
 import AdminRoomTypesPage from "./pages/AdminRoomTypesPage";
 import AdminRoomsPage from "./pages/AdminRoomsPage";
 import AdminPricingRulesPage from "./pages/AdminPricingRulesPage";
@@ -21,6 +22,7 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/rooms" element={<RoomsPage />} />
+            <Route path="/roomdetail/:id" element={<RoomDetail />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
