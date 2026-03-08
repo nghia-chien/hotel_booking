@@ -87,12 +87,12 @@ export const createBookingService = async (data, userId) => {
 
   const checkIn = new Date(data.checkIn);
   const checkOut = new Date(data.checkOut);
-
+  
   const conflict = await Booking.exists({
     room: room._id,
     status: { $in: ["Pending", "Confirmed", "CheckedIn"] },
     checkIn: { $lt: checkOut },
-    checkOut: { $gt: checkIn }
+    checkOut: { $gt: checkIn },
   });
 
   if (conflict) {
