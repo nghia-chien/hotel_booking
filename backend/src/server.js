@@ -10,6 +10,7 @@ import roomRoutes from "./routes/roomRoutes.js";
 import pricingRuleRoutes from "./routes/pricingRuleRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import publicRoomRoutes from "./routes/publicRoomRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 import { notFound, errorHandler } from "./middlewares/errorHandler.js";
 
 dotenv.config();
@@ -50,6 +51,7 @@ app.use("/api/rooms", roomRoutes);
 app.use("/api/pricing-rules", pricingRuleRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/public/rooms", publicRoomRoutes);
+app.use("/api/payments", paymentRoutes);
 
 // 404 & error handler
 app.use(notFound);

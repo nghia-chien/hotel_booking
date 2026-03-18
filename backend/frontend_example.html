@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayPal Payment Example</title>
+    <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=USD"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .payment-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .booking-info {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        #paypal-button-container {
+            margin-top: 20px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .error {
+            color: red;
+            background-color: #ffe6e6;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            color: green;
+            background-color: #e6ffe6;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hotel Booking Payment</h1>
+    
+    <div class="booking-info">
+        <h3>Booking Details</h3>
+        <p><strong>Booking ID:</strong> <span id="bookingId">123456789</span></p>
+        <p><strong>Room Type:</strong> <span id="roomType">Deluxe Suite</span></p>
+        <p><strong>Check-in:</strong> <span id="checkIn">2024-01-15</span></p>
+        <p><strong>Check-out:</strong> <span id="checkOut">2024-01-18</span></p>
+        <p><strong>Total Amount:</strong> $<span id="totalAmount">450.00</span></p>
+    </div>
+
+    <div class="payment-container">
+        <h3>Payment Method</h3>
+        <p>Click the PayPal button below to proceed with payment:</p>
+        
+        <div id="error-message" class="error" style="display: none;"></div>
+        <div id="success-message" class="success" style="display: none;"></div>
+        <div id="loading" class="loading" style="display: none;">Processing payment...</div>
+        
+        <div id="paypal-button-container"></div>
+    </div>
+
+    <script>
+        // Configuration - Replace with your actual values
+        const config = {
+            bookingId: '123456789', // Replace with actual booking ID
+            apiBaseUrl: 'http://localhost:3000/api',
+            userToken: 'YOUR_JWT_TOKEN_HERE' // Replace with actual user token
+        };
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('success-message').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success-message');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('error-message').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Show loading state
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error-message').style.display = 'none';
+            document.getElementById('success-message').style.display = 'none';
+        }
+
+        // Initialize PayPal buttons
+        paypal.Buttons({
+            // Style configuration
+            style: {
+                layout: 'vertical',
+                color: 'blue',
+                shape: 'rect',
+                label: 'pay'
+            },
+
+            // Create order on server
+            createOrder: async function(data, actions) {
+                try {
+                    showLoading();
+                    
+                    const response = await fetch(`${config.apiBaseUrl}/payments/paypal/orders/${config.bookingId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${config.userToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(result.message || 'Failed to create PayPal order');
+                    }
+                    
+                    document.getElementById('loading').style.display = 'none';
+                    return result.data.orderId;
+                    
+                } catch (error) {
+                    console.error('Error creating PayPal order:', error);
+                    showError('Failed to create payment order: ' + error.message);
+                    throw error;
+                }
+            },
+
+            // Capture payment after approval
+            onApprove: async function(data, actions) {
+                try {
+                    showLoading();
+                    
+                    const response = await fetch(`${config.apiBaseUrl}/payments/paypal/capture/${data.orderID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${config.userToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            payerId: data.payerID
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(result.message || 'Failed to capture payment');
+                    }
+                    
+                    showSuccess('Payment successful! Your booking has been confirmed.');
+                    
+                    // Optionally redirect to success page
+                    setTimeout(() => {
+                        window.location.href = '/booking-confirmation';
+                    }, 3000);
+                    
+                } catch (error) {
+                    console.error('Error capturing payment:', error);
+                    showError('Payment processing failed: ' + error.message);
+                }
+            },
+
+            // Handle cancellation
+            onCancel: function(data) {
+                showError('Payment was cancelled. You can try again when you\'re ready.');
+                console.log('Payment cancelled', data);
+            },
+
+            // Handle errors
+            onError: function(err) {
+                console.error('PayPal error:', err);
+                showError('An error occurred with PayPal payment. Please try again.');
+            }
+        }).render('#paypal-button-container');
+
+        // Alternative: Manual payment flow
+        async function processManualPayment() {
+            try {
+                showLoading();
+                
+                const response = await fetch(`${config.apiBaseUrl}/payments/bookings/${config.bookingId}/pay`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${config.userToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        method: 'paypal',
+                        paypalOrderId: 'MANUAL_ORDER_ID', // You would get this from PayPal
+                        payerId: 'MANUAL_PAYER_ID' // You would get this from PayPal
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.message || 'Payment failed');
+                }
+                
+                showSuccess('Payment processed successfully!');
+                
+            } catch (error) {
+                console.error('Manual payment error:', error);
+                showError('Payment failed: ' + error.message);
+            }
+        }
+
+        // Check payment status
+        async function checkPaymentStatus() {
+            try {
+                const response = await fetch(`${config.apiBaseUrl}/payments/history`, {
+                    headers: {
+                        'Authorization': `Bearer ${config.userToken}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    console.log('Payment history:', result.data);
+                    // You can check if this booking is already paid
+                }
+                
+            } catch (error) {
+                console.error('Error checking payment status:', error);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check payment status on load
+            checkPaymentStatus();
+            
+            // Update booking details if needed
+            document.getElementById('bookingId').textContent = config.bookingId;
+        });
+    </script>
+</body>
+</html>

@@ -174,6 +174,14 @@ export const payBookingService = async (bookingId, userId, userRole, body) => {
   }
 
   const { method = "mock", cardLast4 } = body || {};
+  
+  // For PayPal payments, use the PayPal service instead
+  if (method === "paypal") {
+    const err = new Error("Use PayPal-specific endpoints for PayPal payments");
+    err.statusCode = 400;
+    throw err;
+  }
+
   const transactionId = `MOCK-${Date.now()}`;
 
   const payment = await Payment.create({

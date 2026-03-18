@@ -19,7 +19,7 @@ const paymentSchema = new mongoose.Schema(
     },
     method: {
       type: String,
-      enum: ["card", "bank_transfer", "cash", "mock"],
+      enum: ["card", "bank_transfer", "cash", "mock", "paypal"],
       default: "mock"
     },
     status: {
@@ -28,6 +28,15 @@ const paymentSchema = new mongoose.Schema(
       default: "SUCCESS"
     },
     transactionId: {
+      type: String
+    },
+    paypalOrderId: {
+      type: String
+    },
+    paypalCaptureId: {
+      type: String
+    },
+    paypalPayerId: {
       type: String
     },
     metadata: {
