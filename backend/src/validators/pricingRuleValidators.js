@@ -9,10 +9,10 @@ export const createPricingRuleSchema = Joi.object({
   value: Joi.number().required(),
   applyWeekend: Joi.boolean().default(false),
   applyHolidays: Joi.boolean().default(false)
-});
+}).unknown(false);
 
 export const updatePricingRuleSchema = createPricingRuleSchema.fork(
   ["roomType", "name", "startDate", "endDate", "value"],
   (schema) => schema.optional()
-);
+).unknown(false);
 

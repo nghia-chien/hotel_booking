@@ -12,6 +12,7 @@ import bookingRoutes from "./routes/bookingRoutes.js";
 import publicRoomRoutes from "./routes/publicRoomRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import { notFound, errorHandler } from "./middlewares/errorHandler.js";
+import { logger } from "./middlewares/auth.js";
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(logger);
 app.use(
   "/uploads",
   express.static(path.join(process.cwd(), "uploads"))

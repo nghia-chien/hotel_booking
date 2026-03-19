@@ -8,10 +8,10 @@ export const createRoomSchema = Joi.object({
   policies: Joi.string().allow("", null),
   images: Joi.array().items(Joi.string()).default([]),
   isActive: Joi.boolean().default(true)
-});
+}).unknown(false);
 
 export const updateRoomSchema = createRoomSchema.fork(
   ["roomNumber", "roomType", "capacity"],
   (schema) => schema.optional()
-);
+).unknown(false);
 

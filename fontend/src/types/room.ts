@@ -1,10 +1,17 @@
 export interface RoomType {
   _id: string
   name: string
-  basePrice?: number;
+  basePrice: number;
   description?: string;
 }
+export interface RoomTypeAdmin extends RoomType {
+  defaultCapacity: number
+}
 
+export interface ListResponse<T> {
+  success: boolean;
+  data: T[];
+}
 export interface Room {
   _id: string
   roomNumber: string
@@ -13,6 +20,7 @@ export interface Room {
   images?: string[]
   amenities?: string[]
   policies?: string
+  isActive: boolean
 }
 
 export interface RoomResponse {

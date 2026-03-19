@@ -1,21 +1,9 @@
 import {  useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
-
-interface RoomType {
-  _id: string;
-  name: string;
-  description?: string;
-  basePrice: number;
-  defaultCapacity: number;
-}
-
-interface ListResponse {
-  success: boolean;
-  data: RoomType[];
-}
+import type { RoomTypeAdmin , ListResponse } from "../../types/room";
 
 const AdminRoomTypesPage = () => {
-  const [items, setItems] = useState<RoomType[]>([]);
+  const [items, setItems] = useState<RoomTypeAdmin[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -39,7 +27,7 @@ const AdminRoomTypesPage = () => {
     setMessage(null);
     setLoading(true);
     try {
-      const res = await apiRequest<ListResponse>("/api/room-types", "GET", undefined, {
+      const res = await apiRequest<ListResponse<RoomTypeAdmin>>("/api/room-types", "GET", undefined, {
         auth: true
       });
       setItems(res.data);
@@ -54,7 +42,7 @@ const AdminRoomTypesPage = () => {
     void load();
   }, []);
 
-  const startEdit = (rt: RoomType) => {
+  const startEdit = (rt: RoomTypeAdmin) => {
     setEditingId(rt._id);
     setName(rt.name);
     setDescription(rt.description || "");

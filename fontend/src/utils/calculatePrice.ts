@@ -1,3 +1,5 @@
+// chưa dùng tới 
+
 export function calculatePrice(
   checkIn: Date,
   checkOut: Date,

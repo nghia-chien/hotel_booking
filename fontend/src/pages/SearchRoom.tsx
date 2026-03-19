@@ -4,8 +4,6 @@ import { useNavigate } from "react-router-dom"
 import { SearchBar } from "../components/SearchBar"
 import { FilterSidebar } from "../components/FilterSideBar"
 import { RoomCard } from "../components/RoomCard"
-
-import { calculatePrice } from "../utils/calculatePrice"
 import { estimateRating, toImageUrl } from "../utils/roomUtils"
 
 import { useRoomSearch } from "../hooks/useRoomSearch"
@@ -141,13 +139,7 @@ const RoomsPage = () => {
               const hero = images[0] ? toImageUrl(images[0]) : ""
 
               const total =
-                searchParams != null
-                  ? calculatePrice(
-                      searchParams.checkIn,
-                      searchParams.checkOut,
-                      item.totalPrice
-                    )
-                  : item.totalPrice
+ item.totalPrice
 
               return (
                 <RoomCard

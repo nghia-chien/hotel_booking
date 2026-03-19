@@ -87,6 +87,11 @@ export const createBookingService = async (data, userId) => {
 
   const checkIn = new Date(data.checkIn);
   const checkOut = new Date(data.checkOut);
+  if (checkOut <= checkIn) {
+    const err = new Error("Check-out must be after check-in");
+    err.statusCode = 400;
+    throw err;
+  }
   
   const conflict = await Booking.exists({
     room: room._id,
