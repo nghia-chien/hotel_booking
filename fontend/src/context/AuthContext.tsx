@@ -3,7 +3,7 @@ import {
   useContext,
   useEffect,
   useState,
-  ReactNode
+  type ReactNode
 } from "react";
 import { apiRequest } from "../api/client";
 

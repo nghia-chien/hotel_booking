@@ -57,19 +57,19 @@ const MyBookingsPage = () => {
     }
   };
 
-  const handlePay = async (id: string) => {
-    setError(null);
-    setMessage(null);
-    try {
-      await apiRequest(`/api/bookings/${id}/pay`, "POST", null, {
-        auth: true
-      });
-      setMessage("Payment successful");
-      void loadBookings();
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  };
+  // const handlePay = async (id: string) => {
+  //   setError(null);
+  //   setMessage(null);
+  //   try {
+  //     await apiRequest(`/api/bookings/${id}/pay`, "POST", null, {
+  //       auth: true
+  //     });
+  //     setMessage("Payment successful");
+  //     void loadBookings();
+  //   } catch (err) {
+  //     setError((err as Error).message);
+  //   }
+  // };
 
   return (
     <div className="p-6">
