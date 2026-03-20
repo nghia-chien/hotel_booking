@@ -1,8 +1,26 @@
-import {  useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { API_BASE_URL, apiRequest } from "../../api/client";
-import type {Room , RoomType , ListResponse} from "../../types/room"
 
+interface RoomType {
+  _id: string;
+  name: string;
+}
 
+interface Room {
+  _id: string;
+  roomNumber: string;
+  capacity: number;
+  amenities?: string[];
+  policies?: string;
+  images?: string[];
+  isActive: boolean;
+  roomType: RoomType;
+}
+
+interface ListResponse<T> {
+  success: boolean;
+  data: T[];
+}
 
 const AdminRoomsPage = () => {
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
@@ -79,7 +97,7 @@ const AdminRoomsPage = () => {
     setError(null);
   };
 
-  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setMessage(null);

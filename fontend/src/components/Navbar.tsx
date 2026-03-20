@@ -37,6 +37,9 @@ const Navbar = () => {
                   >
                     Giá theo mùa
                   </Link>
+                  <Link to="/admin/reports" className="hover:text-blue-100">
+                    Báo cáo
+                  </Link>
                 </>
               )}
               <span className="text-sm text-blue-100">

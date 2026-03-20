@@ -10,6 +10,12 @@ const PAYPAL_API_BASE = process.env.NODE_ENV === 'production'
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
 
+const FRONTEND_URL =
+  process.env.FRONTEND_URL ||
+  (process.env.STRIPE_SUCCESS_URL
+    ? new URL(process.env.STRIPE_SUCCESS_URL).origin
+    : "http://localhost:5173");
+
 // Get PayPal access token
 const getPayPalAccessToken = async () => {
   try {
@@ -32,44 +38,56 @@ const getPayPalAccessToken = async () => {
   }
 };
 
-// Create PayPal order
-export const createPayPalOrder = async (bookingId, userId) => {
+// Create PayPal order (có thể thanh toán cho nhiều booking cùng lúc)
+export const createPayPalOrder = async (bookingIds, userId) => {
   try {
-    // Validate booking
-    const booking = await Booking.findById(bookingId);
-    if (!booking) {
-      const error = new Error('Booking not found');
-      error.statusCode = 404;
-      throw error;
+    const ids = Array.isArray(bookingIds) ? bookingIds : [bookingIds];
+    if (!ids || ids.length === 0) {
+      const err = new Error("bookingIds are required");
+      err.statusCode = 400;
+      throw err;
     }
 
-    if (!booking.customer.equals(userId)) {
-      const error = new Error('You can only pay for your own bookings');
-      error.statusCode = 403;
-      throw error;
+    // Validate bookings
+    const bookings = await Booking.find({
+      _id: { $in: ids },
+      customer: userId,
+      status: "Pending"
+    });
+
+    if (!bookings || bookings.length === 0) {
+      const err = new Error("No pending bookings found");
+      err.statusCode = 404;
+      throw err;
     }
 
-    if (booking.status !== 'Pending') {
-      const error = new Error('Only pending bookings can be paid');
-      error.statusCode = 400;
-      throw error;
+    // Nếu thiếu booking hoặc booking không thuộc Pending/user thì chặn
+    const foundIds = new Set(bookings.map((b) => b._id.toString()));
+    const missing = ids.filter((id) => !foundIds.has(String(id)));
+    if (missing.length > 0) {
+      const err = new Error("Some bookings cannot be paid (not found or not pending)");
+      err.statusCode = 400;
+      throw err;
     }
 
     // Get PayPal access token
     const accessToken = await getPayPalAccessToken();
 
+    const totalAmount = bookings.reduce((sum, b) => sum + b.totalPrice, 0);
+    const referenceId = `BOOKING_GROUP-${Date.now()}`;
+
     // Create order payload
     const orderPayload = {
       intent: 'CAPTURE',
       purchase_units: [{
-        reference_id: booking._id.toString(),
-        description: `Hotel booking for ${booking.roomType}`,
+        reference_id: referenceId,
+        description: `Hotel booking (${bookings.length} phòng)`,
         amount: {
           currency_code: 'USD',
-          value: booking.totalPrice.toFixed(2)
+          value: totalAmount.toFixed(2)
         },
         custom_data: {
-          booking_id: booking._id.toString(),
+          booking_ids: ids.map((x) => String(x)),
           customer_id: userId
         }
       }],
@@ -77,8 +95,8 @@ export const createPayPalOrder = async (bookingId, userId) => {
         brand_name: 'Hotel Booking System',
         landing_page: 'BILLING',
         user_action: 'PAY_NOW',
-        return_url: `${process.env.FRONTEND_URL}/payment/success`,
-        cancel_url: `${process.env.FRONTEND_URL}/payment/cancel`
+        return_url: `${FRONTEND_URL}/payment/success`,
+        cancel_url: `${FRONTEND_URL}/payment/cancel`
       }
     };
 
@@ -95,16 +113,18 @@ export const createPayPalOrder = async (bookingId, userId) => {
 
     // Create pending payment record
     await Payment.create({
-      booking: booking._id,
-      customer: booking.customer,
-      amount: booking.totalPrice,
+      booking: ids[0],
+      bookings: ids,
+      customer: userId,
+      amount: totalAmount,
       method: 'paypal',
       status: 'PENDING',
       transactionId: `PAYPAL-${Date.now()}`,
       paypalOrderId: response.data.id,
       metadata: {
         orderStatus: response.data.status,
-        createTime: response.data.create_time
+        createTime: response.data.create_time,
+        bookingIds: ids
       }
     });
 
@@ -176,16 +196,27 @@ export const capturePayPalPayment = async (orderId, payerId, userId) => {
     await payment.save();
 
     // Update booking status
-    const booking = await Booking.findById(payment.booking);
-    if (booking) {
-      booking.status = 'Confirmed';
-      booking.paymentStatus = 'Paid';
-      await booking.save();
-    }
+    const bookingIds = payment.bookings?.length
+      ? payment.bookings
+      : payment.booking
+        ? [payment.booking]
+        : [];
+
+    const bookings = await Booking.find({ _id: { $in: bookingIds } });
+    await Promise.all(
+      bookings.map(async (b) => {
+        // Chỉ cập nhật các booking Pending để tránh trạng thái bất nhất
+        if (b.status === "Pending") {
+          b.status = "Confirmed";
+          b.paymentStatus = "Paid";
+          await b.save();
+        }
+      })
+    );
 
     return {
       payment,
-      booking,
+      bookings,
       captureData: {
         id: capture.id,
         status: capture.status,

@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@paypal/checkout-server-sdk": "^1.0.3",
+    "@paypal/paypal-server-sdk": "^2.2.0",
     "@paypal/react-paypal-js": "^9.0.1",
     "lucide-react": "^0.577.0"
   }

@@ -42,20 +42,16 @@ export function SearchBar({ onSearch, loading }: SearchBarProps) {
               >
                 <CalendarIcon className="mr-2 h-4 w-4 text-[#2C2C2C]" />
                 <span className="text-[#2C2C2C]">
-                  {checkIn ? format(checkIn, "MMM dd, yyyy HH:mm") : "Select date"}
+                  {checkIn ? format(checkIn, "MMM dd, yyyy") : "Select date"}
                 </span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
-                value={checkIn}
-                onChange={(date) => {
-                  setCheckIn(date);
-                  if (checkOut && date && checkOut <= date) {
-                    setCheckOut(undefined);
-                  }
-                }}
-                minDateTime={new Date()}
+                mode="single"
+                selected={checkIn}
+                onSelect={setCheckIn}
+                initialFocus
               />
             </PopoverContent>
           </Popover>
@@ -72,15 +68,17 @@ export function SearchBar({ onSearch, loading }: SearchBarProps) {
               >
                 <CalendarIcon className="mr-2 h-4 w-4 text-[#2C2C2C]" />
                 <span className="text-[#2C2C2C]">
-                  {checkOut ? format(checkOut, "MMM dd, yyyy HH:mm") : "Select date"}
+                  {checkOut ? format(checkOut, "MMM dd, yyyy") : "Select date"}
                 </span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
-                value={checkOut}
-                onChange={setCheckOut}
-                minDateTime={checkIn}
+                mode="single"
+                selected={checkOut}
+                onSelect={setCheckOut}
+                initialFocus
+                disabled={(date) => (checkIn ? date < checkIn : false)}
               />
             </PopoverContent>
           </Popover>

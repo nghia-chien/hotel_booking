@@ -1,9 +1,21 @@
-import {  useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
-import type { RoomTypeAdmin , ListResponse } from "../../types/room";
+
+interface RoomType {
+  _id: string;
+  name: string;
+  description?: string;
+  basePrice: number;
+  defaultCapacity: number;
+}
+
+interface ListResponse {
+  success: boolean;
+  data: RoomType[];
+}
 
 const AdminRoomTypesPage = () => {
-  const [items, setItems] = useState<RoomTypeAdmin[]>([]);
+  const [items, setItems] = useState<RoomType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -27,7 +39,7 @@ const AdminRoomTypesPage = () => {
     setMessage(null);
     setLoading(true);
     try {
-      const res = await apiRequest<ListResponse<RoomTypeAdmin>>("/api/room-types", "GET", undefined, {
+      const res = await apiRequest<ListResponse>("/api/room-types", "GET", undefined, {
         auth: true
       });
       setItems(res.data);
@@ -42,7 +54,7 @@ const AdminRoomTypesPage = () => {
     void load();
   }, []);
 
-  const startEdit = (rt: RoomTypeAdmin) => {
+  const startEdit = (rt: RoomType) => {
     setEditingId(rt._id);
     setName(rt.name);
     setDescription(rt.description || "");
@@ -52,7 +64,7 @@ const AdminRoomTypesPage = () => {
     setError(null);
   };
 
-  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setMessage(null);

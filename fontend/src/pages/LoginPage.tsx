@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { type FormEvent, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const LoginPage = () => {
@@ -12,7 +12,7 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -59,6 +59,14 @@ const LoginPage = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+          <div className="mt-2 text-right">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Quên mật khẩu?
+            </Link>
+          </div>
         </div>
         {error && <p className="text-red-600 text-sm">{error}</p>}
         <button

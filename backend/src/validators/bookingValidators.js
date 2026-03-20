@@ -6,7 +6,7 @@ export const createBookingSchema = Joi.object({
   checkOut: Joi.date().iso().greater(Joi.ref("checkIn")).required(),
   guests: Joi.number().integer().min(1).required(),
   specialRequest: Joi.string().allow("", null)
-}).unknown(false);
+});
 
 export const searchRoomsSchema = Joi.object({
   checkIn: Joi.date().iso().required(),
@@ -18,5 +18,5 @@ export const searchRoomsSchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(100).default(10),
   sort: Joi.string()
-}).unknown(false);
+});
 

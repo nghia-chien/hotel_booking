@@ -5,8 +5,14 @@ const paymentSchema = new mongoose.Schema(
     booking: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Booking",
-      required: true
+      required: false
     },
+    bookings: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Booking"
+      }
+    ],
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -19,7 +25,7 @@ const paymentSchema = new mongoose.Schema(
     },
     method: {
       type: String,
-      enum: ["card", "bank_transfer", "cash", "mock", "paypal"],
+      enum: ["card", "bank_transfer", "cash", "mock", "stripe", "paypal", "refund"],
       default: "mock"
     },
     status: {

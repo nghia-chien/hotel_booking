@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import {  useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
 
 interface RoomType {
@@ -74,7 +74,7 @@ const AdminPricingRulesPage = () => {
     void load();
   }, []);
 
-  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setMessage(null);

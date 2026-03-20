@@ -5,6 +5,7 @@ import {
   updateRoomSchema
 } from "../validators/roomValidators.js";
 import { buildPaginationOptions } from "../utils/pagination.js";
+import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
 
 const validate = (schema, data) => {
   const { error, value } = schema.validate(data, { abortEarly: false });
@@ -21,7 +22,9 @@ export const createRoom = async (req, res, next) => {
   try {
     const body = { ...req.body };
     if (req.files && req.files.length > 0) {
-      body.images = req.files.map((file) => `/uploads/rooms/${file.filename}`);
+      body.images = await Promise.all(
+        req.files.map((file) => uploadBufferToCloudinary(file))
+      );
     }
 
     // Normalize amenities from multipart/form-data
@@ -124,7 +127,9 @@ export const updateRoom = async (req, res, next) => {
   try {
     const body = { ...req.body };
     if (req.files && req.files.length > 0) {
-      body.images = req.files.map((file) => `/uploads/rooms/${file.filename}`);
+      body.images = await Promise.all(
+        req.files.map((file) => uploadBufferToCloudinary(file))
+      );
     }
 
     if (typeof body.amenities === "string") {
@@ -147,6 +152,10 @@ export const updateRoom = async (req, res, next) => {
     }
 
     const data = validate(updateRoomSchema, body);
+    // Nếu không upload ảnh mới, giữ nguyên ảnh hiện tại (tránh Joi default [] xóa ảnh)
+    if (!req.files || req.files.length === 0) {
+      delete data.images;
+    }
 
     if (data.roomType) {
       const roomType = await RoomType.findById(data.roomType);

@@ -5,4 +5,4 @@ export const searchRooms = (params: string) =>
   apiRequest<SearchResponse>(`/api/bookings/search?${params}`, "GET")
 
 export const createBooking = (data: CreateBookingPayload) =>
-  apiRequest("/api/bookings", "POST", data)
+  apiRequest("/api/bookings", "POST", data, { auth: true })

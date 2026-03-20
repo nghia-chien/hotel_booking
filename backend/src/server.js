@@ -9,10 +9,9 @@ import roomTypeRoutes from "./routes/roomTypeRoutes.js";
 import roomRoutes from "./routes/roomRoutes.js";
 import pricingRuleRoutes from "./routes/pricingRuleRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
-import publicRoomRoutes from "./routes/publicRoomRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import publicRoomRoutes from "./routes/publicRoomRoutes.js";
 import { notFound, errorHandler } from "./middlewares/errorHandler.js";
-import { logger } from "./middlewares/auth.js";
 
 dotenv.config();
 
@@ -31,7 +30,6 @@ app.use(
   })
 );
 app.use(express.json());
-app.use(logger);
 app.use(
   "/uploads",
   express.static(path.join(process.cwd(), "uploads"))
@@ -52,8 +50,8 @@ app.use("/api/room-types", roomTypeRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/pricing-rules", pricingRuleRoutes);
 app.use("/api/bookings", bookingRoutes);
-app.use("/api/public/rooms", publicRoomRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/public/rooms", publicRoomRoutes);
 
 // 404 & error handler
 app.use(notFound);

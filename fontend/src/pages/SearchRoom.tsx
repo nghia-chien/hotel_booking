@@ -28,6 +28,16 @@ const RoomsPage = () => {
   const [maxPrice, setMaxPrice] = useState<number>(1500)
   const [selectedAmenities, setSelectedAmenities] = useState<AmenityKey[]>([])
   const [minRating, setMinRating] = useState<number>(0)
+  const nights =
+    searchParams != null
+      ? Math.max(
+          1,
+          Math.round(
+            (searchParams.checkOut.getTime() - searchParams.checkIn.getTime()) /
+              (24 * 60 * 60 * 1000)
+          )
+        )
+      : 1
 
   const handleSearch = async ({
     checkIn,
@@ -138,8 +148,8 @@ const RoomsPage = () => {
               const images = item.room.images || []
               const hero = images[0] ? toImageUrl(images[0]) : ""
 
-              const total =
- item.totalPrice
+              const total = item.totalPrice
+              const pricePerNight = total / nights
 
               return (
                 <RoomCard
@@ -147,6 +157,7 @@ const RoomsPage = () => {
                   image={hero}
                   roomType={`${item.room.roomType?.name} · #${item.room.roomNumber}`}
                   totalPrice={total}
+                  pricePerNight={pricePerNight}
                   capacity={item.room.capacity}
                   onBook={() => handleBooking(item.room)}
                   onViewDetails={() =>

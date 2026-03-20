@@ -1,45 +1,77 @@
+import { Button } from "./ui/button";
+
 interface RoomCardProps {
   image: string;
   roomType: string;
-  totalPrice: number;
   capacity: number;
-  onViewDetails: () => void;
-  onBook: () => void;
+  pricePerNight?: number;
+  totalPrice?: number;
+  onBook?: () => void;
+  onViewDetails?: () => void;
 }
 
 export function RoomCard({
   image,
   roomType,
-  totalPrice,
   capacity,
-  onViewDetails,
-  onBook
+  pricePerNight,
+  totalPrice,
+  onBook,
+  onViewDetails
 }: RoomCardProps) {
   return (
-    <div className="bg-white rounded-2xl border p-4 flex flex-col">
-      <img src={image} className="rounded-xl mb-4" />
+    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-[#E8DFD8] transition-all hover:shadow-md flex flex-col">
+      <div className="aspect-[4/3] overflow-hidden bg-[#F5F1ED]">
+        <img
+          src={image}
+          alt={roomType}
+          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+          loading="lazy"
+        />
+      </div>
 
-      <h3>{roomType}</h3>
-      <p> {capacity} People</p>
+      <div className="p-6 flex-1 flex flex-col">
+        <h3 className="mb-2 text-[#2C2C2C]">{roomType}</h3>
+        <p className="mb-4 text-sm text-[#666666]">Tối đa {capacity} khách</p>
 
-      <div className="mt-auto">
-        <div className="text-2xl font-semibold">
-          ${totalPrice.toFixed(0)}
-        </div>
+        <div className="mt-auto flex items-end justify-between gap-3">
+          <div>
+            {pricePerNight != null ? (
+              <>
+                <div className="text-2xl text-[#2C2C2C]">
+                  ${pricePerNight.toFixed(0)}
+                </div>
+                <div className="text-sm text-[#666666]">/ đêm</div>
+              </>
+            ) : (
+              <>
+                <div className="text-2xl text-[#2C2C2C]">
+                  ${Number(totalPrice ?? 0).toFixed(0)}
+                </div>
+                <div className="text-sm text-[#666666]">tổng tiền</div>
+              </>
+            )}
+          </div>
 
-        <div className="flex gap-2 mt-3">
-          <button
-            onClick={onViewDetails}
-            className="flex-1 border rounded-lg p-2"
-          >
-            View
-          </button>
-          <button
-            onClick={onBook}
-            className="flex-1 bg-black text-white rounded-lg p-2"
-          >
-            Book Now
-          </button>
+          <div className="flex gap-2">
+            {onViewDetails && (
+              <Button
+                variant="outline"
+                className="border-[#E8DFD8] bg-white hover:bg-[#F5F1ED]"
+                onClick={onViewDetails}
+              >
+                Xem chi tiết
+              </Button>
+            )}
+            {onBook && (
+              <Button
+                className="bg-[#2C2C2C] hover:bg-[#3A3A3A] text-white"
+                onClick={onBook}
+              >
+                Đặt phòng
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
