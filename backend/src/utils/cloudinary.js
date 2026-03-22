@@ -22,13 +22,13 @@ cloudinary.v2.config({
   secure: true
 });
 
-export const uploadBufferToCloudinary = async (file, folder = "hotel-booking/rooms") => {
+export const uploadBufferToCloudinary = async (file, folder = "hotel-booking/rooms", prefix = "file") => {
   if (!file?.buffer) {
     throw new Error("Missing file buffer for Cloudinary upload");
   }
 
   const random = Math.round(Math.random() * 1e9);
-  const publicId = `room-${Date.now()}-${random}`;
+  const publicId = `${prefix}-${Date.now()}-${random}`;
 
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.v2.uploader.upload_stream(

@@ -1,63 +1,55 @@
-import crypto from "crypto";
-import qs from "qs";
+import {
+  VNPay,
+  ProductCode,
+  VnpLocale,
+  ignoreLogger,
+  HashAlgorithm,
+} from "vnpay";
 import Booking from "../models/Booking.js";
 import Payment from "../models/Payment.js";
 
-// ─── Config ───────────────────────────────────────────────────────────────────
-const VNP_TMNCODE      = process.env.VNP_TMNCODE      || "YOUR_TMN_CODE";
-const VNP_HASHSECRET   = process.env.VNP_HASHSECRET   || "YOUR_HASH_SECRET";
-const VNP_URL          = process.env.VNP_URL           || "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-const VNP_RETURNURL    = process.env.VNP_RETURNURL     || "http://localhost:5173/payment/success";
-const VNP_API_URL      = process.env.VNP_API_URL       || "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction";
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Format Date → "YYYYMMDDHHmmss" (giờ VN) */
-const formatDate = (date) => {
-  const pad = (n) => String(n).padStart(2, "0");
-  const d   = new Date(date);
-  // Shift to GMT+7
-  const vn  = new Date(d.getTime() + 7 * 60 * 60 * 1000);
-  return (
-    vn.getUTCFullYear().toString() +
-    pad(vn.getUTCMonth() + 1) +
-    pad(vn.getUTCDate()) +
-    pad(vn.getUTCHours()) +
-    pad(vn.getUTCMinutes()) +
-    pad(vn.getUTCSeconds())
-  );
+/** Lấy IP thực của client, chuẩn hoá IPv6 loopback về 127.0.0.1 */
+export const getClientIp = (req) => {
+  const forwarded = req.headers["x-forwarded-for"];
+  if (forwarded) {
+    const first = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+    return first.split(",")[0].trim();
+  }
+  const raw = req.socket?.remoteAddress || req.ip || "127.0.0.1";
+  // Chuẩn hoá IPv6 loopback
+  if (raw === "::1" || raw === "::ffff:127.0.0.1") return "127.0.0.1";
+  if (raw.startsWith("::ffff:")) return raw.slice(7);
+  return raw;
 };
 
-/** Lấy IP từ request (dùng ở controller) */
-export const getClientIp = (req) =>
-  (req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "127.0.0.1")
-    .split(",")[0]
-    .trim();
+// ─── Khởi tạo VNPay instance ──────────────────────────────────────────────────
 
-/** Tạo HMAC-SHA512 checksum */
-const createSecureHash = (params) => {
-  // Sắp xếp key theo thứ tự alphabet, bỏ qua vnp_SecureHash
-  const sorted = Object.keys(params)
-    .filter((k) => k !== "vnp_SecureHash" && params[k] !== "" && params[k] !== null && params[k] !== undefined)
-    .sort();
+const vnpay = new VNPay({
+  tmnCode: process.env.VNP_TMNCODE,
+  secureSecret: process.env.VNP_HASHSECRET,
+  vnpayHost: "https://sandbox.vnpayment.vn",
+  testMode: process.env.NODE_ENV !== "production",
+  hashAlgorithm: HashAlgorithm.SHA512,
+  enableLog: process.env.NODE_ENV === "development",
+  loggerFn: ignoreLogger,
+});
 
-  const signData = sorted.map((k) => `${k}=${params[k]}`).join("&");
-  return crypto
-    .createHmac("sha512", VNP_HASHSECRET)
-    .update(Buffer.from(signData, "utf-8"))
-    .digest("hex");
-};
+// USD → VNĐ (totalPrice trong DB lưu USD)
+const USD_TO_VND = 25000;
 
-// ─── 1. Tạo URL thanh toán ────────────────────────────────────────────────────
+// ─── 1. Tạo payment URL ───────────────────────────────────────────────────────
 
 /**
  * Tạo VNPay payment URL cho một hoặc nhiều booking.
  * @param {string|string[]} bookingIds
  * @param {string} userId
  * @param {string} ipAddr  - IP của khách (lấy từ request)
- * @returns {{ paymentUrl: string }}
+ * @param {string} baseUrl - Base URL của backend (e.g. http://localhost:3000)
+ * @returns {{ paymentUrl: string, txnRef: string, paymentId: string }}
  */
-export const createVNPayOrder = async (bookingIds, userId, ipAddr) => {
+export const createVNPayOrder = async (bookingIds, userId, ipAddr, baseUrl) => {
   const ids = Array.isArray(bookingIds) ? bookingIds : [bookingIds];
   if (!ids.length) {
     const err = new Error("bookingIds are required");
@@ -86,142 +78,192 @@ export const createVNPayOrder = async (bookingIds, userId, ipAddr) => {
     throw err;
   }
 
-  // Tổng tiền — VNPay nhận VNĐ, nhân 100 (đơn vị: đồng × 100)
-  // Giả sử totalPrice trong DB là VNĐ. Nếu đang lưu USD thì nhân tỉ giá trước.
-  const totalVND = bookings.reduce((sum, b) => sum + b.totalPrice, 0);
+  // Convert USD → VNĐ, VNPay nhận VNĐ nguyên (thư viện tự × 100)
+  const totalUSD = bookings.reduce((sum, b) => sum + b.totalPrice, 0);
+  const amount   = Math.round(totalUSD * USD_TO_VND);
 
-  // txnRef duy nhất, tối đa 100 ký tự
-  const txnRef = `BK${Date.now()}`;
-  const now    = new Date();
-
-  // Tạo Payment record PENDING trước
-  const payment = await Payment.create({
-    booking  : ids[0],
-    bookings : ids,
-    customer : userId,
-    amount   : totalVND,
-    method   : "vnpay",
-    status   : "PENDING",
-    transactionId: txnRef,
-    vnpTxnRef: txnRef,
-    metadata : {
-      bookingIds: ids,
-      createTime: now.toISOString(),
-    },
-  });
-
-  // Build VNPay params
-  const params = {
-    vnp_Version      : "2.1.0",
-    vnp_Command      : "pay",
-    vnp_TmnCode      : VNP_TMNCODE,
-    vnp_Locale       : "vn",
-    vnp_CurrCode     : "VND",
-    vnp_TxnRef       : txnRef,
-    vnp_OrderInfo    : `Thanh toan ${bookings.length} phong - ${txnRef}`,
-    vnp_OrderType    : "other",
-    vnp_Amount       : Math.round(totalVND * 100),   // VNPay yêu cầu × 100
-    vnp_ReturnUrl    : VNP_RETURNURL,
-    vnp_IpAddr       : ipAddr || "127.0.0.1",
-    vnp_CreateDate   : formatDate(now),
-  };
-
-  params.vnp_SecureHash = createSecureHash(params);
-
-  const paymentUrl = `${VNP_URL}?${qs.stringify(params, { encode: false })}`;
-
-  return { paymentUrl, txnRef, paymentId: payment._id };
-};
-
-// ─── 2. Xử lý return URL (thay cho "capture") ────────────────────────────────
-
-/**
- * Verify params VNPay gửi về returnUrl và cập nhật DB.
- * @param {object} vnpParams  - req.query từ VNPay redirect
- * @param {string} userId
- */
-export const verifyVNPayReturn = async (vnpParams, userId) => {
-  // Tách secure hash ra khỏi params để verify
-  const receivedHash = vnpParams.vnp_SecureHash;
-  const paramsToVerify = { ...vnpParams };
-  delete paramsToVerify.vnp_SecureHash;
-  delete paramsToVerify.vnp_SecureHashType;
-
-  const computedHash = createSecureHash(paramsToVerify);
-
-  if (computedHash !== receivedHash) {
-    const err = new Error("Invalid payment signature");
+  if (amount < 5000) {
+    const err = new Error(`Số tiền quá nhỏ (${amount} VNĐ). Tối thiểu 5,000 VNĐ.`);
     err.statusCode = 400;
     throw err;
   }
 
-  const txnRef     = vnpParams.vnp_TxnRef;
-  const responseCode = vnpParams.vnp_ResponseCode; // "00" = thành công
-  const transactionNo = vnpParams.vnp_TransactionNo;
+  const txnRef = `BK${Date.now()}`;
+
+  // Tạo Payment record PENDING trước
+  const payment = await Payment.create({
+    booking      : ids[0],
+    bookings     : ids,
+    customer     : userId,
+    amount       : totalUSD,        // lưu USD gốc trong DB
+    method       : "vnpay",
+    status       : "PENDING",
+    transactionId: txnRef,
+    vnpTxnRef    : txnRef,
+    metadata: {
+      bookingIds,
+      amountVND : amount,
+      amountUSD : totalUSD,
+      createTime: new Date().toISOString(),
+    },
+  });
+
+  // Thư viện tự build params + ký hash
+  const paymentUrl = vnpay.buildPaymentUrl({
+    // VNPay library automatically multiplies amount by 100, so provide amount in VND divided by 100
+    vnp_Amount    : Math.round(amount / 100),
+    vnp_IpAddr    : ipAddr,
+    vnp_TxnRef    : txnRef,
+    vnp_OrderInfo : `Thanh toan ${bookings.length} phong - ${txnRef}`,
+    vnp_OrderType : ProductCode.Other,
+    vnp_ReturnUrl : `${baseUrl}/api/payments/vnpay/return`,
+    vnp_Locale    : VnpLocale.VN,
+  });
+
+  console.log(`[VNPay] txnRef=${txnRef} | USD=${totalUSD} | VND=${amount} | IP=${ipAddr}`);
+
+  return { paymentUrl, txnRef, paymentId: payment._id };
+};
+
+// ─── 2. Xử lý return URL (backend redirect) ───────────────────────────────────
+
+/**
+ * Verify params VNPay gửi về GET /api/payments/vnpay/return
+ * Cập nhật DB rồi trả về { isSuccess, orderId, responseCode }
+ * để controller redirect về đúng trang frontend.
+ * @param {object} query  - req.query từ VNPay redirect
+ */
+export const handleVNPayReturn = async (query) => {
+  const verification = vnpay.verifyReturnUrl(query);
+  const txnRef       = query.vnp_TxnRef;
+  const transactionNo = query.vnp_TransactionNo;
+
+  if (!verification.isSuccess) {
+    console.log("[VNPay] Return verify failed:", verification.message);
+    // Huỷ payment record nếu có
+    await Payment.findOneAndUpdate(
+      { vnpTxnRef: txnRef, status: "PENDING" },
+      { $set: { status: "FAILED", metadata: { vnpResponseCode: query.vnp_ResponseCode } } }
+    );
+    return { isSuccess: false, responseCode: query.vnp_ResponseCode };
+  }
+
+  // Idempotency — đã xử lý rồi
+  const existing = await Payment.findOne({ vnpTxnRef: txnRef, status: "SUCCESS" });
+  if (existing) {
+    console.log(`[VNPay] Return idempotent: txnRef=${txnRef}`);
+    return { isSuccess: true, alreadyProcessed: true };
+  }
 
   // Tìm payment record
   const payment = await Payment.findOne({ vnpTxnRef: txnRef });
   if (!payment) {
-    const err = new Error("Payment record not found");
-    err.statusCode = 404;
-    throw err;
+    console.log(`[VNPay] Return: payment not found for txnRef=${txnRef}`);
+    return { isSuccess: false, responseCode: "02" };
   }
 
-  // Verify ownership (userId có thể null nếu user chưa login lại sau redirect)
-  if (userId && !payment.customer.equals(userId)) {
-    const err = new Error("Unauthorized");
-    err.statusCode = 403;
-    throw err;
-  }
-
-  if (payment.status === "SUCCESS") {
-    // Idempotent — đã xử lý rồi, trả về luôn
-    const bookings = await Booking.find({ _id: { $in: payment.bookings?.length ? payment.bookings : [payment.booking] } });
-    return { payment, bookings, alreadyProcessed: true };
-  }
-
-  const isSuccess = responseCode === "00";
-
-  payment.status         = isSuccess ? "SUCCESS" : "FAILED";
+  // Cập nhật payment
+  payment.status           = "SUCCESS";
   payment.vnpTransactionNo = transactionNo;
-  payment.metadata       = {
+  payment.metadata         = {
     ...payment.metadata,
-    vnpResponseCode: responseCode,
+    vnpResponseCode : query.vnp_ResponseCode,
     vnpTransactionNo: transactionNo,
-    vnpBankCode: vnpParams.vnp_BankCode,
-    vnpCardType: vnpParams.vnp_CardType,
-    vnpPayDate: vnpParams.vnp_PayDate,
-    processedAt: new Date().toISOString(),
+    vnpBankCode     : query.vnp_BankCode,
+    vnpCardType     : query.vnp_CardType,
+    vnpPayDate      : query.vnp_PayDate,
+    processedAt     : new Date().toISOString(),
   };
   await payment.save();
 
-  // Cập nhật booking
+  // Cập nhật bookings
   const bookingIds = payment.bookings?.length ? payment.bookings : [payment.booking];
   const bookings   = await Booking.find({ _id: { $in: bookingIds } });
+  await Promise.all(
+    bookings.map(async (b) => {
+      if (b.status === "Pending") {
+        b.status        = "Confirmed";
+        b.paymentStatus = "Paid";
+        await b.save();
+      }
+    })
+  );
 
-  if (isSuccess) {
-    await Promise.all(
-      bookings.map(async (b) => {
-        if (b.status === "Pending") {
-          b.status        = "Confirmed";
-          b.paymentStatus = "Paid";
-          await b.save();
-        }
-      })
-    );
-  }
-
-  return { payment, bookings, success: isSuccess, responseCode };
+  console.log(`[VNPay] Return success: txnRef=${txnRef} | bookings updated=${bookings.length}`);
+  return { isSuccess: true, paymentId: payment._id.toString() };
 };
 
-// ─── 3. Hoàn tiền (refund) ────────────────────────────────────────────────────
+// ─── 3. IPN (server-to-server, backup) ───────────────────────────────────────
+
+/**
+ * Xử lý IPN call từ VNPay server — idempotent.
+ * Trả về { RspCode, Message } đúng format VNPay yêu cầu.
+ * @param {object} query - req.query từ VNPay IPN
+ */
+export const handleVNPayIpn = async (query) => {
+  const verification = vnpay.verifyIpnCall(query);
+
+  if (!verification.isSuccess) {
+    console.log("[VNPay] IPN verify failed:", verification.message);
+    return { RspCode: "97", Message: "Invalid signature" };
+  }
+
+  const txnRef        = query.vnp_TxnRef;
+  const transactionNo = query.vnp_TransactionNo;
+
+  // Idempotency
+  const existing = await Payment.findOne({ vnpTxnRef: txnRef, status: "SUCCESS" });
+  if (existing) {
+    console.log(`[VNPay] IPN idempotent: txnRef=${txnRef}`);
+    return { RspCode: "00", Message: "Success" };
+  }
+
+  const payment = await Payment.findOne({ vnpTxnRef: txnRef });
+  if (!payment) {
+    console.log(`[VNPay] IPN: payment not found txnRef=${txnRef}`);
+    return { RspCode: "01", Message: "Order not found" };
+  }
+
+  // Cập nhật payment
+  payment.status           = "SUCCESS";
+  payment.vnpTransactionNo = transactionNo;
+  payment.metadata         = {
+    ...payment.metadata,
+    vnpResponseCode : query.vnp_ResponseCode,
+    vnpTransactionNo: transactionNo,
+    vnpBankCode     : query.vnp_BankCode,
+    vnpCardType     : query.vnp_CardType,
+    vnpPayDate      : query.vnp_PayDate,
+    processedAt     : new Date().toISOString(),
+    source          : "ipn",
+  };
+  await payment.save();
+
+  // Cập nhật bookings
+  const bookingIds = payment.bookings?.length ? payment.bookings : [payment.booking];
+  const bookings   = await Booking.find({ _id: { $in: bookingIds } });
+  await Promise.all(
+    bookings.map(async (b) => {
+      if (b.status === "Pending") {
+        b.status        = "Confirmed";
+        b.paymentStatus = "Paid";
+        await b.save();
+      }
+    })
+  );
+
+  console.log(`[VNPay] IPN success: txnRef=${txnRef} | bookings updated=${bookings.length}`);
+  return { RspCode: "00", Message: "Success" };
+};
+
+// ─── 4. Hoàn tiền ────────────────────────────────────────────────────────────
 
 /**
  * Gửi yêu cầu hoàn tiền qua VNPay API.
- * @param {string} paymentId   - _id của Payment record
+ * @param {string} paymentId    - _id của Payment record
  * @param {string} userId
  * @param {string} userRole
- * @param {number} [refundAmount]  - Số tiền hoàn (VNĐ). Nếu bỏ qua → hoàn toàn bộ.
+ * @param {number} [refundAmount] - Số tiền hoàn (USD). Nếu bỏ qua → hoàn toàn bộ.
  * @param {string} ipAddr
  */
 export const refundVNPayPayment = async (paymentId, userId, userRole, refundAmount, ipAddr) => {
@@ -256,76 +298,55 @@ export const refundVNPayPayment = async (paymentId, userId, userRole, refundAmou
     throw err;
   }
 
-  const amountToRefund = refundAmount ?? payment.amount;
-  const isPartial      = amountToRefund < payment.amount;
-  const transType      = isPartial ? "03" : "02"; // 02: full, 03: partial
+  const amountUSD  = refundAmount ?? payment.amount;
+  const amountVND  = Math.round(amountUSD * USD_TO_VND);
+  const isPartial  = amountUSD < payment.amount;
 
-  const txnRef   = payment.vnpTxnRef;
-  const now      = new Date();
-  const refundTxnRef = `RF${Date.now()}`;
-
-  const params = {
-    vnp_RequestId     : refundTxnRef,
-    vnp_Version       : "2.1.0",
-    vnp_Command       : "refund",
-    vnp_TmnCode       : VNP_TMNCODE,
-    vnp_TransactionType: transType,
-    vnp_TxnRef        : txnRef,
-    vnp_Amount        : Math.round(amountToRefund * 100),
-    vnp_OrderInfo     : `Hoan tien ${isPartial ? "mot phan" : "toan bo"} - ${txnRef}`,
-    vnp_TransactionNo : payment.vnpTransactionNo,
-    vnp_TransactionDate: payment.metadata?.vnpPayDate || formatDate(payment.createdAt),
-    vnp_CreateBy      : userId,
-    vnp_CreateDate    : formatDate(now),
-    vnp_IpAddr        : ipAddr || "127.0.0.1",
-  };
-
-  params.vnp_SecureHash = createSecureHash(params);
-
-  // Gọi VNPay API
-  const response = await fetch(VNP_API_URL, {
-    method : "POST",
-    headers: { "Content-Type": "application/json" },
-    body   : JSON.stringify(params),
+  // Dùng thư viện vnpay để refund
+  const result = await vnpay.refund({
+    vnp_RequestId       : `RF${Date.now()}`,
+    vnp_TxnRef          : payment.vnpTxnRef,
+    vnp_Amount          : amountVND,
+    vnp_OrderInfo       : `Hoan tien ${isPartial ? "mot phan" : "toan bo"} - ${payment.vnpTxnRef}`,
+    vnp_TransactionNo   : payment.vnpTransactionNo,
+    vnp_TransactionDate : payment.metadata?.vnpPayDate || new Date(payment.createdAt).toISOString(),
+    vnp_CreateBy        : userId,
+    vnp_IpAddr          : ipAddr,
+    vnp_TransactionType : isPartial ? "03" : "02",
   });
-
-  const result = await response.json();
 
   const refundSuccess = result.vnp_ResponseCode === "00";
 
-  // Cập nhật Payment
   payment.metadata = {
     ...payment.metadata,
     refund: {
-      txnRef       : refundTxnRef,
-      amount       : amountToRefund,
+      amountUSD,
+      amountVND,
       isPartial,
-      responseCode : result.vnp_ResponseCode,
-      message      : result.vnp_Message,
-      refundedAt   : now.toISOString(),
+      responseCode: result.vnp_ResponseCode,
+      message     : result.vnp_Message,
+      refundedAt  : new Date().toISOString(),
     },
   };
 
   if (refundSuccess) {
-    // Cập nhật Booking
     const bookingDoc = await Booking.findById(payment.booking?._id || payment.booking);
     if (bookingDoc) {
-      bookingDoc.paymentStatus  = isPartial ? "Paid" : "Refunded"; // giữ Paid nếu hoàn 1 phần
-      bookingDoc.refundedAmount = (bookingDoc.refundedAmount || 0) + amountToRefund;
+      bookingDoc.paymentStatus  = isPartial ? "Paid" : "Refunded";
+      bookingDoc.refundedAmount = (bookingDoc.refundedAmount || 0) + amountUSD;
       if (!isPartial) bookingDoc.status = "Cancelled";
       await bookingDoc.save();
     }
 
-    // Tạo Payment record hoàn tiền riêng để audit
     await Payment.create({
-      booking  : payment.booking,
-      bookings : payment.bookings,
-      customer : userId,
-      amount   : amountToRefund,
-      method   : "refund",
-      status   : "SUCCESS",
-      transactionId: refundTxnRef,
-      metadata : {
+      booking      : payment.booking,
+      bookings     : payment.bookings,
+      customer     : userId,
+      amount       : amountUSD,
+      method       : "refund",
+      status       : "SUCCESS",
+      transactionId: `RF${Date.now()}`,
+      metadata: {
         originalPaymentId: paymentId,
         vnpResponseCode  : result.vnp_ResponseCode,
         isPartial,
@@ -336,18 +357,18 @@ export const refundVNPayPayment = async (paymentId, userId, userRole, refundAmou
   await payment.save();
 
   return {
-    success: refundSuccess,
+    success     : refundSuccess,
     responseCode: result.vnp_ResponseCode,
-    message: result.vnp_Message,
-    refundAmount: amountToRefund,
+    message     : result.vnp_Message,
+    refundAmount: amountUSD,
     isPartial,
-    payment,
   };
 };
 
 export default {
-  createVNPayOrder,
-  verifyVNPayReturn,
-  refundVNPayPayment,
   getClientIp,
+  createVNPayOrder,
+  handleVNPayReturn,
+  handleVNPayIpn,
+  refundVNPayPayment,
 };

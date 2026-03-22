@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api/client";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface Booking {
   _id: string;
@@ -25,6 +25,7 @@ const MyBookingsPage = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const location = useLocation() as { state?: { message?: string } };
+  const navigate = useNavigate();
 
   const loadBookings = async () => {
     setError(null);
@@ -121,11 +122,15 @@ const MyBookingsPage = () => {
         {bookings.map((b) => (
           <div
             key={b._id}
-            className="border border-gray-100 bg-white rounded-2xl p-4 flex justify-between shadow-sm"
+            onClick={() => navigate(`/my-bookings/${b._id}`)}
+            className="border border-gray-100 bg-white rounded-2xl p-4 flex justify-between shadow-sm hover:border-blue-400 transition cursor-pointer group"
           >
             <div>
               {eligibleForPay(b) && (
-                <div className="flex items-center gap-2 mb-2">
+                <div 
+                  className="flex items-center gap-2 mb-2" 
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <input
                     type="checkbox"
                     checked={selectedIds.includes(b._id)}
@@ -152,7 +157,10 @@ const MyBookingsPage = () => {
               {/* Nút thanh toán nhanh cho từng booking */}
               {eligibleForPay(b) && (
                 <button
-                  onClick={() => handlePayVNPay([b._id])}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePayVNPay([b._id]);
+                  }}
                   disabled={payLoading}
                   className="text-sm bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition disabled:opacity-60"
                 >
@@ -161,7 +169,10 @@ const MyBookingsPage = () => {
               )}
               {(b.status === "Pending" || b.status === "Confirmed") && (
                 <button
-                  onClick={() => handleCancel(b._id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCancel(b._id);
+                  }}
                   className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 transition"
                 >
                   Huỷ booking
