@@ -99,7 +99,6 @@ export function BookingCard({
   };
 
   // Đặt phòng + thanh toán ngay qua VNPay
-  // FIX: tạo booking trước → lấy bookingId → gọi VNPay (không dùng booking._id vì biến đó không tồn tại)
   const handleBookAndPayVNPay = async () => {
     if (!checkIn || !checkOut) return;
     setBookingError(null);
@@ -111,11 +110,12 @@ export function BookingCard({
       if (!bookingId) throw new Error("Không tạo được booking");
 
       // Bước 2: tạo VNPay order, nhận paymentUrl
+      // FIX: added /api prefix
       const res = await apiRequest<{
         success: boolean;
         data?: { paymentUrl?: string; txnRef?: string };
         message?: string;
-      }>("/payments/vnpay/create-order", "POST", { bookingId });
+      }>("/api/payments/vnpay/create-order", "POST", { bookingId }, { auth: true });
 
       const paymentUrl = res?.data?.paymentUrl;
 
@@ -287,7 +287,7 @@ export function BookingCard({
             </Button>
             <Button
               className="rounded-xl bg-[#2C2C2C] hover:bg-[#3A3A3A] text-white"
-              onClick={handleBookAndPayVNPay}  
+              onClick={handleBookAndPayVNPay}
               disabled={!canQuote || bookingLoading}
             >
               {bookingLoading ? "Đang xử lý..." : "Đặt & thanh toán"}

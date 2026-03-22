@@ -34,7 +34,7 @@ function App() {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             {/* PUBLIC */}
-            <Route path="/payment/success" element={<PaymentSuccessPage />} />
+            <Route path="/payment/result" element={<PaymentSuccessPage />} />
             <Route path="/payment/cancel" element={<PaymentCancelPage />} />
 
             {/* PROTECTED */}
