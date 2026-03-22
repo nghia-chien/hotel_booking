@@ -34,9 +34,7 @@ export function BookingCard({
 
   const [loadingPrice, setLoadingPrice] = useState(false);
   const [priceError, setPriceError] = useState<string | null>(null);
-  const [priceSummary, setPriceSummary] = useState<PriceResponse["data"] | null>(
-    null
-  );
+  const [priceSummary, setPriceSummary] = useState<PriceResponse["data"] | null>(null);
 
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
@@ -70,18 +68,19 @@ export function BookingCard({
     }
   };
 
-  const createBookingForThisRoom = async () => {
-    if (!checkIn || !checkOut) return;
+  const createBookingForThisRoom = async (): Promise<string | null> => {
+    if (!checkIn || !checkOut) return null;
     const res = (await createBooking({
-        roomId,
-        checkIn: checkIn.toISOString(),
-        checkOut: checkOut.toISOString(),
-        guests
-      })) as { data: { _id: string } };
+      roomId,
+      checkIn: checkIn.toISOString(),
+      checkOut: checkOut.toISOString(),
+      guests
+    })) as { data: { _id: string } };
 
     return res.data._id;
   };
 
+  // Thêm phòng vào giỏ, chuyển sang MyBookings để thanh toán sau
   const handleAddRoom = async () => {
     if (!checkIn || !checkOut) return;
     setBookingError(null);
@@ -99,27 +98,44 @@ export function BookingCard({
     }
   };
 
-  const handleBookAndPay = async () => {
+  // Đặt phòng + thanh toán ngay qua VNPay
+  // FIX: tạo booking trước → lấy bookingId → gọi VNPay (không dùng booking._id vì biến đó không tồn tại)
+  const handleBookAndPayVNPay = async () => {
     if (!checkIn || !checkOut) return;
     setBookingError(null);
     setBookingLoading(true);
+
     try {
+      // Bước 1: tạo booking, lấy _id
       const bookingId = await createBookingForThisRoom();
-      if (!bookingId) return;
+      if (!bookingId) throw new Error("Không tạo được booking");
 
-      const paypal = await apiRequest<{
+      // Bước 2: tạo VNPay order, nhận paymentUrl
+      const res = await apiRequest<{
         success: boolean;
-        data: { orderId: string; approvalUrl: string };
-      }>(
-        "/api/payments/paypal/create-order",
-        "POST",
-        { bookingIds: [bookingId] },
-        { auth: true }
-      );
+        data?: { paymentUrl?: string; txnRef?: string };
+        message?: string;
+      }>("/payments/vnpay/create-order", "POST", { bookingId });
 
-      window.location.href = paypal.data.approvalUrl;
-    } catch (err) {
-      setBookingError((err as Error).message);
+      const paymentUrl = res?.data?.paymentUrl;
+
+      if (res?.success && paymentUrl) {
+        // Bước 3: redirect sang cổng VNPay
+        window.location.assign(paymentUrl);
+        return;
+      }
+
+      throw new Error(res?.message || "Không lấy được URL thanh toán");
+    } catch (err: unknown) {
+      let msg = "Có lỗi xảy ra. Vui lòng thử lại.";
+      if (typeof err === "object" && err !== null) {
+        const e = err as {
+          response?: { data?: { message?: string } };
+          message?: string;
+        };
+        msg = e.response?.data?.message || e.message || msg;
+      }
+      setBookingError(msg);
     } finally {
       setBookingLoading(false);
     }
@@ -267,14 +283,14 @@ export function BookingCard({
               onClick={handleAddRoom}
               disabled={!canQuote || bookingLoading}
             >
-              {bookingLoading ? "Đang thêm..." : "Thêm phòng"}
+              {bookingLoading ? "Đang xử lý..." : "Thêm phòng"}
             </Button>
             <Button
               className="rounded-xl bg-[#2C2C2C] hover:bg-[#3A3A3A] text-white"
-              onClick={handleBookAndPay}
+              onClick={handleBookAndPayVNPay}  
               disabled={!canQuote || bookingLoading}
             >
-              {bookingLoading ? "Đang thanh toán..." : "Đặt phòng"}
+              {bookingLoading ? "Đang xử lý..." : "Đặt & thanh toán"}
             </Button>
           </div>
 
@@ -286,7 +302,7 @@ export function BookingCard({
 
       <div>
         <p className="text-xs text-black/50 mb-2">
-          Gợi ý: hãy bấm “Tính giá” để xem tổng tiền trước khi đặt.
+          Gợi ý: hãy bấm "Tính giá" để xem tổng tiền trước khi đặt.
         </p>
         <Input
           placeholder="Yêu cầu đặc biệt (tuỳ chọn) — sẽ bổ sung ở bước sau"
@@ -296,4 +312,3 @@ export function BookingCard({
     </div>
   );
 }
-

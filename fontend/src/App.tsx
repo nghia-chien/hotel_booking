@@ -33,10 +33,13 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
 
+            {/* PUBLIC */}
+            <Route path="/payment/success" element={<PaymentSuccessPage />} />
+            <Route path="/payment/cancel" element={<PaymentCancelPage />} />
+
+            {/* PROTECTED */}
             <Route element={<ProtectedRoute roles={["user", "admin", "staff"]} />}>
               <Route path="/my-bookings" element={<MyBookingsPage />} />
-              <Route path="/payment/success" element={<PaymentSuccessPage />} />
-              <Route path="/payment/cancel" element={<PaymentCancelPage />} />
             </Route>
 
             <Route element={<ProtectedRoute roles={["admin", "staff"]} />}>
