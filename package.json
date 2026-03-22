@@ -1,8 +1,4 @@
 { 
-  "scripts": {
-    "backend:dev": "cd backend && yarn dev",
-    "frontend:deploy": "cd frontend && yarn build && gh-pages -d dist"
-  },
   "dependencies": {
     "@paypal/paypal-server-sdk": "^2.2.0",
     "@paypal/react-paypal-js": "^9.0.1",

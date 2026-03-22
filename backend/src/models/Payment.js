@@ -5,52 +5,53 @@ const paymentSchema = new mongoose.Schema(
     booking: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Booking",
-      required: false
+      required: false,
     },
     bookings: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Booking"
-      }
+        ref: "Booking",
+      },
     ],
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
     },
     amount: {
       type: Number,
       required: true,
-      min: 0
+      min: 0,
     },
     method: {
       type: String,
-      enum: ["card", "bank_transfer", "cash", "mock", "stripe", "paypal", "refund"],
-      default: "mock"
+      enum: ["card", "bank_transfer", "cash", "mock", "stripe", "vnpay", "refund"],
+      default: "mock",
     },
     status: {
       type: String,
       enum: ["PENDING", "SUCCESS", "FAILED"],
-      default: "SUCCESS"
+      default: "PENDING",
     },
     transactionId: {
-      type: String
+      type: String,
     },
-    paypalOrderId: {
-      type: String
+
+    // ── VNPay fields ──────────────────────────────────────────────────────────
+    vnpTxnRef: {
+      type: String,  // txnRef bạn tự tạo (BK<timestamp>), dùng để tra cứu
+      index: true,
     },
-    paypalCaptureId: {
-      type: String
+    vnpTransactionNo: {
+      type: String,  // mã giao dịch phía VNPay trả về
     },
-    paypalPayerId: {
-      type: String
-    },
+
+    // ── Metadata (lưu raw params VNPay, refund info, v.v.) ───────────────────
     metadata: {
-      type: Object
-    }
+      type: Object,
+    },
   },
   { timestamps: true }
 );
 
 export default mongoose.model("Payment", paymentSchema);
-

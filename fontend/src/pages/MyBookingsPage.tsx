@@ -64,7 +64,7 @@ const MyBookingsPage = () => {
       await apiRequest(`/api/bookings/${id}/cancel`, "POST", null, {
         auth: true
       });
-      setMessage("Booking cancelled");
+      setMessage("Đã huỷ booking");
       void loadBookings();
     } catch (err) {
       setError((err as Error).message);
@@ -81,23 +81,30 @@ const MyBookingsPage = () => {
     });
   };
 
-  const handlePayPal = async (bookingIds: string[]) => {
+  // FIX: đổi từ handlePayPal → handlePayVNPay
+  const handlePayVNPay = async (bookingIds: string[]) => {
     setError(null);
     setMessage(null);
     setPayLoading(true);
     try {
       const resp = await apiRequest<{
         success: boolean;
-        data: { orderId: string; approvalUrl: string };
+        data: { paymentUrl: string; txnRef: string };
       }>(
-        "/api/payments/paypal/create-order",
+        "/api/payments/vnpay/create-order",
         "POST",
         { bookingIds },
         { auth: true }
       );
-      window.location.href = resp.data.approvalUrl;
-    } catch (err) {
-      setError((err as Error).message);
+
+      if (resp.success && resp.data.paymentUrl) {
+        window.location.assign(resp.data.paymentUrl);
+      } else {
+        throw new Error("Không lấy được URL thanh toán");
+      }
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } }; message?: string };
+      setError(e.response?.data?.message || e.message || "Có lỗi xảy ra");
     } finally {
       setPayLoading(false);
     }
@@ -124,13 +131,11 @@ const MyBookingsPage = () => {
                     checked={selectedIds.includes(b._id)}
                     onChange={(e) => toggleSelected(b._id, e.target.checked)}
                   />
-                  <span className="text-sm text-black/60">
-                    Chưa thanh toán
-                  </span>
+                  <span className="text-sm text-black/60">Chưa thanh toán</span>
                 </div>
               )}
               <p className="font-semibold">
-                {new Date(b.checkIn).toLocaleDateString()} -{" "}
+                {new Date(b.checkIn).toLocaleDateString()} –{" "}
                 {new Date(b.checkOut).toLocaleDateString()}
               </p>
               <p className="text-sm text-gray-600">
@@ -139,11 +144,21 @@ const MyBookingsPage = () => {
               <p className="text-sm">
                 Tổng tiền:{" "}
                 <span className="font-semibold">
-                  {b.totalPrice.toFixed(2)} $
+                  {b.totalPrice.toLocaleString("vi-VN")} ₫
                 </span>
               </p>
             </div>
             <div className="flex flex-col gap-2 items-end">
+              {/* Nút thanh toán nhanh cho từng booking */}
+              {eligibleForPay(b) && (
+                <button
+                  onClick={() => handlePayVNPay([b._id])}
+                  disabled={payLoading}
+                  className="text-sm bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition disabled:opacity-60"
+                >
+                  Thanh toán
+                </button>
+              )}
               {(b.status === "Pending" || b.status === "Confirmed") && (
                 <button
                   onClick={() => handleCancel(b._id)}
@@ -163,6 +178,7 @@ const MyBookingsPage = () => {
         )}
       </div>
 
+      {/* Thanh toán nhiều phòng cùng lúc */}
       {selectedIds.length > 0 && (
         <div className="mt-4 flex items-center justify-end gap-3">
           <button
@@ -175,9 +191,11 @@ const MyBookingsPage = () => {
           <button
             className="text-sm bg-[#2C2C2C] text-white px-4 py-2 rounded-lg hover:bg-black transition disabled:opacity-60"
             disabled={payLoading}
-            onClick={() => handlePayPal(selectedIds)}
+            onClick={() => handlePayVNPay(selectedIds)}
           >
-            {payLoading ? "Đang chuyển PayPal..." : `Thanh toán ${selectedIds.length} phòng`}
+            {payLoading
+              ? "Đang chuyển VNPay..."
+              : `Thanh toán ${selectedIds.length} phòng qua VNPay`}
           </button>
         </div>
       )}
@@ -186,4 +204,3 @@ const MyBookingsPage = () => {
 };
 
 export default MyBookingsPage;
-
