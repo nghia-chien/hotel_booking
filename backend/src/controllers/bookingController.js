@@ -2,11 +2,14 @@ import Booking from "../models/Booking.js";
 import Room from "../models/Room.js";
 import Payment from "../models/Payment.js";
 import { buildPaginationOptions } from "../utils/pagination.js";
+import PDFDocument from "pdfkit";
+import { format } from "date-fns";
 import {
   createBookingSchema,
   searchRoomsSchema
 } from "../validators/bookingValidators.js";
 import { calculateBookingPrice } from "../utils/pricing.js";
+import { createNotification } from "../utils/notificationHelper.js";
 
 const validate = (schema, data) => {
   const { error, value } = schema.validate(data, { abortEarly: false });
@@ -233,6 +236,20 @@ export const payBooking = async (req, res, next) => {
     booking.paymentStatus = "Paid";
     await booking.save();
 
+    // Notify User
+    const roomNotify = await Room.findById(booking.room).populate("roomType");
+    void createNotification(booking.customer, "payment_success", {
+      transactionId,
+      amount: booking.totalPrice,
+      bookingId: booking._id
+    });
+    void createNotification(booking.customer, "booking_confirmed", {
+      roomName: roomNotify?.roomNumber || "Phòng",
+      checkIn: format(booking.checkIn, "dd/MM/yyyy"),
+      totalPrice: booking.totalPrice,
+      bookingId: booking._id
+    });
+
     res.json({
       success: true,
       data: {
@@ -320,6 +337,14 @@ export const cancelBooking = async (req, res, next) => {
     booking.refundedAmount = refundedAmount;
     await booking.save();
 
+    // Notify User
+    const roomNotify = await Room.findById(booking.room).populate("roomType");
+    void createNotification(booking.customer, "booking_cancelled", {
+      roomName: roomNotify?.roomNumber || "Phòng",
+      bookingId: booking._id,
+      reason: req.body.reason || "Huỷ theo yêu cầu"
+    });
+
     if (booking.paymentStatus === "Refunded") {
       await Payment.create({
         booking: booking._id,
@@ -332,6 +357,11 @@ export const cancelBooking = async (req, res, next) => {
           refundPercentage,
           cancelledAt: now.toISOString()
         }
+      });
+
+      void createNotification(booking.customer, "refund_processed", {
+        amount: refundedAmount,
+        bookingId: booking._id
       });
     }
 
@@ -504,6 +534,142 @@ export const getPopularRoomTypes = async (req, res, next) => {
       success: true,
       data: result
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getBookingById = async (req, res, next) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+      .populate("room")
+      .populate("roomType")
+      .populate("customer", "fullName email phone");
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found"
+      });
+    }
+
+    if (!booking.customer._id.equals(req.user._id) && req.user.role === "user") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied"
+      });
+    }
+
+    res.json({
+      success: true,
+      data: booking
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const generateInvoice = async (req, res, next) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+      .populate("room")
+      .populate("roomType")
+      .populate("customer", "fullName email");
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found"
+      });
+    }
+
+    if (!booking.customer._id.equals(req.user._id) && req.user.role === "user") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied"
+      });
+    }
+
+    if (booking.status === "Pending" || booking.status === "Cancelled") {
+      return res.status(400).json({
+        success: false,
+        message: "Invoice not available for this status"
+      });
+    }
+
+    const doc = new PDFDocument({ margin: 50 });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="invoice-${booking._id}.pdf"`
+    );
+
+    doc.pipe(res);
+
+    // Header
+    doc
+      .fillColor("#444444")
+      .fontSize(20)
+      .text("Hotel Booking", 50, 50)
+      .fontSize(10)
+      .text("123 Hotel Street, Hanoi, Vietnam", 200, 50, { align: "right" })
+      .text("Phone: +84 123 456 789", 200, 65, { align: "right" })
+      .moveDown();
+
+    doc.strokeColor("#aaaaaa").lineWidth(1).moveTo(50, 90).lineTo(550, 90).stroke();
+
+    // Invoice Info
+    doc
+      .fontSize(12)
+      .text(`Invoice Number: INV-${booking._id.toString().substring(0, 8).toUpperCase()}`, 50, 110)
+      .text(`Date: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 50, 125)
+      .text(`Booking ID: ${booking._id}`, 50, 140)
+      .moveDown();
+
+    // Customer Info
+    doc
+      .fontSize(14)
+      .text("Billed To:", 50, 170)
+      .fontSize(12)
+      .text(booking.customer.fullName, 50, 190)
+      .text(booking.customer.email, 50, 205)
+      .moveDown();
+
+    // Table Header
+    const tableTop = 250;
+    doc
+      .fontSize(12)
+      .text("Room", 50, tableTop, { bold: true })
+      .text("Check-in", 200, tableTop, { bold: true })
+      .text("Check-out", 320, tableTop, { bold: true })
+      .text("Total", 450, tableTop, { align: "right", bold: true });
+
+    doc.strokeColor("#eeeeee").lineWidth(1).moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
+
+    // Table Row
+    const rowY = tableTop + 30;
+    doc
+      .text(booking.room.name, 50, rowY)
+      .text(format(booking.checkIn, "dd/MM/yyyy"), 200, rowY)
+      .text(format(booking.checkOut, "dd/MM/yyyy"), 320, rowY)
+      .text(`${booking.totalPrice.toLocaleString()} VND`, 450, rowY, { align: "right" });
+
+    doc.strokeColor("#eeeeee").lineWidth(1).moveTo(50, rowY + 15).lineTo(550, rowY + 15).stroke();
+
+    // Summary
+    const summaryY = rowY + 50;
+    doc
+      .fontSize(14)
+      .text("Total Amount:", 350, summaryY, { bold: true })
+      .text(`${booking.totalPrice.toLocaleString()} VND`, 450, summaryY, { align: "right", bold: true });
+
+    // Footer
+    doc
+      .fontSize(10)
+      .text("Thank you for choosing our service!", 50, 700, { align: "center", width: 500 });
+
+    doc.end();
   } catch (error) {
     next(error);
   }

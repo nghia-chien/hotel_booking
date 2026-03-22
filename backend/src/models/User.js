@@ -2,10 +2,22 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    name: {
+    fullName: {
       type: String,
       required: true,
       trim: true
+    },
+    phone: {
+      type: String,
+      trim: true
+    },
+    address: {
+      type: String,
+      trim: true
+    },
+    avatar: {
+      type: String,
+      default: ""
     },
     email: {
       type: String,
@@ -22,6 +34,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["user", "admin", "staff"],
       default: "user"
+    },
+    isActive: {
+      type: Boolean,
+      default: true
     },
     resetPasswordToken: String,
     resetPasswordExpires: Date

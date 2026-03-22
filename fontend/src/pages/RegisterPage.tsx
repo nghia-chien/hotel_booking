@@ -6,7 +6,7 @@ const RegisterPage = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const [name, setName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,7 +17,7 @@ const RegisterPage = () => {
     setError(null);
     setLoading(true);
     try {
-      await register(name, email, password);
+      await register(fullName, email, password);
       navigate("/", { replace: true });
     } catch (err) {
       setError((err as Error).message);
@@ -40,8 +40,8 @@ const RegisterPage = () => {
             type="text"
             placeholder="Nguyễn Văn A"
             className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
             required
           />
         </div>

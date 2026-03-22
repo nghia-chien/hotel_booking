@@ -21,6 +21,16 @@ interface Room {
   images?: string[];
   amenities?: string[];
   policies?: string;
+  avgRating?: number;
+  totalReviews?: number;
+}
+
+interface Review {
+  _id: string;
+  user: { fullName: string };
+  rating: number;
+  comment: string;
+  createdAt: string;
 }
 
 interface RoomResponse {
@@ -41,6 +51,8 @@ export default function RoomDetail() {
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   useEffect(() => {
     const fetchRoom = async () => {
@@ -63,7 +75,24 @@ export default function RoomDetail() {
       }
     };
 
+    const fetchReviews = async () => {
+      if (!id) return;
+      try {
+        setReviewsLoading(true);
+        const res = await apiRequest<{ success: boolean; data: Review[] }>(
+          `/api/reviews/room/${id}`,
+          "GET"
+        );
+        setReviews(res.data);
+      } catch (err) {
+        console.error("Error fetching reviews:", err);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+
     void fetchRoom();
+    void fetchReviews();
   }, [id]);
 
   if (loading) {
@@ -130,10 +159,15 @@ export default function RoomDetail() {
                 {[1, 2, 3, 4, 5].map((i) => (
                   <Star
                     key={i}
-                    className="h-4 w-4 fill-[#FFD700] text-[#FFD700]"
+                    className={`h-4 w-4 ${i <= (room.avgRating || 0) ? "fill-[#FFD700] text-[#FFD700]" : "text-gray-200"}`}
                   />
                 ))}
-                <span className="ml-1 text-xs">(demo rating)</span>
+                <span className="ml-1 text-xs font-bold text-gray-900">
+                  {room.avgRating || 0}
+                </span>
+                <span className="text-xs text-gray-400">
+                  ({room.totalReviews || 0} đánh giá)
+                </span>
               </div>
             </div>
 
@@ -160,6 +194,56 @@ export default function RoomDetail() {
                 <p className="text-sm text-black/60">
                   {room.amenities.join(", ")}
                 </p>
+              </div>
+            )}
+          </section>
+
+          {/* Reviews Section */}
+          <section className="bg-white border border-black/5 rounded-2xl p-6 shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-gray-50 pb-4">
+              <h3 className="text-xl font-bold text-gray-900 italic">Đánh giá từ khách hàng</h3>
+              <div className="text-right">
+                <div className="text-3xl font-black text-gray-900">{room.avgRating || 0}</div>
+                <div className="flex gap-0.5 justify-end">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <Star key={i} className={`w-3 h-3 ${i <= (room.avgRating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`} />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {reviewsLoading ? (
+              <div className="py-10 text-center text-gray-400 text-sm">Đang tải đánh giá...</div>
+            ) : reviews.length === 0 ? (
+              <div className="py-10 text-center space-y-2">
+                <p className="text-gray-400 font-medium">Chưa có đánh giá nào cho phòng này.</p>
+                <p className="text-xs text-gray-300 italic">Hãy là người đầu tiên chia sẻ trải nghiệm!</p>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {reviews.map((rev) => (
+                  <div key={rev._id} className="group">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-black text-lg shadow-inner uppercase">
+                        {rev.user.fullName.substring(0, 2)}
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-bold text-gray-900">{rev.user.fullName}</h4>
+                          <span className="text-xs text-gray-400">{new Date(rev.createdAt).toLocaleDateString("vi-VN")}</span>
+                        </div>
+                        <div className="flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map(i => (
+                            <Star key={i} className={`w-3 h-3 ${i <= rev.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`} />
+                          ))}
+                        </div>
+                        <p className="text-gray-600 text-sm mt-3 leading-relaxed bg-gray-50/50 p-4 rounded-xl border border-transparent group-hover:border-gray-100 transition-all">
+                          {rev.comment}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </section>

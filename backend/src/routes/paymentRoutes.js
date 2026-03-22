@@ -132,8 +132,22 @@ router.get("/my", authenticate, async (req, res, next) => {
   try {
     const payments = await Payment.find({ customer: req.user._id })
       .sort({ createdAt: -1 })
-      .populate("bookings", "checkIn checkOut totalPrice status paymentStatus")
-      .populate("booking",  "checkIn checkOut totalPrice status paymentStatus");
+      .populate({
+        path: "booking",
+        select: "checkIn checkOut totalPrice status room roomType",
+        populate: [
+          { path: "room", select: "roomNumber" },
+          { path: "roomType", select: "name" }
+        ]
+      })
+      .populate({
+        path: "bookings",
+        select: "checkIn checkOut totalPrice status room roomType",
+        populate: [
+          { path: "room", select: "roomNumber" },
+          { path: "roomType", select: "name" }
+        ]
+      });
 
     return res.status(200).json({ success: true, data: payments });
   } catch (error) {

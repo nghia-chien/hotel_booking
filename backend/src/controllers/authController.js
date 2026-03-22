@@ -5,7 +5,13 @@ import {
   generateAccessToken,
   generateRefreshToken
 } from "../utils/jwt.js";
-import { loginSchema, registerSchema } from "../validators/authValidators.js";
+import { 
+  loginSchema, 
+  registerSchema, 
+  profileUpdateSchema, 
+  changePasswordSchema 
+} from "../validators/authValidators.js";
+import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
 
 const validate = (schema, data) => {
   const { error, value } = schema.validate(data, { abortEarly: false });
@@ -34,7 +40,7 @@ export const register = async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(data.password, salt);
 
     const user = await User.create({
-      name: data.name,
+      fullName: data.fullName,
       email: data.email,
       password: hashedPassword,
       role: data.role || "user"
@@ -48,9 +54,12 @@ export const register = async (req, res, next) => {
       data: {
         user: {
           id: user._id,
-          name: user.name,
+          fullName: user.fullName,
           email: user.email,
-          role: user.role
+          role: user.role,
+          avatar: user.avatar,
+          phone: user.phone,
+          address: user.address
         },
         accessToken,
         refreshToken
@@ -89,9 +98,12 @@ export const login = async (req, res, next) => {
       data: {
         user: {
           id: user._id,
-          name: user.name,
+          fullName: user.fullName,
           email: user.email,
-          role: user.role
+          role: user.role,
+          avatar: user.avatar,
+          phone: user.phone,
+          address: user.address
         },
         accessToken,
         refreshToken
@@ -211,6 +223,93 @@ export const resetPassword = async (req, res, next) => {
     res.json({
       success: true,
       message: "Password reset successfully"
+    });
+  } catch (error) {
+    next(error);
+  }
+};export const updateProfile = async (req, res, next) => {
+  try {
+    const data = validate(profileUpdateSchema, req.body);
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    user.fullName = data.fullName;
+    user.phone = data.phone;
+    user.address = data.address;
+    await user.save();
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role,
+          avatar: user.avatar,
+          phone: user.phone,
+          address: user.address
+        }
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const changePassword = async (req, res, next) => {
+  try {
+    const data = validate(changePasswordSchema, req.body);
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(data.currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Mật khẩu hiện tại không đúng"
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(data.newPassword, salt);
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Password changed successfully"
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+export const uploadAvatar = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file uploaded" });
+    }
+
+    const avatarUrl = await uploadBufferToCloudinary(req.file, "hotel-booking/avatars", "avatar");
+    
+    // Update user record
+    const user = await User.findById(req.user._id);
+    if (user) {
+      user.avatar = avatarUrl;
+      await user.save();
+    }
+
+    res.json({
+      success: true,
+      data: { avatarUrl }
     });
   } catch (error) {
     next(error);

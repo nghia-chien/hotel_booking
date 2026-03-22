@@ -9,9 +9,12 @@ import { apiRequest } from "../api/client";
 
 export interface AuthUser {
   id: string;
-  name: string;
+  fullName: string;
   email: string;
   role: "user" | "admin" | "staff";
+  avatar?: string;
+  phone?: string;
+  address?: string;
 }
 
 interface AuthResponse {
@@ -26,9 +29,12 @@ interface AuthResponse {
 interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<AuthUser>;
+  register: (fullName: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  updateProfile: (data: { fullName: string; phone?: string; address?: string }) => Promise<void>;
+  changePassword: (data: { currentPassword: string; newPassword: string }) => Promise<void>;
+  uploadAvatar: (file: File) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -60,16 +66,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const saveSession = (
     authUser: AuthUser,
-    accessToken: string,
-    refreshToken: string
+    accessToken?: string,
+    refreshToken?: string
   ) => {
     setUser(authUser);
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ user: authUser, accessToken, refreshToken })
-    );
-    localStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const existing = stored ? JSON.parse(stored) : {};
+    
+    const newSession = {
+      user: authUser,
+      accessToken: accessToken || existing.accessToken || localStorage.getItem("accessToken"),
+      refreshToken: refreshToken || existing.refreshToken || localStorage.getItem("refreshToken")
+    };
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newSession));
+    if (accessToken) localStorage.setItem("accessToken", accessToken);
+    if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
   };
 
   const login = async (email: string, password: string) => {
@@ -82,15 +94,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       res.data.accessToken,
       res.data.refreshToken
     );
+    return res.data.user;
   };
 
   const register = async (
-    name: string,
+    fullName: string,
     email: string,
     password: string
   ) => {
     const res = await apiRequest<AuthResponse>("/api/auth/register", "POST", {
-      name,
+      fullName,
       email,
       password
     });
@@ -108,12 +121,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("refreshToken");
   };
 
+  const updateProfile = async (data: { fullName: string; phone?: string; address?: string }) => {
+    const res = await apiRequest<{ success: boolean; data: { user: AuthUser } }>(
+      "/api/auth/profile",
+      "PUT",
+      data,
+      { auth: true }
+    );
+    saveSession(res.data.user);
+  };
+
+  const changePassword = async (data: { currentPassword: string; newPassword: string }) => {
+    await apiRequest<void>(
+      "/api/auth/change-password",
+      "PUT",
+      data,
+      { auth: true }
+    );
+  };
+
+  const uploadAvatar = async (file: File) => {
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    const res = await apiRequest<{ success: boolean; data: { avatarUrl: string } }>(
+      "/api/auth/avatar",
+      "POST",
+      formData,
+      { auth: true }
+    );
+
+    if (user) {
+      saveSession({ ...user, avatar: res.data.avatarUrl });
+    }
+    return res.data.avatarUrl;
+  };
+
   const value: AuthContextValue = {
     user,
     loading,
     login,
     register,
-    logout
+    logout,
+    updateProfile,
+    changePassword,
+    uploadAvatar
   };
 
   return (

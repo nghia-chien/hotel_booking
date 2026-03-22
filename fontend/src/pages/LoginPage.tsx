@@ -17,11 +17,13 @@ const LoginPage = () => {
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
-      const redirectTo =
-        location.state?.from?.pathname && location.state.from.pathname !== "/login"
-          ? location.state.from.pathname
-          : "/";
+      const user = await login(email, password);
+      let redirectTo = "/";
+      if (user.role === "admin" || user.role === "staff") {
+        redirectTo = "/admin";
+      } else if (location.state?.from?.pathname && location.state.from.pathname !== "/login") {
+        redirectTo = location.state.from.pathname;
+      }
       navigate(redirectTo, { replace: true });
     } catch (err) {
       setError((err as Error).message);

@@ -12,12 +12,22 @@ import AdminRoomTypesPage from "./pages/Admin/AdminRoomTypesPage";
 import AdminRoomsPage from "./pages/Admin/AdminRoomsPage";
 import AdminPricingRulesPage from "./pages/Admin/AdminPricingRulesPage";
 import AdminReportsPage from "./pages/Admin/AdminReportsPage";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import AdminUsers from "./pages/Admin/AdminUsers";
+import AdminCalendar from "./pages/Admin/AdminCalendar";
+import AdminReviews from "./pages/Admin/AdminReviews";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import PaymentCancelPage from "./pages/PaymentCancelPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ProfilePage from "./pages/ProfilePage";
+import BookingDetailPage from "./pages/BookingDetailPage";
+import PaymentHistoryPage from "./pages/PaymentHistoryPage";
+import NotificationsPage from "./pages/NotificationsPage";
+import FAQPage from "./pages/FAQPage";
+import PolicyPage from "./pages/PolicyPage";
 
 function App() {
   return (
@@ -32,6 +42,8 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/policy" element={<PolicyPage />} />
 
             {/* PUBLIC */}
             <Route path="/payment/result" element={<PaymentSuccessPage />} />
@@ -40,9 +52,14 @@ function App() {
             {/* PROTECTED */}
             <Route element={<ProtectedRoute roles={["user", "admin", "staff"]} />}>
               <Route path="/my-bookings" element={<MyBookingsPage />} />
+              <Route path="/my-bookings/:id" element={<BookingDetailPage />} />
+              <Route path="/payment-history" element={<PaymentHistoryPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
             </Route>
 
             <Route element={<ProtectedRoute roles={["admin", "staff"]} />}>
+              <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/bookings" element={<AdminBookingsPage />} />
               <Route path="/admin/room-types" element={<AdminRoomTypesPage />} />
               <Route path="/admin/rooms" element={<AdminRoomsPage />} />
@@ -51,6 +68,12 @@ function App() {
                 element={<AdminPricingRulesPage />}
               />
               <Route path="/admin/reports" element={<AdminReportsPage />} />
+              <Route path="/admin/calendar" element={<AdminCalendar />} />
+            </Route>
+
+            <Route element={<ProtectedRoute roles={["admin"]} />}>
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/reviews" element={<AdminReviews />} />
             </Route>
           </Route>
 
