@@ -10,8 +10,8 @@ import { authenticate, authorizeRoles } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-router.get("/", authenticate, authorizeRoles("admin", "staff"), getRoomTypes);
-router.get("/:id", authenticate, authorizeRoles("admin", "staff"), getRoomTypeById);
+router.get("/", getRoomTypes);
+router.get("/:id", getRoomTypeById);
 router.post("/", authenticate, authorizeRoles("admin"), createRoomType);
 router.put("/:id", authenticate, authorizeRoles("admin"), updateRoomType);
 router.delete("/:id", authenticate, authorizeRoles("admin"), deleteRoomType);

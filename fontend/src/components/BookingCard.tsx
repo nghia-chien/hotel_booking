@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Calendar as CalendarIcon, Users } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
 import { apiRequest } from "../api/client";
 import { createBooking } from "../api/booking.api";
+import { useAuth } from "../context/AuthContext";
 
 interface PriceResponse {
   success: boolean;
@@ -27,6 +28,7 @@ export function BookingCard({
   capacity: number;
 }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [checkIn, setCheckIn] = useState<Date>();
   const [checkOut, setCheckOut] = useState<Date>();
   const [guests, setGuests] = useState(2);
@@ -38,6 +40,26 @@ export function BookingCard({
 
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
+  const [bookedDates, setBookedDates] = useState<{ checkIn: Date; checkOut: Date }[]>([]);
+
+  // Fetch booked dates
+  useEffect(() => {
+    const fetchBookedDates = async () => {
+      try {
+        const res = await apiRequest<{ success: boolean; data: any[] }>(
+          `/api/public/rooms/${roomId}/booked-dates`,
+          "GET"
+        );
+        setBookedDates(res.data.map(b => ({
+          checkIn: new Date(b.checkIn),
+          checkOut: new Date(b.checkOut)
+        })));
+      } catch (err) {
+        console.error("Failed to fetch booked dates:", err);
+      }
+    };
+    void fetchBookedDates();
+  }, [roomId]);
 
   const canQuote = Boolean(checkIn && checkOut && guests >= 1);
 
@@ -80,8 +102,12 @@ export function BookingCard({
     return res.data._id;
   };
 
-  // Thêm phòng vào giỏ, chuyển sang MyBookings để thanh toán sau
+   // Thêm phòng vào giỏ, chuyển sang MyBookings để thanh toán sau
   const handleAddRoom = async () => {
+    if (!user) {
+      navigate("/login", { state: { from: { pathname: window.location.pathname } } });
+      return;
+    }
     if (!checkIn || !checkOut) return;
     setBookingError(null);
     setBookingLoading(true);
@@ -98,8 +124,12 @@ export function BookingCard({
     }
   };
 
-  // Đặt phòng + thanh toán ngay qua VNPay
+   // Đặt phòng + thanh toán ngay qua VNPay
   const handleBookAndPayVNPay = async () => {
+    if (!user) {
+      navigate("/login", { state: { from: { pathname: window.location.pathname } } });
+      return;
+    }
     if (!checkIn || !checkOut) return;
     setBookingError(null);
     setBookingLoading(true);
@@ -170,7 +200,20 @@ export function BookingCard({
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar mode="single" selected={checkIn} onSelect={setCheckIn} />
+              <Calendar 
+                mode="single" 
+                selected={checkIn} 
+                onSelect={setCheckIn} 
+                disabled={(date) => {
+                  // Disable past dates
+                  if (date < new Date(new Date().setHours(0,0,0,0))) return true;
+                  // Disable booked dates
+                  return bookedDates.some(b => 
+                    date >= new Date(b.checkIn.setHours(0,0,0,0)) && 
+                    date < new Date(b.checkOut.setHours(0,0,0,0))
+                  );
+                }}
+              />
             </PopoverContent>
           </Popover>
         </div>
@@ -194,7 +237,23 @@ export function BookingCard({
                 mode="single"
                 selected={checkOut}
                 onSelect={setCheckOut}
-                disabled={(date) => (checkIn ? date <= checkIn : false)}
+                disabled={(date) => {
+                  // Must be after check-in
+                  if (checkIn && date <= checkIn) return true;
+                  // Must not be in the past
+                  if (date < new Date(new Date().setHours(0,0,0,0))) return true;
+                  // Must not overlap with a booking that starts after check-in
+                  if (checkIn) {
+                    const nextBooking = bookedDates
+                      .filter(b => b.checkIn > checkIn)
+                      .sort((a,b) => a.checkIn.getTime() - b.checkIn.getTime())[0];
+                    if (nextBooking && date > nextBooking.checkIn) return true;
+                  }
+                  return bookedDates.some(b => 
+                    date > new Date(b.checkIn.setHours(0,0,0,0)) && 
+                    date <= new Date(b.checkOut.setHours(0,0,0,0))
+                  );
+                }}
               />
             </PopoverContent>
           </Popover>
