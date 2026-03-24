@@ -1,22 +1,26 @@
 import { useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
-import { SearchBar } from "../components/SearchBar"
+import BookingSearchForm from "../components/search/BookingSearchForm"
 import { FilterSidebar } from "../components/FilterSideBar"
-import { RoomCard } from "../components/RoomCard"
-import { estimateRating, toImageUrl } from "../utils/roomUtils"
+import { PropertyGrid } from "../components/property"
 
-import { useRoomSearch } from "../hooks/useRoomSearch"
+import usePropertySearch from "../hooks/usePropertySearch"
+import { estimateRating } from "../utils/roomUtils"
 
 import { createBooking } from "../api/booking.api"
+import { useAuth } from "../context/AuthContext"
+import { useData } from "../context/DataContext"
 
 import type { Room, CreateBookingPayload } from "../types/room"
 import type { AmenityKey } from "../constants/amenities"
+import type { PropertyCardProps } from "../types/property"
 
 const RoomsPage = () => {
   const navigate = useNavigate()
-
-  const { results, loading, error, search } = useRoomSearch()
+  const { user } = useAuth()
+  const { rooms: cachedRooms } = useData()
+  const { results, loading, error, search, hasSearched } = usePropertySearch()
 
   const [searchParams, setSearchParams] = useState<{
     checkIn: Date
@@ -28,6 +32,7 @@ const RoomsPage = () => {
   const [maxPrice, setMaxPrice] = useState<number>(1500)
   const [selectedAmenities, setSelectedAmenities] = useState<AmenityKey[]>([])
   const [minRating, setMinRating] = useState<number>(0)
+  
   const nights =
     searchParams != null
       ? Math.max(
@@ -64,6 +69,10 @@ const RoomsPage = () => {
   }
 
   const handleBooking = async (room: Room) => {
+    if (!user) {
+      navigate("/login", { state: { from: { pathname: window.location.pathname } } });
+      return;
+    }
     if (!searchParams) return
 
     const payload: CreateBookingPayload = {
@@ -82,8 +91,18 @@ const RoomsPage = () => {
     })
   }
 
+  const displayResults = useMemo(() => {
+    if (hasSearched) return results
+    if (loading) return []
+    // Pre-load: show all rooms before user hits search
+    return cachedRooms.map(r => ({
+      room: r,
+      totalPrice: r.roomType?.basePrice ?? 0
+    }))
+  }, [results, cachedRooms, loading, hasSearched])
+
   const filteredResults = useMemo(() => {
-    return results.filter(({ room, totalPrice }) => {
+    return displayResults.filter(({ room, totalPrice }) => {
       if (totalPrice < minPrice || totalPrice > maxPrice) return false
 
       if (selectedAmenities.length > 0) {
@@ -99,22 +118,46 @@ const RoomsPage = () => {
       }
 
       if (minRating > 0) {
-        const rating = estimateRating(room._id)
+        const rating = (room as any).avgRating ?? estimateRating(room._id);
         if (rating < minRating) return false
       }
 
       return true
     })
-  }, [results, minPrice, maxPrice, selectedAmenities, minRating])
+  }, [displayResults, minPrice, maxPrice, selectedAmenities, minRating])
+
+  const mappedItems: PropertyCardProps[] = filteredResults.map((item) => {
+    const images = item.room.images ?? []
+    
+    return {
+      id: item.room._id,
+      image: images[0] ? images[0] : '',
+      name: `${item.room.roomType?.name ?? 'Phòng'} · #${item.room.roomNumber}`,
+      location: item.room.roomType?.name ?? '',
+      pricePerNight: hasSearched ? item.totalPrice / nights : item.totalPrice,
+      totalPrice: hasSearched ? item.totalPrice : undefined,
+      priceLabel: hasSearched ? undefined : '/đêm',
+      capacity: item.room.capacity,
+      rating: (item.room as any).avgRating ?? estimateRating(item.room._id),
+      amenities: item.room.amenities,
+      onBook: () => handleBooking(item.room),
+      onViewDetails: () => navigate(`/roomdetail/${item.room._id}`),
+    }
+  })
 
   return (
     <div
       className="min-h-[calc(100vh-140px)]"
-      style={{ maxWidth: 1440, margin: "0 auto" }}
+      style={{ maxWidth: 1440, margin: "0 auto", padding: "0 1.5rem" }}
     >
-      <SearchBar onSearch={handleSearch} loading={loading} />
+      <BookingSearchForm 
+        variant="page" 
+        onSearch={handleSearch} 
+        loading={loading}
+        className="mb-8"
+      />
 
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8">
         <aside>
           <FilterSidebar
             minPrice={minPrice}
@@ -133,47 +176,22 @@ const RoomsPage = () => {
         </aside>
 
         <section>
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-black/60">
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-sm font-medium text-[var(--color-text-secondary)]">
               {loading
-                ? "Đang tải kết quả..."
-                : `${filteredResults.length} phòng phù hợp`}
+                ? "Đang tìm kiếm phòng phù hợp..."
+                : `${filteredResults.length} phòng có sẵn cho kỳ nghỉ của bạn`}
             </p>
 
             {error && <p className="text-sm text-red-600">{error}</p>}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {filteredResults.map((item) => {
-              const images = item.room.images || []
-              const hero = images[0] ? toImageUrl(images[0]) : ""
-
-              const total = item.totalPrice
-              const pricePerNight = total / nights
-
-              return (
-                <RoomCard
-                  key={item.room._id}
-                  image={hero}
-                  roomType={`${item.room.roomType?.name} · #${item.room.roomNumber}`}
-                  totalPrice={total}
-                  pricePerNight={pricePerNight}
-                  capacity={item.room.capacity}
-                  onBook={() => handleBooking(item.room)}
-                  onViewDetails={() =>
-                    navigate(`/roomdetail/${item.room._id}`)
-                  }
-                />
-              )
-            })}
-          </div>
-
-          {!loading && filteredResults.length === 0 && !error && (
-            <div className="mt-6 bg-[#F7F2EA] border border-black/5 rounded-2xl p-6 text-sm text-black/60">
-              Không tìm thấy phòng phù hợp. Hãy thử thay đổi ngày, số khách
-              hoặc bộ lọc.
-            </div>
-          )}
+          <PropertyGrid
+            items={mappedItems}
+            loading={loading}
+            columns={3}
+            emptyMessage="Không tìm thấy phòng phù hợp. Hãy thử thay đổi ngày hoặc bộ lọc."
+          />
         </section>
       </div>
     </div>

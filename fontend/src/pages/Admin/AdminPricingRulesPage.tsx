@@ -1,6 +1,19 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { type FormEvent, useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
+import { cn } from "../../components/ui/utils";
+import { 
+  Plus, 
+  Trash2, 
+  Calendar, 
+  Tag, 
+  Percent, 
+  DollarSign, 
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Tent,
+  ArrowRight
+} from "lucide-react";
 
 interface RoomType {
   _id: string;
@@ -76,6 +89,11 @@ const AdminPricingRulesPage = () => {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (new Date(startDate) > new Date(endDate)) {
+        setError("Ngày bắt đầu không thể sau ngày kết thúc.");
+        return;
+    }
+
     setError(null);
     setMessage(null);
     try {
@@ -94,7 +112,7 @@ const AdminPricingRulesPage = () => {
         },
         { auth: true }
       );
-      setMessage("Created pricing rule");
+      setMessage("Đã tạo luật giá mới thành công.");
       setName("");
       setValue(10);
       setApplyWeekend(false);
@@ -106,13 +124,14 @@ const AdminPricingRulesPage = () => {
   };
 
   const remove = async (id: string) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa luật giá này?")) return;
     setError(null);
     setMessage(null);
     try {
       await apiRequest(`/api/pricing-rules/${id}`, "DELETE", undefined, {
         auth: true
       });
-      setMessage("Deleted pricing rule");
+      setMessage("Đã xóa luật giá.");
       void load();
     } catch (err) {
       setError((err as Error).message);
@@ -120,143 +139,238 @@ const AdminPricingRulesPage = () => {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Admin · Giá theo mùa</h1>
-
-      <form className="border border-gray-100 bg-white rounded-2xl p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 shadow-sm" onSubmit={submit}>
+    <div className="max-w-7xl mx-auto space-y-10 py-6 animate-in fade-in duration-500">
+      {/* Header */}
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-[var(--color-border)]">
         <div>
-          <label className="block text-sm mb-1">Loại phòng</label>
-          <select
-            className="w-full border p-2 rounded"
-            value={roomType}
-            onChange={(e) => setRoomType(e.target.value)}
-            required
-          >
-            {roomTypes.map((rt) => (
-              <option key={rt._id} value={rt._id}>
-                {rt.name}
-              </option>
-            ))}
-          </select>
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2 block">
+            Cấu hình doanh thu
+          </span>
+          <h1 className="font-serif text-3xl font-bold text-[var(--color-text-primary)]">
+            Giá theo mùa & Sự kiện
+          </h1>
+          <p className="text-[var(--color-text-secondary)] text-sm mt-2">
+            Thiết lập các quy tắc thay đổi giá tự động dựa trên thời điểm, ngày lễ hoặc cuối tuần.
+          </p>
+        </div>
+      </header>
+
+      {/* Form Section */}
+      <section className="bg-white rounded-3xl p-8 shadow-[var(--shadow-sm)] border border-[var(--color-border)]">
+        <div className="flex items-center gap-3 mb-8 border-b border-[var(--color-border)] pb-4">
+          <div className="p-2 bg-[var(--color-surface)] rounded-lg text-[var(--color-text-primary)]">
+            <Plus className="w-4 h-4" />
+          </div>
+          <h2 className="text-lg font-bold text-[var(--color-text-primary)]">
+            Tạo quy tắc giá mới
+          </h2>
         </div>
 
-        <div>
-          <label className="block text-sm mb-1">Tên rule</label>
-          <input
-            className="w-full border p-2 rounded"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-        </div>
+        <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Loại phòng áp dụng</label>
+            <select
+              className="w-full bg-[var(--color-surface)] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--color-primary)] transition-all appearance-none cursor-pointer"
+              value={roomType}
+              onChange={(e) => setRoomType(e.target.value)}
+              required
+            >
+              {roomTypes.map((rt) => (
+                <option key={rt._id} value={rt._id}>
+                  {rt.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div>
-          <label className="block text-sm mb-1">Kiểu giá</label>
-          <select
-            className="w-full border p-2 rounded"
-            value={priceType}
-            onChange={(e) =>
-              setPriceType(e.target.value as "fixed" | "percentage")
-            }
-          >
-            <option value="percentage">Tăng theo %</option>
-            <option value="fixed">Cộng cố định</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm mb-1">Bắt đầu</label>
-          <input
-            type="date"
-            className="w-full border p-2 rounded"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm mb-1">Kết thúc</label>
-          <input
-            type="date"
-            className="w-full border p-2 rounded"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm mb-1">Giá trị</label>
-            <input
-            type="number"
-            className="w-full border p-2 rounded"
-            value={value}
-            onChange={(e) => setValue(Number(e.target.value))}
-            required
-          />
-        </div>
-
-        <div className="md:col-span-3 flex items-center gap-6">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={applyWeekend}
-              onChange={(e) => setApplyWeekend(e.target.checked)}
-            />
-            Áp dụng cuối tuần
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={applyHolidays}
-              onChange={(e) => setApplyHolidays(e.target.checked)}
-            />
-            Áp dụng ngày lễ
-          </label>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition" type="submit">
-            Tạo rule
-          </button>
-        </div>
-      </form>
-
-      {loading && <p>Đang tải...</p>}
-      {error && <p className="text-red-600 mb-2">{error}</p>}
-      {message && <p className="text-green-600 mb-2">{message}</p>}
-
-      <div className="space-y-3">
-        {rules.map((r) => (
-          <div key={r._id} className="border border-gray-100 bg-white rounded-2xl p-3 flex justify-between shadow-sm">
-            <div>
-              <p className="font-semibold">{r.name}</p>
-              <p className="text-sm text-gray-600">
-                {r.roomType?.name} · {r.priceType === "percentage" ? "Tăng %" : "Cộng cố định"} {r.value} ·{" "}
-                {new Date(r.startDate).toLocaleDateString()} -{" "}
-                {new Date(r.endDate).toLocaleDateString()}
-              </p>
-              <p className="text-xs text-gray-500">
-                Cuối tuần: {String(r.applyWeekend)} · Ngày lễ:{" "}
-                {String(r.applyHolidays)}
-              </p>
-            </div>
-            <div>
-              <button
-                className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg"
-                onClick={() => remove(r._id)}
-              >
-                Xóa
-              </button>
+          <div className="space-y-1.5 md:col-span-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Tên quy tắc (Vd: Mùa du lịch Hè 2024)</label>
+            <div className="relative">
+              <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
+              <input
+                className="w-full bg-[var(--color-surface)] border-none rounded-xl pl-10 pr-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Vd: Ngày lễ Quốc khánh 02/09"
+                required
+              />
             </div>
           </div>
-        ))}
 
-        {!loading && rules.length === 0 && (
-          <p className="text-gray-600">Chưa có pricing rule nào.</p>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Kiểu thay đổi giá</label>
+            <select
+              className="w-full bg-[var(--color-surface)] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--color-primary)] transition-all appearance-none cursor-pointer"
+              value={priceType}
+              onChange={(e) =>
+                setPriceType(e.target.value as "fixed" | "percentage")
+              }
+            >
+              <option value="percentage">Tăng theo phần trăm (%)</option>
+              <option value="fixed">Cộng thêm số tiền cố định (USD)</option>
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Ngày bắt đầu</label>
+            <input
+              type="date"
+              className="w-full bg-[var(--color-surface)] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Ngày kết thúc</label>
+            <input
+              type="date"
+              className="w-full bg-[var(--color-surface)] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Giá trị tăng thêm</label>
+            <div className="relative">
+              {priceType === "percentage" ? (
+                <Percent className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
+              ) : (
+                <DollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
+              )}
+              <input
+                type="number"
+                className="w-full bg-[var(--color-surface)] border-none rounded-xl pl-10 pr-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
+                value={value}
+                onChange={(e) => setValue(Number(e.target.value))}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="md:col-span-2 flex items-center gap-8 px-2">
+            <label className="flex items-center gap-3 group cursor-pointer">
+              <input
+                type="checkbox"
+                className="w-5 h-5 rounded-md border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                checked={applyWeekend}
+                onChange={(e) => setApplyWeekend(e.target.checked)}
+              />
+              <span className="text-sm font-bold text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]">Cuối tuần (T7, CN)</span>
+            </label>
+            <label className="flex items-center gap-3 group cursor-pointer">
+              <input
+                type="checkbox"
+                className="w-5 h-5 rounded-md border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                checked={applyHolidays}
+                onChange={(e) => setApplyHolidays(e.target.checked)}
+              />
+              <span className="text-sm font-bold text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]">Sự kiện & Ngày lễ</span>
+            </label>
+          </div>
+
+          <div className="md:col-span-3 lg:col-span-3 flex justify-end pt-4">
+            <button
+              type="submit"
+              className="px-8 py-3 bg-black text-white text-sm font-bold uppercase tracking-widest rounded-xl shadow-[var(--shadow-sm)] hover:bg-gray-800 transition-all flex items-center gap-2"
+            >
+              Áp dụng quy tắc
+            </button>
+          </div>
+        </form>
+      </section>
+
+      {/* Messages */}
+      {(error || message) && (
+        <div className="animate-in slide-in-from-top-2 duration-300">
+           {error && (
+             <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-100 flex items-center gap-3">
+               <AlertCircle className="w-5 h-5" />
+               <p className="text-sm font-medium">{error}</p>
+             </div>
+           )}
+           {message && (
+             <div className="bg-emerald-50 text-emerald-700 p-4 rounded-xl border border-emerald-100 flex items-center gap-3">
+               <CheckCircle2 className="w-5 h-5" />
+               <p className="text-sm font-medium">{message}</p>
+             </div>
+           )}
+        </div>
+      )}
+
+      {/* List Section */}
+      <section className="space-y-4">
+        <h3 className="text-lg font-bold text-[var(--color-text-primary)] px-2">Quy tắc đang hiệu lực</h3>
+        
+        {loading ? (
+          <div className="flex items-center justify-center py-20 bg-white rounded-3xl border border-[var(--color-border)]">
+             <div className="w-8 h-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {rules.map((r) => (
+              <div key={r._id} className="group bg-white rounded-3xl p-6 shadow-[var(--shadow-sm)] border border-[var(--color-border)] hover:border-gray-300 transition-all">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center text-[var(--color-text-primary)] group-hover:bg-[var(--color-primary)] transition-colors">
+                    <Tent className="w-5 h-5" />
+                  </div>
+                  <button
+                    className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors"
+                    onClick={() => remove(r._id)}
+                    title="Gỡ bỏ quy tắc"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <h4 className="text-lg font-bold text-[var(--color-text-primary)] mb-1">{r.name}</h4>
+                <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-4">{r.roomType?.name}</p>
+                
+                <div className="bg-[var(--color-surface)] rounded-2xl p-4 space-y-3">
+                   <div className="flex items-center justify-between text-xs font-bold">
+                      <span className="text-[var(--color-text-muted)] uppercase tracking-widest">Thời gian</span>
+                      <div className="flex items-center gap-2 text-[var(--color-text-primary)]">
+                         <span>{new Date(r.startDate).toLocaleDateString('vi-VN')}</span>
+                         <ArrowRight className="w-3 h-3" />
+                         <span>{new Date(r.endDate).toLocaleDateString('vi-VN')}</span>
+                      </div>
+                   </div>
+                   <div className="flex items-center justify-between text-xs font-bold">
+                      <span className="text-[var(--color-text-muted)] uppercase tracking-widest">Biến động giá</span>
+                      <span className="px-2.5 py-1 bg-[var(--color-primary)] rounded-lg text-black">
+                         {r.priceType === "percentage" ? `+${r.value}%` : `+${r.value.toLocaleString()} USD`}
+                      </span>
+                   </div>
+                </div>
+
+                <div className="mt-4 flex gap-3">
+                   {r.applyWeekend && (
+                     <span className="flex items-center gap-1 text-[10px] font-black uppercase text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+                        <Clock className="w-3 h-3" /> Weekend
+                     </span>
+                   )}
+                   {r.applyHolidays && (
+                     <span className="flex items-center gap-1 text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
+                        <Calendar className="w-3 h-3" /> Holiday
+                     </span>
+                   )}
+                </div>
+              </div>
+            ))}
+            
+            {!loading && rules.length === 0 && (
+              <div className="md:col-span-2 text-center py-20 bg-white rounded-3xl border-2 border-dashed border-[var(--color-border)]">
+                <p className="text-[var(--color-text-muted)] font-medium italic">Không có quy tắc giá nào được cài đặt.</p>
+              </div>
+            )}
+          </div>
         )}
-      </div>
+      </section>
     </div>
   );
 };
 
 export default AdminPricingRulesPage;
-

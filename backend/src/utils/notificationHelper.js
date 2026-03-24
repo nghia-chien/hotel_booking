@@ -33,7 +33,7 @@ export const createNotification = async (userId, type, data) => {
             <p>Chào <b>${user.fullName}</b>,</p>
             <p>Phòng <b>${data.roomName}</b> của bạn đã được xác nhận.</p>
             <p><b>Ngày nhận phòng:</b> ${data.checkIn}</p>
-            <p><b>Tổng cộng:</b> ${data.totalPrice?.toLocaleString()} VND</p>
+            <p><b>Tổng cộng:</b> ${data.totalPrice?.toLocaleString()} USD</p>
             <hr/>
             <p style="font-size: 12px; color: #888;">Cảm ơn bạn đã lựa chọn dịch vụ của chúng tôi!</p>
           </div>
@@ -55,7 +55,7 @@ export const createNotification = async (userId, type, data) => {
         break;
       case "payment_success":
         title = "Thanh toán thành công";
-        message = `Giao dịch ${data.transactionId} số tiền ${data.amount?.toLocaleString()} VND đã được xác nhận.`;
+        message = `Giao dịch ${data.transactionId} số tiền ${data.amount?.toLocaleString()} USD đã được xác nhận.`;
         link = `/my-bookings/${data.bookingId}`;
         emailHtml = `
           <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
@@ -63,21 +63,21 @@ export const createNotification = async (userId, type, data) => {
             <p>Chào <b>${user.fullName}</b>,</p>
             <p>Hệ thống đã ghi nhận thanh toán cho booking của bạn.</p>
             <p><b>Mã GD:</b> ${data.transactionId}</p>
-            <p><b>Số tiền:</b> ${data.amount?.toLocaleString()} VND</p>
+            <p><b>Số tiền:</b> ${data.amount?.toLocaleString()} USD</p>
             <p>Phòng của bạn hiện đã ở trạng thái đã xác nhận.</p>
           </div>
         `;
         break;
       case "refund_processed":
         title = "Hoàn tiền đã xử lý";
-        message = `Số tiền ${data.amount?.toLocaleString()} VND đã được hoàn trả. Dự kiến nhận từ 3-5 ngày qua VNPay.`;
+        message = `Số tiền ${data.amount?.toLocaleString()} USD đã được hoàn trả. Dự kiến nhận từ 3-5 ngày qua VNPay.`;
         link = `/my-bookings/${data.bookingId}`;
         emailHtml = `
           <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
             <h1 style="color: #BA7517;">Hoàn tiền thành công</h1>
             <p>Chào <b>${user.fullName}</b>,</p>
             <p>Yêu cầu hoàn tiền cho booking của bạn đã được xử lý.</p>
-            <p><b>Số tiền hoàn:</b> ${data.amount?.toLocaleString()} VND</p>
+            <p><b>Số tiền hoàn:</b> ${data.amount?.toLocaleString()} USD</p>
             <p>Dự kiến tiền sẽ về tài khoản của bạn trong vòng 3-5 ngày làm việc.</p>
           </div>
         `;

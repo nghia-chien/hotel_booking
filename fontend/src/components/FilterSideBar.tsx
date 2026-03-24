@@ -1,6 +1,7 @@
 import { Wifi, Tv, Wind, Coffee, Waves, Dumbbell, Star } from "lucide-react";
 import { Slider } from "./ui/slider";
 import { Checkbox } from "./ui/checkbox";
+import { cn } from "./ui/utils";
 
 interface FilterSidebarProps {
   minPrice: number;
@@ -19,15 +20,15 @@ export function FilterSidebar({
   selectedAmenities,
   onAmenitiesChange,
   minRating,
-  onMinRatingChange
+  onMinRatingChange,
 }: FilterSidebarProps) {
   const amenities = [
-    { id: "wifi", label: "Free WiFi", icon: Wifi },
-    { id: "tv", label: "Smart TV", icon: Tv },
-    { id: "ac", label: "Air Conditioning", icon: Wind },
-    { id: "coffee", label: "Coffee Maker", icon: Coffee },
-    { id: "pool", label: "Pool Access", icon: Waves },
-    { id: "gym", label: "Gym Access", icon: Dumbbell }
+    { id: 'wifi', label: 'Free WiFi', icon: Wifi },
+    { id: 'tv', label: 'Smart TV', icon: Tv },
+    { id: 'ac', label: 'Air Conditioning', icon: Wind },
+    { id: 'coffee', label: 'Coffee Maker', icon: Coffee },
+    { id: 'pool', label: 'Pool Access', icon: Waves },
+    { id: 'gym', label: 'Gym Access', icon: Dumbbell },
   ];
 
   const ratings = [5, 4, 3];
@@ -47,14 +48,19 @@ export function FilterSidebar({
   };
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E8DFD8] sticky top-8">
-      <h2 className="mb-6 text-[#2C2C2C]">Filters</h2>
+    <div className="bg-white rounded-2xl p-6 shadow-[var(--shadow-sm)] border border-[var(--color-border)] sticky top-8">
+      <h2 className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-6 border-b border-[var(--color-border)] pb-4">
+        Bộ lọc tìm kiếm
+      </h2>
 
       {/* Price Range */}
-      <div className="mb-8">
+      <div className="mb-8 border-b border-[var(--color-border)] pb-8">
+        <label className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] block mb-4">
+          Khoảng giá
+        </label>
         <div className="flex items-center justify-between mb-4">
-          <label className="text-sm text-[#2C2C2C]">Price Range</label>
-          <span className="text-sm text-[#666666]">
+          <span className="text-sm font-medium text-[var(--color-text-primary)]">Tầm giá</span>
+          <span className="text-sm font-semibold text-[var(--color-text-secondary)]">
             ${minPrice} - ${maxPrice}
           </span>
         </div>
@@ -66,20 +72,22 @@ export function FilterSidebar({
           step={50}
           className="mb-2"
         />
-        <div className="flex justify-between text-xs text-[#999999]">
+        <div className="flex justify-between text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-tighter">
           <span>$50</span>
           <span>$3000</span>
         </div>
       </div>
 
       {/* Amenities */}
-      <div className="mb-8">
-        <label className="block mb-4 text-sm text-[#2C2C2C]">Amenities</label>
+      <div className="mb-8 border-b border-[var(--color-border)] pb-8">
+        <label className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] block mb-4">
+          Tiện ích
+        </label>
         <div className="space-y-3">
           {amenities.map((amenity) => {
             const Icon = amenity.icon;
             return (
-              <div key={amenity.id} className="flex items-center gap-3">
+              <div key={amenity.id} className="flex items-center gap-3 group">
                 <Checkbox
                   id={amenity.id}
                   checked={selectedAmenities.includes(amenity.id)}
@@ -87,9 +95,9 @@ export function FilterSidebar({
                 />
                 <label
                   htmlFor={amenity.id}
-                  className="flex items-center gap-2 text-sm text-[#2C2C2C] cursor-pointer"
+                  className="flex items-center gap-2 text-sm text-[var(--color-text-primary)] cursor-pointer group-hover:text-[var(--color-text-secondary)] transition-colors"
                 >
-                  <Icon className="h-4 w-4 text-[#666666]" />
+                  <Icon className="h-4 w-4 text-[var(--color-text-secondary)]" />
                   {amenity.label}
                 </label>
               </div>
@@ -100,26 +108,28 @@ export function FilterSidebar({
 
       {/* Guest Ratings */}
       <div>
-        <label className="block mb-4 text-sm text-[#2C2C2C]">Guest Rating</label>
+        <label className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] block mb-4">
+          Đánh giá
+        </label>
         <div className="space-y-2">
           {ratings.map((rating) => (
             <button
               key={rating}
-              onClick={() =>
-                onMinRatingChange(minRating === rating ? 0 : rating)
-              }
-              className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+              onClick={() => onMinRatingChange(minRating === rating ? 0 : rating)}
+              className={cn(
+                'w-full flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all cursor-pointer',
                 minRating === rating
-                  ? "bg-[#2C2C2C] text-white border-[#2C2C2C]"
-                  : "bg-[#F5F1ED] text-[#2C2C2C] border-[#E8DFD8] hover:bg-[#E8DFD8]"
-              }`}
+                  ? 'bg-[var(--color-primary-foreground)] text-white border-transparent'
+                  : 'bg-[var(--color-surface)] text-[var(--color-text-primary)] border-[var(--color-border)] hover:border-gray-400 hover:bg-gray-50'
+              )}
             >
               <Star
-                className={`h-4 w-4 ${
-                  minRating === rating ? "fill-white" : "fill-[#FFD700]"
-                }`}
+                className={cn(
+                  'h-3.5 w-3.5',
+                  minRating === rating ? 'fill-white' : 'fill-yellow-400'
+                )}
               />
-              <span className="text-sm">{rating}+ Stars</span>
+              <span className="text-sm font-medium">{rating}+ Sao</span>
             </button>
           ))}
         </div>

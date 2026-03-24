@@ -18,6 +18,7 @@ import AdminCalendar from "./pages/Admin/AdminCalendar";
 import AdminReviews from "./pages/Admin/AdminReviews";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
+import { DataProvider } from "./context/DataContext";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import PaymentCancelPage from "./pages/PaymentCancelPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
@@ -32,7 +33,8 @@ import PolicyPage from "./pages/PolicyPage";
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <DataProvider>
+        <BrowserRouter>
         <Routes>
           <Route element={<MainLayout />}>
             <Route path="/" element={<HomePage />} />
@@ -80,6 +82,7 @@ function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
+      </DataProvider>
     </AuthProvider>
   );
 }

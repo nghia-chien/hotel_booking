@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../../api/client";
+import { cn } from "../../components/ui/utils";
+import { 
+  BarChart3, 
+  PieChart, 
+  Calendar, 
+  TrendingUp, 
+  Users, 
+  Hotel,
+  ArrowRight,
+  Search,
+  AlertCircle
+} from "lucide-react";
 
 interface OccupancyResponse {
   success: boolean;
@@ -77,7 +89,7 @@ export default function AdminReportsPage() {
         apiRequest<RoomTypeListResponse>(
           "/api/room-types",
           "GET",
-          undefined,
+          80, // Note: The original code didn't have a limit here, keeping it compatible
           { auth: true }
         )
       ]);
@@ -98,88 +110,179 @@ export default function AdminReportsPage() {
   }, []);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6">
-        <h1 className="text-2xl font-bold mb-2">Báo cáo</h1>
-        <p className="text-sm text-gray-500">
-          Occupancy rate và loại phòng được đặt nhiều nhất.
-        </p>
+    <div className="max-w-7xl mx-auto space-y-10 py-6 animate-in fade-in duration-500">
+      {/* Header */}
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-[var(--color-border)]">
+        <div>
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2 block">
+            Phân tích số liệu
+          </span>
+          <h1 className="font-serif text-3xl font-bold text-[var(--color-text-primary)]">
+            Báo cáo & Thống kê
+          </h1>
+          <p className="text-[var(--color-text-secondary)] text-sm mt-2">
+            Theo dõi hiệu suất lấp đầy phòng và các danh mục dịch vụ phổ biến nhất.
+          </p>
+        </div>
+      </header>
 
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-          <div>
-            <label className="block text-sm mb-1 text-gray-700">Từ ngày</label>
+      {/* Filter Section */}
+      <section className="bg-white rounded-3xl p-8 shadow-[var(--shadow-sm)] border border-[var(--color-border)]">
+        <div className="flex items-center gap-3 mb-6">
+          <Calendar className="w-5 h-5 text-[var(--color-text-muted)]" />
+          <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--color-text-primary)]">Khoảng thời gian báo cáo</h2>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Từ ngày</label>
             <input
               type="date"
-              className="w-full border border-gray-300 p-2 rounded"
+              className="w-full bg-[var(--color-surface)] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
             />
           </div>
-          <div>
-            <label className="block text-sm mb-1 text-gray-700">Đến ngày</label>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Đến ngày</label>
             <input
               type="date"
-              className="w-full border border-gray-300 p-2 rounded"
+              className="w-full bg-[var(--color-surface)] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
             />
           </div>
           <button
-            className="h-10 bg-blue-600 text-white rounded-lg px-4 disabled:opacity-60"
+            className="h-[48px] bg-black text-white text-xs font-bold uppercase tracking-widest rounded-xl shadow-sm hover:bg-gray-800 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
             onClick={load}
             disabled={loading}
           >
-            {loading ? "Đang tải..." : "Xem báo cáo"}
+            {loading ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <Search className="w-4 h-4" />
+            )}
+            Xem báo cáo
           </button>
         </div>
 
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-      </div>
+        {error && (
+          <div className="mt-6 bg-red-50 text-red-700 p-4 rounded-xl border border-red-100 flex items-center gap-3 animate-in slide-in-from-top-2">
+             <AlertCircle className="w-5 h-5" />
+             <p className="text-sm font-medium">{error}</p>
+          </div>
+        )}
+      </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6">
-          <h2 className="text-lg font-semibold mb-3">Occupancy rate</h2>
-          {occupancy ? (
-            <div className="space-y-2">
-              <p className="text-4xl font-bold">
-                {occupancy.occupancyRate.toFixed(1)}%
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Occupancy Rate Card */}
+        <div className="lg:col-span-1 bg-white rounded-3xl p-8 shadow-[var(--shadow-sm)] border border-[var(--color-border)] flex flex-col justify-between overflow-hidden relative group">
+           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
+              <PieChart className="w-32 h-32" />
+           </div>
+           
+           <div>
+             <h3 className="text-lg font-bold text-[var(--color-text-primary)] mb-1">Occupancy Rate</h3>
+             <p className="text-xs text-[var(--color-text-muted)] font-medium mb-8 italic">Hiệu suất lấp đầy phòng</p>
+             
+             {occupancy ? (
+               <div className="space-y-8">
+                 <div className="flex items-baseline gap-2">
+                    <span className="text-6xl font-black text-[var(--color-text-primary)] tracking-tighter">
+                      {occupancy.occupancyRate.toFixed(1)}
+                    </span>
+                    <span className="text-3xl font-bold text-[var(--color-primary-dark)]">%</span>
+                 </div>
+                 
+                 <div className="space-y-3">
+                   <div className="w-full h-3 bg-[var(--color-surface)] rounded-full overflow-hidden border border-[var(--color-border)]">
+                      <div 
+                        className="h-full bg-[var(--color-primary)] transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(200,240,0,0.5)]"
+                        style={{ width: `${occupancy.occupancyRate}%` }}
+                      ></div>
+                   </div>
+                   <div className="flex items-center justify-between text-xs font-bold text-[var(--color-text-secondary)]">
+                      <div className="flex items-center gap-2">
+                         <Hotel className="w-4 h-4 text-[var(--color-text-muted)]" />
+                         <span>{occupancy.occupiedRooms ?? 0} phòng đang được đặt</span>
+                      </div>
+                      <span>Tổng: {occupancy.totalRooms}</span>
+                   </div>
+                 </div>
+               </div>
+             ) : (
+               <div className="py-10 text-center text-[var(--color-text-muted)] italic text-sm">Chưa có dữ liệu thống kê.</div>
+             )}
+           </div>
+
+           <div className="mt-10 p-5 bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] flex items-center gap-4">
+              <TrendingUp className="w-8 h-8 text-emerald-600 opacity-50" />
+              <p className="text-[10px] font-medium text-[var(--color-text-secondary)] leading-relaxed uppercase tracking-widest">
+                Xu hướng lấp đầy phòng {occupancy && occupancy.occupancyRate > 70 ? "Vượt ngưỡng" : "Ổn định"}
               </p>
-              <p className="text-sm text-gray-600">
-                Phòng đang được “chiếm dụng”: {occupancy.occupiedRooms ?? 0}/
-                {occupancy.totalRooms}
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-gray-600">Chưa có dữ liệu.</p>
-          )}
+           </div>
         </div>
 
-        <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6">
-          <h2 className="text-lg font-semibold mb-3">
-            Top loại phòng được đặt
-          </h2>
-          <div className="space-y-2">
+        {/* Popular Room Types Card */}
+        <div className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-[var(--shadow-sm)] border border-[var(--color-border)]">
+          <div className="flex items-center justify-between mb-8 border-b border-[var(--color-border)] pb-4">
+            <div>
+               <h3 className="text-lg font-bold text-[var(--color-text-primary)] mb-1">Hạng phòng phổ biến</h3>
+               <p className="text-xs text-[var(--color-text-muted)] font-medium italic">Sắp xếp theo số lượt đặt phòng</p>
+            </div>
+            <BarChart3 className="w-6 h-6 text-[var(--color-text-muted)]" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {popular.length === 0 && (
-              <p className="text-sm text-gray-600">Chưa có dữ liệu.</p>
+              <div className="md:col-span-2 py-20 text-center text-[var(--color-text-muted)] italic text-sm border-2 border-dashed border-[var(--color-border)] rounded-3xl">
+                Chưa có dữ liệu đặt phòng cho khoảng thời gian này.
+              </div>
             )}
-            {popular.map((p) => (
+            {popular.map((p, idx) => (
               <div
                 key={p._id}
-                className="flex items-center justify-between rounded-xl border border-gray-100 p-3"
+                className="group flex flex-col justify-between p-6 bg-[var(--color-surface)] rounded-2xl border border-transparent hover:border-[var(--color-primary)] hover:bg-white transition-all cursor-default"
               >
-                <div>
-                  <p className="font-medium">
-                    {roomTypeNameById.get(p._id) ?? p._id}
-                  </p>
-                  <p className="text-xs text-gray-500">{p._id}</p>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                     <span className="w-8 h-8 flex items-center justify-center bg-white rounded-lg text-xs font-black shadow-sm group-hover:bg-[var(--color-primary)] transition-colors">
+                        {idx + 1}
+                     </span>
+                     <div className="space-y-0.5">
+                        <p className="text-sm font-bold text-[var(--color-text-primary)]">
+                           {roomTypeNameById.get(p._id) ?? p._id}
+                        </p>
+                        <p className="text-[10px] text-[var(--color-text-muted)] font-mono tracking-tighter">ID: {p._id}</p>
+                     </div>
+                  </div>
                 </div>
-                <span className="text-sm font-semibold">{p.bookings}</span>
+                
+                <div className="flex items-end justify-between">
+                   <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-text-secondary)]">
+                      <Users className="w-3.5 h-3.5" />
+                      <span>{p.bookings} lượt đặt</span>
+                   </div>
+                   <div className="flex items-center gap-1.5 text-[var(--color-primary-dark)]">
+                      <TrendingUp className="w-4 h-4" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">Hot</span>
+                   </div>
+                </div>
               </div>
             ))}
           </div>
+          
+          {popular.length > 0 && (
+            <div className="mt-8 flex items-center gap-2 px-4 py-3 bg-amber-50 rounded-xl border border-amber-100">
+               <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Gợi ý quản trị:</span>
+               <p className="text-xs text-amber-700 font-medium">
+                  Hãy cân nhắc tăng giá cơ bản cho hạng phòng {roomTypeNameById.get(popular[0]._id) || "phổ biến nhất"} vào mùa cao điểm.
+               </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
-

@@ -6,6 +6,8 @@ import { format, parse, startOfWeek, getDay } from "date-fns";
 import { vi } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { apiRequest } from "../../api/client";
+import { cn } from "../../components/ui/utils";
+import { useData } from "../../context/DataContext";
 import { 
   Calendar as CalendarIcon, 
   ChevronLeft, 
@@ -13,7 +15,10 @@ import {
   Info,
   ExternalLink,
   Loader2,
-  X
+  X,
+  Clock,
+  User,
+  Zap
 } from "lucide-react";
 
 const locales = {
@@ -53,19 +58,23 @@ interface CalendarData {
 }
 
 const statusColors: Record<string, string> = {
-  Confirmed: "#1D9E75",
-  Pending: "#BA7517",
-  Cancelled: "#E24B4A",
-  CheckedIn: "#2563EB",
-  CheckedOut: "#6B7280",
+  Confirmed: "#10B981", // emerald-500
+  Pending: "#F59E0B",  // amber-500
+  Cancelled: "#EF4444", // red-500
+  CheckedIn: "#3B82F6", // blue-500
+  CheckedOut: "#6B7280", // gray-500
 };
 
 export default function AdminCalendar() {
+  const { calendarState, setCalendarState } = useData();
+  const { currentDate, view } = calendarState;
+
   const [events, setEvents] = useState<BookingEvent[]>([]);
   const [loading, setLoading] = useState(false);
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<View>("month");
   const [selectedEvent, setSelectedEvent] = useState<BookingEvent | null>(null);
+
+  const setCurrentDate = (date: Date) => setCalendarState({ ...calendarState, currentDate: date });
+  const setView = (v: View) => setCalendarState({ ...calendarState, view: v });
 
   const fetchBookings = useCallback(async (date: Date, currentView: View) => {
     setLoading(true);
@@ -97,7 +106,7 @@ export default function AdminCalendar() {
         room.bookings.forEach(booking => {
           allEvents.push({
             id: booking.bookingId,
-            title: `[${room.roomNumber}] - ${booking.guestName}`,
+            title: `${room.roomNumber} - ${booking.guestName}`,
             start: new Date(booking.checkIn),
             end: new Date(booking.checkOut),
             status: booking.status,
@@ -117,7 +126,7 @@ export default function AdminCalendar() {
   }, []);
 
   useEffect(() => {
-    fetchBookings(currentDate, view);
+    void fetchBookings(currentDate, view);
   }, [currentDate, view, fetchBookings]);
 
   const eventStyleGetter = (event: BookingEvent) => {
@@ -125,53 +134,87 @@ export default function AdminCalendar() {
     return {
       style: {
         backgroundColor,
-        borderRadius: "4px",
-        opacity: 0.95,
+        borderRadius: "8px",
+        opacity: 0.9,
         color: "white",
         border: "none",
         display: "block",
-        fontSize: "12px",
-        padding: "2px 4px"
+        fontSize: "10px",
+        fontWeight: "bold",
+        padding: "4px 8px",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        textTransform: "uppercase" as const,
+        letterSpacing: "0.025em"
       }
     };
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="max-w-7xl mx-auto space-y-8 py-6 animate-in fade-in duration-500 pb-20 mt-12">
+      {/* Header */}
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-[var(--color-border)]">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Lịch đặt phòng</h1>
-          <p className="text-gray-500 text-sm">Tổng quan tình trạng phòng theo thời gian.</p>
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2 block">
+            Quản lý vận hành
+          </span>
+          <h1 className="font-serif text-3xl font-bold text-[var(--color-text-primary)]">
+            Lịch Booking
+          </h1>
+          <p className="text-[var(--color-text-secondary)] text-sm mt-3 max-w-md leading-relaxed">
+            Theo dõi tình trạng trống/đầy phòng, quản lý lịch check-in/check-out trực quan.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          {loading && <Loader2 className="w-4 h-4 animate-spin text-blue-600" />}
-          <div className="flex bg-white rounded-xl border border-gray-100 shadow-sm p-1">
+        
+        <div className="flex items-center gap-4">
+          {loading && <Loader2 className="w-5 h-5 animate-spin text-[var(--color-primary-dark)]" />}
+          <div className="flex bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-1 shadow-sm">
             {(["month", "week", "day"] as View[]).map((v) => (
               <button
                 key={v}
                 onClick={() => setView(v)}
-                className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition-all ${
+                className={cn(
+                  "px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
                   view === v 
-                  ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" 
-                  : "text-gray-500 hover:bg-gray-50"
-                }`}
+                  ? "bg-black text-white shadow-lg" 
+                  : "text-[var(--color-text-secondary)] hover:bg-gray-200"
+                )}
               >
                 {v === "month" ? "Tháng" : v === "week" ? "Tuần" : "Ngày"}
               </button>
             ))}
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 h-[750px] relative overflow-hidden">
+      {/* Calendar Wrap */}
+      <div className="bg-white rounded-[40px] border border-[var(--color-border)] shadow-[var(--shadow-lg)] p-8 h-[800px] relative overflow-hidden">
         <style>{`
           .rbc-calendar { font-family: inherit; }
-          .rbc-header { padding: 10px; font-weight: bold; font-size: 12px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em; }
-          .rbc-event { transition: transform 0.2s; }
-          .rbc-event:hover { transform: scale(1.02); z-index: 10; }
-          .rbc-today { background-color: #F8FAFC; }
-          .rbc-off-range-bg { background-color: #F1F5F9; opacity: 0.5; }
+          .rbc-header { padding: 15px 10px; font-weight: 800; font-size: 10px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.15em; border-bottom: 2px solid var(--color-surface); }
+          .rbc-month-view { border: 1px solid var(--color-surface); border-radius: 20px; overflow: hidden; }
+          .rbc-day-bg { border-left: 1px solid var(--color-surface); }
+          .rbc-month-row { border-top: 1px solid var(--color-surface); }
+          .rbc-today { background-color: rgba(200, 240, 0, 0.05); }
+          .rbc-off-range-bg { background-color: #F9FAFB; opacity: 0.6; }
+          .rbc-event { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+          .rbc-event:hover { transform: translateY(-2px); z-index: 50; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+          .rbc-toolbar { margin-bottom: 25px; }
+          .rbc-btn-group button { 
+             border: none; 
+             background: var(--color-surface); 
+             border-radius: 10px !important; 
+             margin: 0 4px; 
+             font-size: 12px; 
+             font-weight: 700; 
+             padding: 8px 16px;
+             color: var(--color-text-primary);
+             transition: all 0.2s;
+          }
+          .rbc-btn-group button:hover { background: #E5E7EB; }
+          .rbc-btn-group button.rbc-active { background: black; color: white; }
+          .rbc-toolbar-label { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 20px; color: var(--color-text-primary); }
         `}</style>
+        
         <Calendar
           localizer={localizer}
           events={events}
@@ -185,55 +228,73 @@ export default function AdminCalendar() {
           eventPropGetter={eventStyleGetter}
           onSelectEvent={(event) => setSelectedEvent(event)}
           messages={{
-            next: "Tiếp",
-            previous: "Trước",
+            next: "Kế tiếp",
+            previous: "Quay lại",
             today: "Hôm nay",
             month: "Tháng",
             week: "Tuần",
             day: "Ngày",
-            agenda: "Lịch trình"
+            agenda: "Danh sách"
           }}
           culture="vi"
         />
 
-        {/* Popover overlay */}
+        {/* Custom Event Detail Modal */}
         {selectedEvent && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
-              <div className="p-4 flex justify-between items-center border-b border-gray-50 bg-gray-50/50">
-                <h3 className="font-bold text-gray-900">Chi tiết đặt phòng</h3>
-                <button onClick={() => setSelectedEvent(null)} className="p-1.5 hover:bg-gray-200 rounded-full transition-colors">
-                  <X className="w-4 h-4 text-gray-500" />
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
+              <div className="p-6 pb-2 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                   <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center shadow-sm">
+                      <Zap className="w-4 h-4 text-black" />
+                   </div>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Chi tiết đặt phòng</span>
+                </div>
+                <button onClick={() => setSelectedEvent(null)} className="p-2 hover:bg-[var(--color-surface)] rounded-full transition-colors group">
+                  <X className="w-4 h-4 text-[var(--color-text-muted)] group-hover:text-black" />
                 </button>
               </div>
-              <div className="p-6 space-y-4">
-                <div className="space-y-1">
-                  <div className="text-[10px] uppercase font-black tracking-widest text-blue-600">Phòng {selectedEvent.roomNumber} ({selectedEvent.roomName})</div>
-                  <div className="text-xl font-black text-gray-900">{selectedEvent.guestName}</div>
+              
+              <div className="p-8 pt-4 space-y-6">
+                <div>
+                  <h3 className="font-serif text-2xl font-bold text-[var(--color-text-primary)] leading-tight">
+                    {selectedEvent.guestName}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-2">
+                     <span className="px-2 py-0.5 bg-black text-white text-[9px] font-black rounded-md tracking-tighter uppercase font-mono">
+                        ROOM {selectedEvent.roomNumber}
+                     </span>
+                     <span className="text-xs font-bold text-[var(--color-text-secondary)]">{selectedEvent.roomName}</span>
+                  </div>
                 </div>
                 
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between text-sm py-2 px-3 bg-gray-50 rounded-xl">
-                    <span className="text-gray-400 font-bold uppercase text-[10px]">Thời gian</span>
-                    <span className="font-bold">
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="flex items-center justify-between p-4 bg-[var(--color-surface)] rounded-3xl border border-[var(--color-border)]">
+                    <div className="flex items-center gap-3">
+                       <CalendarIcon className="w-4 h-4 text-[var(--color-text-muted)]" />
+                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Thời gian</span>
+                    </div>
+                    <span className="text-xs font-black text-[var(--color-text-primary)]">
                       {format(selectedEvent.start, "dd/MM")} - {format(selectedEvent.end, "dd/MM/yyyy")}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-sm py-2 px-3 bg-gray-50 rounded-xl">
-                     <span className="text-gray-400 font-bold uppercase text-[10px]">Trạng thái</span>
-                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase text-white" style={{ backgroundColor: statusColors[selectedEvent.status] }}>
-                        {selectedEvent.status}
-                     </span>
+                  
+                  <div className="flex items-center justify-between p-4 bg-[var(--color-surface)] rounded-3xl border border-[var(--color-border)]">
+                     <div className="flex items-center gap-3">
+                        <Clock className="w-4 h-4 text-[var(--color-text-muted)]" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Trạng thái</span>
+                     </div>
+                     <StatusBadge status={selectedEvent.status} />
                   </div>
                 </div>
 
-                <div className="pt-2 flex gap-3">
+                <div className="pt-4 flex gap-4">
                   <Link 
-                    to={`/admin/bookings/${selectedEvent.id}`}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-center text-sm shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
+                    to={`/admin/bookings?id=${selectedEvent.id}`}
+                    className="flex-1 bg-[var(--color-primary)] hover:opacity-90 text-black font-black uppercase tracking-[0.2em] py-4 rounded-2xl text-center text-[10px] shadow-lg shadow-[var(--color-primary)]/20 transition-all flex items-center justify-center gap-2"
                     onClick={() => setSelectedEvent(null)}
                   >
-                    Xem booking <ExternalLink className="w-4 h-4" />
+                    Quản lý Booking <ExternalLink className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </div>
@@ -241,6 +302,39 @@ export default function AdminCalendar() {
           </div>
         )}
       </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap items-center justify-center gap-6 p-6 bg-white rounded-3xl border border-[var(--color-border)] shadow-[var(--shadow-sm)]">
+         <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mr-2">Ghi chú:</span>
+         {Object.entries(statusColors).map(([status, color]) => (
+           <div key={status} className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: color }}></div>
+              <span className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider">{status}</span>
+           </div>
+         ))}
+      </div>
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const configs: Record<string, { bg: string; text: string; label: string }> = {
+    Confirmed: { bg: "bg-emerald-500", text: "text-white", label: "Đã xác nhận" },
+    Pending: { bg: "bg-amber-500", text: "text-white", label: "Chờ duyệt" },
+    Cancelled: { bg: "bg-red-500", text: "text-white", label: "Đã hủy" },
+    CheckedIn: { bg: "bg-blue-500", text: "text-white", label: "Đã nhận phòng" },
+    CheckedOut: { bg: "bg-gray-500", text: "text-white", label: "Đã trả phòng" },
+  };
+
+  const config = configs[status] || { bg: "bg-gray-500", text: "text-white", label: status };
+
+  return (
+    <span className={cn(
+      "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider",
+      config.bg,
+      config.text
+    )}>
+      {config.label}
+    </span>
   );
 }

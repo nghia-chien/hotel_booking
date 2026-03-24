@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiRequest } from "../api/client";
-import { 
-  Calendar, 
-  ChevronLeft, 
-  MapPin, 
-  Moon, 
-  CreditCard, 
+import {
+  Calendar,
+  ChevronLeft,
+  MapPin,
+  Moon,
+  CreditCard,
   Download,
   QrCode,
   Loader2,
@@ -148,9 +148,9 @@ export default function BookingDetailPage() {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`
         }
       });
-      
+
       if (!resp.ok) throw new Error("Không thể tải hoá đơn");
-      
+
       const blob = await resp.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -192,13 +192,13 @@ export default function BookingDetailPage() {
   const nights = differenceInDays(new Date(booking.checkOut), new Date(booking.checkIn));
   const pricePerNight = booking.totalPrice / nights;
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-  const roomImage = booking.room.images?.[0] ? 
-    (booking.room.images[0].startsWith("http") ? booking.room.images[0] : `${API_URL}${booking.room.images[0]}`) : 
+  const roomImage = booking.room.images?.[0] ?
+    (booking.room.images[0].startsWith("http") ? booking.room.images[0] : `${API_URL}${booking.room.images[0]}`) :
     null;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <button 
+      <button
         onClick={() => navigate("/my-bookings")}
         className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
       >
@@ -260,7 +260,7 @@ export default function BookingDetailPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-gray-400">Tổng cộng</p>
-                  <p className="text-lg font-bold text-blue-600">{booking.totalPrice.toLocaleString()} ₫</p>
+                  <p className="text-lg font-bold text-blue-600">{booking.totalPrice.toLocaleString()} $</p>
                 </div>
               </div>
             </div>
@@ -273,12 +273,12 @@ export default function BookingDetailPage() {
             </h2>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">{nights} đêm × {pricePerNight.toLocaleString()} ₫</span>
-                <span className="font-medium text-gray-900">{booking.totalPrice.toLocaleString()} ₫</span>
+                <span className="text-gray-500">{nights} đêm × {pricePerNight.toLocaleString()} $</span>
+                <span className="font-medium text-gray-900">{booking.totalPrice.toLocaleString()} $</span>
               </div>
               <div className="flex justify-between text-sm font-bold border-t border-gray-100 pt-3">
                 <span>Tổng tiền (đã bao gồm VAT)</span>
-                <span className="text-blue-600">{booking.totalPrice.toLocaleString()} ₫</span>
+                <span className="text-blue-600">{booking.totalPrice.toLocaleString()} $</span>
               </div>
             </div>
           </section>
@@ -346,7 +346,7 @@ export default function BookingDetailPage() {
             <div className="p-6 bg-blue-600 text-white relative">
               <h3 className="text-xl font-bold text-center">Đánh giá kỳ nghỉ của bạn</h3>
               <p className="text-blue-100 text-sm text-center mt-1">Trải nghiệm của bạn sẽ giúp ích cho những khách hàng khác!</p>
-              <button 
+              <button
                 onClick={() => setShowReviewModal(false)}
                 className="absolute top-4 right-4 p-1 hover:bg-white/10 rounded-full transition-colors"
                 disabled={submitting}
@@ -374,7 +374,7 @@ export default function BookingDetailPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-500 uppercase tracking-widest flex justify-between">
-                  Nhận xét 
+                  Nhận xét
                   <span className={`${comment.length > 500 ? "text-red-500" : "text-gray-300"}`}>{comment.length}/500</span>
                 </label>
                 <textarea

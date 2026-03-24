@@ -4,6 +4,19 @@ import { calculateBookingPrice } from "../utils/pricing.js";
 
 const router = express.Router();
 
+// Public endpoint: lấy tất cả các phòng
+router.get("/", async (req, res, next) => {
+  try {
+    const rooms = await Room.find({ isActive: true }).populate("roomType");
+    res.json({
+      success: true,
+      data: rooms
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Public endpoint: lấy thông tin phòng + loại phòng cho trang khách
 router.get("/:id", async (req, res, next) => {
   try {
@@ -100,6 +113,33 @@ router.get("/:id/price", async (req, res, next) => {
         nights,
         pricePerNight: totalPrice / nights
       }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Public endpoint: lấy các ngày đã được đặt của phòng này để disable trên lịch
+router.get("/:id/booked-dates", async (req, res, next) => {
+  try {
+    const Room = (await import("../models/Room.js")).default;
+    const Booking = (await import("../models/Booking.js")).default;
+    
+    const room = await Room.findById(req.params.id);
+    if (!room) {
+      return res.status(404).json({ success: false, message: "Room not found" });
+    }
+
+    const bookings = await Booking.find({
+      room: room._id,
+      status: { $in: ["Pending", "Confirmed", "CheckedIn"] },
+      // Chỉ lấy các booking từ hôm nay trở đi để tối ưu
+      checkOut: { $gte: new Date() }
+    }).select("checkIn checkOut");
+
+    res.json({
+      success: true,
+      data: bookings
     });
   } catch (error) {
     next(error);

@@ -126,51 +126,7 @@ export const getRoomById = async (req, res, next) => {
 export const updateRoom = async (req, res, next) => {
   try {
     const body = { ...req.body };
-    if (req.files && req.files.length > 0) {
-      body.images = await Promise.all(
-        req.files.map((file) => uploadBufferToCloudinary(file))
-      );
-    }
-
-    if (typeof body.amenities === "string") {
-      try {
-        const parsed = JSON.parse(body.amenities);
-        if (Array.isArray(parsed)) {
-          body.amenities = parsed;
-        } else {
-          body.amenities = String(body.amenities)
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean);
-        }
-      } catch {
-        body.amenities = String(body.amenities)
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean);
-      }
-    }
-
-    const data = validate(updateRoomSchema, body);
-    // Nếu không upload ảnh mới, giữ nguyên ảnh hiện tại (tránh Joi default [] xóa ảnh)
-    if (!req.files || req.files.length === 0) {
-      delete data.images;
-    }
-
-    if (data.roomType) {
-      const roomType = await RoomType.findById(data.roomType);
-      if (!roomType) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid roomType"
-        });
-      }
-    }
-
-    const room = await Room.findByIdAndUpdate(req.params.id, data, {
-      new: true
-    }).populate("roomType");
-
+    const room = await Room.findById(req.params.id);
     if (!room) {
       return res.status(404).json({
         success: false,
@@ -178,7 +134,54 @@ export const updateRoom = async (req, res, next) => {
       });
     }
 
-    res.json({ success: true, data: room });
+    let updatedImages = [...(room.images || [])];
+
+    // 1. Xử lý xóa ảnh nếu được yêu cầu
+    if (body.imagesToDelete) {
+      try {
+        const toDelete = JSON.parse(body.imagesToDelete);
+        if (Array.isArray(toDelete)) {
+          updatedImages = updatedImages.filter(img => !toDelete.includes(img));
+        }
+      } catch (e) {
+        console.error("Error parsing imagesToDelete", e);
+      }
+    }
+
+    // 2. Xử lý upload ảnh mới (append)
+    if (req.files && req.files.length > 0) {
+      const newImages = await Promise.all(
+        req.files.map((file) => uploadBufferToCloudinary(file))
+      );
+      updatedImages = [...updatedImages, ...newImages];
+    }
+
+    body.images = updatedImages;
+
+    // Normalize amenities
+    if (typeof body.amenities === "string") {
+      try {
+        const parsed = JSON.parse(body.amenities);
+        body.amenities = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        body.amenities = String(body.amenities).split(",").map(s => s.trim()).filter(Boolean);
+      }
+    }
+
+    const data = validate(updateRoomSchema, body);
+
+    if (data.roomType) {
+      const roomType = await RoomType.findById(data.roomType);
+      if (!roomType) {
+        return res.status(400).json({ success: false, message: "Invalid roomType" });
+      }
+    }
+
+    const updatedRoom = await Room.findByIdAndUpdate(req.params.id, data, {
+      new: true
+    }).populate("roomType");
+
+    res.json({ success: true, data: updatedRoom });
   } catch (error) {
     next(error);
   }
