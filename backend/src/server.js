@@ -15,6 +15,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import { notFound, errorHandler } from "./middlewares/errorHandler.js";
+import { startBookingCron } from "./cron/bookingCron.js";
 
 dotenv.config();
 
@@ -86,6 +87,9 @@ const startServer = async () => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
+  
+  // Khởi động job dọn dẹp các booking pending quá 15 phút
+  startBookingCron();
 };
 
 if (process.env.NODE_ENV !== "test") {

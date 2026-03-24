@@ -72,6 +72,7 @@ export default function Navbar() {
               
               {isAdminOpen && (
                 <div className="absolute left-0 top-full mt-2 w-56 bg-white rounded-xl shadow-[var(--shadow-lg)] border border-[var(--color-border)] py-2 z-50">
+                  <DropdownLink to="/admin" icon={LayoutDashboard} onClick={() => setIsAdminOpen(false)}>Dashboard</DropdownLink>
                   <DropdownLink to="/admin/bookings" icon={LayoutDashboard} onClick={() => setIsAdminOpen(false)}>Quản lý booking</DropdownLink>
                   <DropdownLink to="/admin/room-types" icon={ShieldCheck} onClick={() => setIsAdminOpen(false)}>Loại phòng</DropdownLink>
                   <DropdownLink to="/admin/rooms" icon={Building2} onClick={() => setIsAdminOpen(false)}>Phòng</DropdownLink>

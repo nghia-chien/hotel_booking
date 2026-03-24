@@ -1,23 +1,32 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { cn } from "../../components/ui/utils";
 import { 
   Calendar, 
   CheckCircle2, 
   Clock, 
-  XCircle, 
-  Trash2,
-  ChevronRight,
-  ArrowRightLeft
+  XCircle,
+  ArrowRightLeft,
+  User,
+  Phone,
+  DoorOpen
 } from "lucide-react";
 
 interface Booking {
   _id: string;
   status: string;
+  paymentStatus: string;
   checkIn: string;
   checkOut: string;
   totalPrice: number;
+  customer?: {
+    fullName: string;
+    email: string;
+    phone: string;
+  };
+  room?: {
+    roomNumber: string;
+  };
 }
 
 interface BookingsResponse {
@@ -82,6 +91,21 @@ const AdminBookingsPage = () => {
     }
   };
 
+  const handleCancel = async (id: string) => {
+    if (!window.confirm("Bạn có chắc chắn muốn huỷ đặt phòng này? Nếu khách đã thanh toán, hệ thống sẽ tự động hoàn tiền.")) return;
+    setError(null);
+    setMessage(null);
+    try {
+      await apiRequest(`/api/bookings/${id}/cancel`, "POST", {}, {
+        auth: true
+      });
+      setMessage("Đã huỷ đặt phòng và xử lý hoàn tiền thành công.");
+      void loadBookings();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
@@ -94,7 +118,7 @@ const AdminBookingsPage = () => {
             Quản lý Đặt phòng
           </h1>
           <p className="text-[var(--color-text-secondary)] text-sm mt-2">
-            Theo dõi, phê duyệt và thực hiện quy trình Check-in/Check-out cho khách hàng.
+            Theo dõi phòng, thông tin khách hàng, duyệt Check-in/Check-out và Huỷ phòng.
           </p>
         </div>
       </header>
@@ -122,62 +146,87 @@ const AdminBookingsPage = () => {
           {bookings.map((b) => (
             <div
               key={b._id}
-              className="group bg-white rounded-2xl p-6 shadow-[var(--shadow-sm)] border border-[var(--color-border)] hover:border-gray-300 hover:shadow-[var(--shadow-md)] transition-all flex flex-col md:flex-row md:items-center justify-between gap-6"
+              className="group bg-white rounded-2xl p-6 shadow-[var(--shadow-sm)] border border-[var(--color-border)] hover:border-gray-300 hover:shadow-[var(--shadow-md)] transition-all flex flex-col xl:flex-row xl:items-center justify-between gap-6"
             >
-              <div className="flex items-start gap-5">
-                <div className="w-12 h-12 rounded-xl bg-[var(--color-surface)] flex items-center justify-center text-[var(--color-text-primary)] transition-transform group-hover:scale-110">
+              <div className="flex flex-col md:flex-row items-start gap-6 flex-1">
+                <div className="w-12 h-12 rounded-xl bg-[var(--color-surface)] flex items-center justify-center text-[var(--color-text-primary)] flex-shrink-0 transition-transform group-hover:scale-110">
                   <Calendar className="w-6 h-6" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-bold text-[var(--color-text-primary)]">
-                      {new Date(b.checkIn).toLocaleDateString('vi-VN')}
-                    </span>
-                    <ArrowRightLeft className="w-3 h-3 text-[var(--color-text-muted)]" />
-                    <span className="text-sm font-bold text-[var(--color-text-primary)]">
-                      {new Date(b.checkOut).toLocaleDateString('vi-VN')}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 mt-2">
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)]">
-                      <span className="text-[var(--color-text-muted)] italic">Mã đơn:</span>
-                      <span className="font-mono">{b._id.substring(0, 8)}...</span>
-                    </div>
-                    <div className="w-1 h-1 rounded-full bg-gray-300"></div>
-                    <p className="text-sm font-bold text-[var(--color-text-primary)]">
-                      {b.totalPrice.toLocaleString()} USD
-                    </p>
-                  </div>
+                
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                   <div>
+                     <div className="flex items-center gap-2 mb-1.5">
+                       <span className="text-sm font-bold text-[var(--color-text-primary)]">
+                         {new Date(b.checkIn).toLocaleDateString('vi-VN')}
+                       </span>
+                       <ArrowRightLeft className="w-3 h-3 text-[var(--color-text-muted)]" />
+                       <span className="text-sm font-bold text-[var(--color-text-primary)]">
+                         {new Date(b.checkOut).toLocaleDateString('vi-VN')}
+                       </span>
+                     </div>
+                     <div className="flex items-center gap-2 mt-2 font-mono text-xs text-[var(--color-text-secondary)]">
+                        <span className="bg-gray-100 px-2 py-0.5 rounded-md">#{b._id.substring(0, 8)}</span>
+                        <span className="font-sans font-bold text-[var(--color-text-primary)] ml-2">{b.totalPrice.toLocaleString()} ₫</span>
+                     </div>
+                     <div className="mt-3 flex gap-2 items-center text-xs">
+                        <StatusBadge status={b.status} />
+                        {b.paymentStatus === "Paid" && <span className="px-2 py-0.5 rounded border border-blue-200 bg-blue-50 text-blue-700 font-bold uppercase tracking-wider">Đã thanh toán</span>}
+                        {b.paymentStatus === "Refunded" && <span className="px-2 py-0.5 rounded border border-orange-200 bg-orange-50 text-orange-700 font-bold uppercase tracking-wider">Đã hoàn tiền</span>}
+                     </div>
+                   </div>
+
+                   <div className="bg-gray-50/50 p-3 rounded-xl border border-gray-100 space-y-2">
+                      <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-2 text-sm">
+                           <User className="w-4 h-4 text-gray-400" />
+                           <span className="font-bold text-gray-900">{b.customer?.fullName || "Khách ẩn danh"}</span>
+                         </div>
+                         <div className="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
+                           <DoorOpen className="w-3.5 h-3.5" />
+                           <span className="font-black">Phòng {b.room?.roomNumber || "N/A"}</span>
+                         </div>
+                      </div>
+                      {b.customer?.phone && (
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <Phone className="w-3.5 h-3.5" />
+                          <span>{b.customer.phone}</span>
+                        </div>
+                      )}
+                      {b.customer?.email && (
+                        <div className="flex items-center gap-2 text-xs text-gray-500 truncate">
+                          <span className="w-3.5 h-3.5 flex items-center justify-center font-bold">@</span>
+                          <span className="truncate">{b.customer.email}</span>
+                        </div>
+                      )}
+                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 pt-4 md:pt-0">
-                <StatusBadge status={b.status} />
-                
-                <div className="flex items-center gap-3">
-                  {b.status === "Confirmed" && (
-                    <button
-                      onClick={() => handleCheckIn(b._id)}
-                      className="px-5 py-2.5 bg-[var(--color-primary)] text-black text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm hover:opacity-90 transition-all flex items-center gap-2"
-                    >
-                      Check-in
-                    </button>
-                  )}
-                  {b.status === "CheckedIn" && (
-                    <button
-                      onClick={() => handleCheckOut(b._id)}
-                      className="px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm hover:bg-emerald-700 transition-all flex items-center gap-2"
-                    >
-                      Check-out
-                    </button>
-                  )}
-                  <Link 
-                    to={`/admin/bookings?id=${b._id}`}
-                    className="p-2.5 bg-[var(--color-surface)] hover:bg-gray-200 text-[var(--color-text-primary)] rounded-xl transition-all"
+              <div className="flex items-center justify-between md:justify-end gap-3 border-t xl:border-t-0 pt-4 xl:pt-0">
+                {(b.status === "Pending" || b.status === "Confirmed") && (
+                  <button
+                    onClick={() => handleCancel(b._id)}
+                    className="px-4 py-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold uppercase tracking-wider rounded-xl transition-all"
                   >
-                    <ChevronRight className="w-5 h-5" />
-                  </Link>
-                </div>
+                    Huỷ Phòng
+                  </button>
+                )}
+                {b.status === "Confirmed" && (
+                  <button
+                    onClick={() => handleCheckIn(b._id)}
+                    className="px-5 py-2.5 bg-[var(--color-primary)] text-[var(--color-text-primary)] text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm hover:opacity-90 transition-all flex items-center gap-2"
+                  >
+                    Check-in
+                  </button>
+                )}
+                {b.status === "CheckedIn" && (
+                  <button
+                    onClick={() => handleCheckOut(b._id)}
+                    className="px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm hover:bg-emerald-700 transition-all flex items-center gap-2"
+                  >
+                    Check-out
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -196,20 +245,19 @@ const AdminBookingsPage = () => {
 
 function StatusBadge({ status }: { status: string }) {
   const configs: Record<string, { bg: string; text: string; label: string }> = {
-    Confirmed: { bg: "bg-emerald-50", text: "text-emerald-700", label: "Đã xác nhận" },
-    Pending: { bg: "bg-amber-50", text: "text-amber-700", label: "Chờ duyệt" },
-    Cancelled: { bg: "bg-red-50", text: "text-red-700", label: "Đã hủy" },
-    CheckedIn: { bg: "bg-blue-50", text: "text-blue-700", label: "Đã nhận phòng" },
-    CheckedOut: { bg: "bg-gray-50", text: "text-gray-700", label: "Đã trả phòng" },
+    Confirmed: { bg: "bg-emerald-50 text-emerald-700 border-emerald-200", text: "", label: "Đã xác nhận" },
+    Pending: { bg: "bg-amber-50 text-amber-700 border-amber-200", text: "", label: "Chờ duyệt" },
+    Cancelled: { bg: "bg-red-50 text-red-700 border-red-200", text: "", label: "Đã hủy" },
+    CheckedIn: { bg: "bg-blue-50 text-blue-700 border-blue-200", text: "", label: "Đã nhận phòng" },
+    CheckedOut: { bg: "bg-gray-50 text-gray-700 border-gray-200", text: "", label: "Đã trả phòng" },
   };
 
-  const config = configs[status] || { bg: "bg-gray-50", text: "text-gray-700", label: status };
+  const config = configs[status] || { bg: "bg-gray-50 text-gray-700 border-gray-200", text: "", label: status };
 
   return (
     <span className={cn(
-      "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-transparent",
-      config.bg,
-      config.text
+      "px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider",
+      config.bg
     )}>
       {config.label}
     </span>

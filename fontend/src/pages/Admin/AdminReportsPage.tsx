@@ -89,7 +89,7 @@ export default function AdminReportsPage() {
         apiRequest<RoomTypeListResponse>(
           "/api/room-types",
           "GET",
-          80, // Note: The original code didn't have a limit here, keeping it compatible
+          undefined,
           { auth: true }
         )
       ]);

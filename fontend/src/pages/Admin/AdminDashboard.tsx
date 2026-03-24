@@ -104,7 +104,7 @@ export default function AdminDashboard() {
         />
         <KPICard
           title="Doanh thu ngày"
-          value={`${stats.todayRevenue.toLocaleString()} USD`}
+          value={`${stats.todayRevenue.toLocaleString()} VNĐ`}
           icon={<DollarSign className="w-5 h-5" />}
           description="Doanh thu thực nhận"
           highlight

@@ -211,7 +211,7 @@ export default function PaymentHistoryPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <span className="font-bold text-gray-900">{p.amount.toLocaleString()} ₫</span>
+                      <span className="font-bold text-gray-900">{p.amount.toLocaleString()} $</span>
                       <p className="text-[10px] text-gray-300 uppercase font-black">{p.method}</p>
                     </td>
                     <td className="px-6 py-4 text-center">

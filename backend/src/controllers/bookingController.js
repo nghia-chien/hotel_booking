@@ -10,6 +10,7 @@ import {
 } from "../validators/bookingValidators.js";
 import { calculateBookingPrice } from "../utils/pricing.js";
 import { createNotification } from "../utils/notificationHelper.js";
+import { refundVNPayPayment, getClientIp } from "../services/vnpayService.js";
 
 const validate = (schema, data) => {
   const { error, value } = schema.validate(data, { abortEarly: false });
@@ -303,7 +304,9 @@ export const cancelBooking = async (req, res, next) => {
       });
     }
 
-    if (!booking.customer.equals(req.user._id) && req.user.role === "user") {
+    const isAdminOrStaff = req.user.role === "admin" || req.user.role === "staff";
+
+    if (!booking.customer.equals(req.user._id) && !isAdminOrStaff) {
       return res.status(403).json({
         success: false,
         message: "You can only cancel your own bookings"
@@ -317,35 +320,67 @@ export const cancelBooking = async (req, res, next) => {
       });
     }
 
+    // Chỉ kiểm tra deadline nếu là user thường, admin/staff không bị giới hạn
     const now = new Date();
-    if (booking.cancellationDeadline && now > booking.cancellationDeadline) {
+    if (!isAdminOrStaff && booking.cancellationDeadline && now > booking.cancellationDeadline) {
       return res.status(400).json({
         success: false,
         message: "Cancellation deadline has passed"
       });
     }
 
-    const refundPercentage = booking.refundPercentage || 0;
-    const refundedAmount = (booking.totalPrice * refundPercentage) / 100;
+    const refundPercentage = booking.refundPercentage ?? 100;
+    const wasAlreadyPaid = booking.paymentStatus === "Paid";
+    const refundedAmount = wasAlreadyPaid ? (booking.totalPrice * refundPercentage) / 100 : 0;
 
     booking.status = "Cancelled";
-    booking.paymentStatus =
-      booking.paymentStatus === "Paid" && refundedAmount > 0
-        ? "Refunded"
-        : booking.paymentStatus;
+    booking.paymentStatus = wasAlreadyPaid && refundedAmount > 0 ? "Refunded" : booking.paymentStatus;
     booking.cancelledAt = now;
     booking.refundedAmount = refundedAmount;
     await booking.save();
 
-    // Notify User
-    const roomNotify = await Room.findById(booking.room).populate("roomType");
+    // Thông báo hủy phòng cho khách
+    const roomNotify = await Room.findById(booking.room);
     void createNotification(booking.customer, "booking_cancelled", {
       roomName: roomNotify?.roomNumber || "Phòng",
       bookingId: booking._id,
-      reason: req.body.reason || "Huỷ theo yêu cầu"
+      reason: req.body.reason || (isAdminOrStaff ? "Huỷ bởi quản trị viên" : "Huỷ theo yêu cầu")
     });
 
-    if (booking.paymentStatus === "Refunded") {
+    // Nếu đã được thanh toán và cần hoàn tiền
+    if (wasAlreadyPaid && refundedAmount > 0) {
+      // Tìm payment gốc (VNPay hoặc bất kỳ phương thức nào đã SUCCESS)
+      const originalPayment = await Payment.findOne({
+        $or: [
+          { booking: booking._id, status: "SUCCESS" },
+          { bookings: booking._id, status: "SUCCESS" }
+        ],
+        method: { $ne: "refund" }  // Loại bỏ record refund
+      }).sort({ createdAt: -1 });
+
+      // Nếu là VNPay → thử gọi hoàn tiền thật qua API
+      if (originalPayment?.method === "vnpay") {
+        try {
+          const ipAddr = getClientIp(req);
+          await refundVNPayPayment(
+            originalPayment._id.toString(),
+            req.user._id,
+            req.user.role,
+            refundedAmount,
+            ipAddr
+          );
+          // refundVNPayPayment đã tự tạo Payment record nếu thành công → return sớm
+          void createNotification(booking.customer, "refund_processed", {
+            amount: refundedAmount,
+            bookingId: booking._id
+          });
+          return res.json({ success: true, data: booking });
+        } catch (err) {
+          console.error("[cancelBooking] VNPay refund failed, falling back to manual refund record:", err.message);
+        }
+      }
+
+      // Fallback: tạo refund record thủ công (cho mock payment, hoặc khi VNPay API lỗi)
       await Payment.create({
         booking: booking._id,
         customer: booking.customer,
@@ -355,7 +390,9 @@ export const cancelBooking = async (req, res, next) => {
         transactionId: `REFUND-${Date.now()}`,
         metadata: {
           refundPercentage,
-          cancelledAt: now.toISOString()
+          cancelledAt: now.toISOString(),
+          cancelledBy: req.user._id,
+          originalPaymentId: originalPayment?._id
         }
       });
 
@@ -613,8 +650,8 @@ export const generateInvoice = async (req, res, next) => {
       .fontSize(20)
       .text("Hotel Booking", 50, 50)
       .fontSize(10)
-      .text("123 Hotel Street, Hanoi, Vietnam", 200, 50, { align: "right" })
-      .text("Phone: +84 123 456 789", 200, 65, { align: "right" })
+      .text("Hotel, Ho Chi Minh, Vietnam", 200, 50, { align: "right" })
+      .text("Phone: +84 37569652", 200, 65, { align: "right" })
       .moveDown();
 
     doc.strokeColor("#aaaaaa").lineWidth(1).moveTo(50, 90).lineTo(550, 90).stroke();
