@@ -39,7 +39,7 @@ export default function TestimonialSection() {
   const current = TESTIMONIALS[activeIndex];
 
   return (
-    <section className="py-20 bg-[var(--color-primary)]">
+    <section className="py-20 bg-[var(--color-primary)] rounded-b-3xl">
       <div className="max-w-3xl mx-auto px-4 text-center">
         <p className="text-[var(--color-primary-foreground)]/60 text-xs font-bold uppercase tracking-widest mb-3">
           Khách hàng nói gì

@@ -8,7 +8,6 @@ import {
   LogOut,
   Menu,
   X,
-  Search,
   LayoutDashboard,
   ShieldCheck,
   Star,

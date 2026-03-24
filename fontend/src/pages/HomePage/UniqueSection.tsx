@@ -37,7 +37,7 @@ const STATS = [
 
 export default function UniqueSection() {
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-white rounded-t-3xl">
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* LEFT CONTENT */}

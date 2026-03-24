@@ -13,8 +13,11 @@ export default function HeroSection({ onSearch, loading }: HeroSectionProps) {
       <div
         className="absolute inset-0 z-0"
         style={{
-          background:
-            'linear-gradient(135deg, #0d1b2a 0%, #1a2744 50%, #1e3a2f 100%)',
+          background: 'url(/blog-banner-2.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          borderRadius: '50px'
         }}
       />
 
