@@ -1,16 +1,6 @@
-import { Wifi, Waves, Coffee, Car, Dumbbell, Tv, Wind, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { cn } from './utils';
-
-const AMENITY_MAP: Record<string, { icon: any; label: string }> = {
-  wifi: { icon: Wifi, label: 'Wi-Fi' },
-  pool: { icon: Waves, label: 'Hồ bơi' },
-  breakfast: { icon: Coffee, label: 'Bữa sáng' },
-  parking: { icon: Car, label: 'Bãi đỗ xe' },
-  gym: { icon: Dumbbell, label: 'Gym' },
-  tv: { icon: Tv, label: 'Smart TV' },
-  ac: { icon: Wind, label: 'Điều hòa' },
-  coffee: { icon: Coffee, label: 'Cà phê' },
-};
+import { AMENITY_MAP } from '../../constants/amenities';
 
 interface PropertyAmenityIconProps {
   amenityId: string;

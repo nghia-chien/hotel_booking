@@ -1,7 +1,8 @@
-import { Wifi, Tv, Wind, Coffee, Waves, Dumbbell, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { Slider } from "./ui/slider";
 import { Checkbox } from "./ui/checkbox";
 import { cn } from "./ui/utils";
+import { AMENITY_MAP } from "../constants/amenities";
 
 interface FilterSidebarProps {
   minPrice: number;
@@ -23,12 +24,12 @@ export function FilterSidebar({
   onMinRatingChange,
 }: FilterSidebarProps) {
   const amenities = [
-    { id: 'wifi', label: 'Free WiFi', icon: Wifi },
-    { id: 'tv', label: 'Smart TV', icon: Tv },
-    { id: 'ac', label: 'Air Conditioning', icon: Wind },
-    { id: 'coffee', label: 'Coffee Maker', icon: Coffee },
-    { id: 'pool', label: 'Pool Access', icon: Waves },
-    { id: 'gym', label: 'Gym Access', icon: Dumbbell },
+    AMENITY_MAP.wifi,
+    AMENITY_MAP.tv,
+    AMENITY_MAP.ac,
+    AMENITY_MAP.coffee,
+    AMENITY_MAP.pool,
+    AMENITY_MAP.gym,
   ];
 
   const ratings = [5, 4, 3];

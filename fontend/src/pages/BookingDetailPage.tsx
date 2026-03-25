@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { format, differenceInDays } from "date-fns";
+import { StatusBadge } from "../components/admin";
 
 interface Room {
   _id: string;
@@ -43,26 +44,6 @@ interface Booking {
   status: "Pending" | "Confirmed" | "CheckedIn" | "CheckedOut" | "Cancelled";
   paymentStatus: string;
   createdAt: string;
-}
-
-const StatusBadge = ({ status }: { status: string }) => {
-  const configs: Record<string, { color: string; icon: any; label: string }> = {
-    Pending: { color: "bg-yellow-100 text-yellow-700", icon: Clock, label: "Chờ xác nhận" },
-    Confirmed: { color: "bg-emerald-100 text-emerald-700", icon: CheckCircle2, label: "Đã xác nhận" },
-    CheckedIn: { color: "bg-blue-100 text-blue-700", icon: Archive, label: "Đã Check-in" },
-    CheckedOut: { color: "bg-gray-100 text-gray-700", icon: Archive, label: "Đã Check-out" },
-    Cancelled: { color: "bg-red-100 text-red-700", icon: XCircle, label: "Đã huỷ" },
-  };
-
-  const config = configs[status] || { color: "bg-gray-100 text-gray-700", icon: Clock, label: status };
-  const Icon = config.icon;
-
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${config.color}`}>
-      <Icon className="w-3.5 h-3.5" />
-      {config.label}
-    </span>
-  );
 };
 
 export default function BookingDetailPage() {

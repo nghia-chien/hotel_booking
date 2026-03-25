@@ -40,14 +40,14 @@ export default function Navbar() {
   const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'staff';
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-sm border-b border-[var(--color-border)] shadow-sm">
+    <header className="sticky top-0 z-50 w-full bg-white backdrop-blur-sm border-b border-[var(--color-border)] shadow-sm">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4 md:gap-8">
         
         {/* LOGO */}
         <Link to="/" className="flex items-center gap-2 flex-shrink-0 group">
           <div className="w-8 h-8 rounded-lg bg-[var(--color-primary-foreground)] flex items-center justify-center transition-transform group-hover:scale-110">
             <Building2 className="w-4 h-4 text-[var(--color-primary)]" />
-          </div>
+          </div>  
           <span className="font-serif font-bold text-lg text-[var(--color-text-primary)] tracking-tight">
             HotelBooking
           </span>
