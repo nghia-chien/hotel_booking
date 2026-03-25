@@ -14,6 +14,7 @@ import {
   Quote
 } from "lucide-react";
 import { format } from "date-fns";
+import { AdminPageHeader } from "../../components/admin";
 
 interface Review {
   _id: string;
@@ -85,23 +86,17 @@ export default function AdminReviews() {
   return (
     <div className="max-w-7xl mx-auto space-y-10 py-6 animate-in fade-in duration-500 pb-20 mt-12">
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-[var(--color-border)]">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2 block">
-            Kiểm duyệt nội dung
-          </span>
-          <h1 className="font-serif text-3xl font-bold text-[var(--color-text-primary)]">
-            Đánh giá & Phản hồi
-          </h1>
-          <p className="text-[var(--color-text-secondary)] text-sm mt-3 max-w-md leading-relaxed">
-            Xem xét các trải nghiệm của khách hàng và quản lý hiển thị các bài đánh giá trên trang chủ.
-          </p>
-        </div>
-        <div className="flex items-center gap-3 bg-[var(--color-surface)] px-5 py-3 rounded-2xl border border-[var(--color-border)]">
+      <AdminPageHeader
+        eyebrow="Kiểm duyệt nội dung"
+        title="Đánh giá & Phản hồi"
+        subtitle="Xem xét các trải nghiệm của khách hàng và quản lý hiển thị các bài đánh giá trên trang chủ."
+        actions={
+          <div className="flex items-center gap-3 bg-[var(--color-surface)] px-5 py-3 rounded-2xl border border-[var(--color-border)]">
             <MessageSquare className="w-4 h-4 text-[var(--color-text-muted)]" />
             <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-primary)]">Tổng soát: {totalCount} lượt feedback</span>
-        </div>
-      </header>
+          </div>
+        }
+      />
 
       {/* Table Section */}
       <div className="bg-white rounded-[40px] border border-[var(--color-border)] shadow-[var(--shadow-lg)] overflow-hidden">

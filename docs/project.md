@@ -6,6 +6,7 @@ Frontend: React + TypeScript, React Router, Axios
 Database: [điền MySQL hoặc PostgreSQL]
 ORM     : [điền Sequelize hoặc Prisma]
 Payment : VNPay
+sử dụng lệnh yarn thay vì npm hay pnpm
 
 ## Folder structure
 backend/src/

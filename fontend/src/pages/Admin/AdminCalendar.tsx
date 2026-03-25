@@ -20,6 +20,7 @@ import {
   User,
   Zap
 } from "lucide-react";
+import { StatusBadge, AdminPageHeader } from "../../components/admin";
 
 const locales = {
   "vi": vi,
@@ -152,39 +153,32 @@ export default function AdminCalendar() {
   return (
     <div className="max-w-7xl mx-auto space-y-8 py-6 animate-in fade-in duration-500 pb-20 mt-12">
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-[var(--color-border)]">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2 block">
-            Quản lý vận hành
-          </span>
-          <h1 className="font-serif text-3xl font-bold text-[var(--color-text-primary)]">
-            Lịch Booking
-          </h1>
-          <p className="text-[var(--color-text-secondary)] text-sm mt-3 max-w-md leading-relaxed">
-            Theo dõi tình trạng trống/đầy phòng, quản lý lịch check-in/check-out trực quan.
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          {loading && <Loader2 className="w-5 h-5 animate-spin text-[var(--color-primary-dark)]" />}
-          <div className="flex bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-1 shadow-sm">
-            {(["month", "week", "day"] as View[]).map((v) => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                className={cn(
-                  "px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                  view === v 
-                  ? "bg-black text-white shadow-lg" 
-                  : "text-[var(--color-text-secondary)] hover:bg-gray-200"
-                )}
-              >
-                {v === "month" ? "Tháng" : v === "week" ? "Tuần" : "Ngày"}
-              </button>
-            ))}
-          </div>
-        </div>
-      </header>
+      <AdminPageHeader
+        eyebrow="Quản lý vận hành"
+        title="Lịch Booking"
+        subtitle="Theo dõi tình trạng trống/đầy phòng, quản lý lịch check-in/check-out trực quan."
+        actions={
+          <>
+            {loading && <Loader2 className="w-5 h-5 animate-spin text-[var(--color-primary-dark)]" />}
+            <div className="flex bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-1 shadow-sm">
+              {(["month", "week", "day"] as View[]).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    view === v 
+                    ? "bg-black text-white shadow-lg" 
+                    : "text-[var(--color-text-secondary)] hover:bg-gray-200"
+                  )}
+                >
+                  {v === "month" ? "Tháng" : v === "week" ? "Tuần" : "Ngày"}
+                </button>
+              ))}
+            </div>
+          </>
+        }
+      />
 
       {/* Calendar Wrap */}
       <div className="bg-white rounded-[40px] border border-[var(--color-border)] shadow-[var(--shadow-lg)] p-8 h-[800px] relative overflow-hidden">
@@ -284,7 +278,7 @@ export default function AdminCalendar() {
                         <Clock className="w-4 h-4 text-[var(--color-text-muted)]" />
                         <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Trạng thái</span>
                      </div>
-                     <StatusBadge status={selectedEvent.status} />
+                     <StatusBadge status={selectedEvent.status} variant="tag" />
                   </div>
                 </div>
 
@@ -314,27 +308,5 @@ export default function AdminCalendar() {
          ))}
       </div>
     </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const configs: Record<string, { bg: string; text: string; label: string }> = {
-    Confirmed: { bg: "bg-emerald-500", text: "text-white", label: "Đã xác nhận" },
-    Pending: { bg: "bg-amber-500", text: "text-white", label: "Chờ duyệt" },
-    Cancelled: { bg: "bg-red-500", text: "text-white", label: "Đã hủy" },
-    CheckedIn: { bg: "bg-blue-500", text: "text-white", label: "Đã nhận phòng" },
-    CheckedOut: { bg: "bg-gray-500", text: "text-white", label: "Đã trả phòng" },
-  };
-
-  const config = configs[status] || { bg: "bg-gray-500", text: "text-white", label: status };
-
-  return (
-    <span className={cn(
-      "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider",
-      config.bg,
-      config.text
-    )}>
-      {config.label}
-    </span>
   );
 }

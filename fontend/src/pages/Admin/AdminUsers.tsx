@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { apiRequest } from "../../api/client";
+import { getAdminUsers, updateUserRole, updateUserStatus } from "../../api/admin.api";
 import { useAuth } from "../../context/AuthContext";
 import { cn } from "../../components/ui/utils";
 import { 
@@ -18,6 +18,7 @@ import {
   MoreHorizontal
 } from "lucide-react";
 import { format } from "date-fns";
+import { AdminPageHeader } from "../../components/admin";
 
 interface User {
   _id: string;
@@ -28,13 +29,7 @@ interface User {
   createdAt: string;
 }
 
-interface UserListResponse {
-  success: boolean;
-  data: User[];
-  totalCount: number;
-  page: number;
-  limit: number;
-}
+
 
 const RoleBadge = ({ role }: { role: string }) => {
   const configs: Record<string, { bg: string; text: string; icon: any; label: string }> = {
@@ -70,12 +65,7 @@ export default function AdminUsers() {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiRequest<UserListResponse>(
-        `/api/admin/users?page=${page}&limit=${limit}&search=${search}`,
-        "GET",
-        undefined,
-        { auth: true }
-      );
+      const res = await getAdminUsers(page, limit, search);
       setUsers(res.data);
       setTotalCount(res.totalCount);
     } catch (err) {
@@ -94,7 +84,7 @@ export default function AdminUsers() {
     if (updatingId) return;
     setUpdatingId(userId);
     try {
-      await apiRequest(`/api/admin/users/${userId}/role`, "PATCH", { role: newRole }, { auth: true });
+      await updateUserRole(userId, newRole);
       setUsers(users.map(u => u._id === userId ? { ...u, role: newRole as any } : u));
     } catch (err) {
       alert((err as Error).message);
@@ -107,7 +97,7 @@ export default function AdminUsers() {
     if (updatingId) return;
     setUpdatingId(userId);
     try {
-      await apiRequest(`/api/admin/users/${userId}/status`, "PATCH", { isActive: !currentStatus }, { auth: true });
+      await updateUserStatus(userId, !currentStatus);
       setUsers(users.map(u => u._id === userId ? { ...u, isActive: !currentStatus } : u));
     } catch (err) {
       alert((err as Error).message);
@@ -125,19 +115,11 @@ export default function AdminUsers() {
   return (
     <div className="max-w-7xl mx-auto space-y-10 py-6 animate-in fade-in duration-500">
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-[var(--color-border)]">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2 block">
-            Quản trị nhân sự
-          </span>
-          <h1 className="font-serif text-3xl font-bold text-[var(--color-text-primary)]">
-            Tài khoản người dùng
-          </h1>
-          <p className="text-[var(--color-text-secondary)] text-sm mt-3 max-w-md leading-relaxed">
-            Phân quyền hệ thống, quản lý trạng thái hoạt động và thông tin cơ bản của người dùng.
-          </p>
-        </div>
-      </header>
+      <AdminPageHeader
+        eyebrow="Quản trị nhân sự"
+        title="Tài khoản người dùng"
+        subtitle="Phân quyền hệ thống, quản lý trạng thái hoạt động và thông tin cơ bản của người dùng."
+      />
 
       {/* Toolbar */}
       <div className="bg-white p-6 rounded-3xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] flex flex-col md:flex-row gap-6">

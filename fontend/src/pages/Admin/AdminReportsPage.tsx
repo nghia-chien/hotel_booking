@@ -8,10 +8,11 @@ import {
   TrendingUp, 
   Users, 
   Hotel,
-  ArrowRight,
+
   Search,
   AlertCircle
 } from "lucide-react";
+import { AdminPageHeader, AlertMessage } from "../../components/admin";
 
 interface OccupancyResponse {
   success: boolean;
@@ -89,7 +90,7 @@ export default function AdminReportsPage() {
         apiRequest<RoomTypeListResponse>(
           "/api/room-types",
           "GET",
-          80, // Note: The original code didn't have a limit here, keeping it compatible
+          undefined,
           { auth: true }
         )
       ]);
@@ -112,19 +113,11 @@ export default function AdminReportsPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-10 py-6 animate-in fade-in duration-500">
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-[var(--color-border)]">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2 block">
-            Phân tích số liệu
-          </span>
-          <h1 className="font-serif text-3xl font-bold text-[var(--color-text-primary)]">
-            Báo cáo & Thống kê
-          </h1>
-          <p className="text-[var(--color-text-secondary)] text-sm mt-2">
-            Theo dõi hiệu suất lấp đầy phòng và các danh mục dịch vụ phổ biến nhất.
-          </p>
-        </div>
-      </header>
+      <AdminPageHeader
+        eyebrow="Phân tích số liệu"
+        title="Báo cáo & Thống kê"
+        subtitle="Theo dõi hiệu suất lấp đầy phòng và các danh mục dịch vụ phổ biến nhất."
+      />
 
       {/* Filter Section */}
       <section className="bg-white rounded-3xl p-8 shadow-[var(--shadow-sm)] border border-[var(--color-border)]">
@@ -166,12 +159,7 @@ export default function AdminReportsPage() {
           </button>
         </div>
 
-        {error && (
-          <div className="mt-6 bg-red-50 text-red-700 p-4 rounded-xl border border-red-100 flex items-center gap-3 animate-in slide-in-from-top-2">
-             <AlertCircle className="w-5 h-5" />
-             <p className="text-sm font-medium">{error}</p>
-          </div>
-        )}
+        <AlertMessage type="error" message={error || ""} className="mt-6" />
       </section>
 
       {/* Stats Grid */}

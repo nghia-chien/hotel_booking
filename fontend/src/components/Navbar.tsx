@@ -40,14 +40,14 @@ export default function Navbar() {
   const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'staff';
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-sm border-b border-[var(--color-border)] shadow-sm">
+    <header className="sticky top-0 z-50 w-full bg-white backdrop-blur-sm border-b border-[var(--color-border)] shadow-sm">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4 md:gap-8">
         
         {/* LOGO */}
         <Link to="/" className="flex items-center gap-2 flex-shrink-0 group">
           <div className="w-8 h-8 rounded-lg bg-[var(--color-primary-foreground)] flex items-center justify-center transition-transform group-hover:scale-110">
             <Building2 className="w-4 h-4 text-[var(--color-primary)]" />
-          </div>
+          </div>  
           <span className="font-serif font-bold text-lg text-[var(--color-text-primary)] tracking-tight">
             HotelBooking
           </span>
@@ -72,6 +72,7 @@ export default function Navbar() {
               
               {isAdminOpen && (
                 <div className="absolute left-0 top-full mt-2 w-56 bg-white rounded-xl shadow-[var(--shadow-lg)] border border-[var(--color-border)] py-2 z-50">
+                  <DropdownLink to="/admin" icon={LayoutDashboard} onClick={() => setIsAdminOpen(false)}>Dashboard</DropdownLink>
                   <DropdownLink to="/admin/bookings" icon={LayoutDashboard} onClick={() => setIsAdminOpen(false)}>Quản lý booking</DropdownLink>
                   <DropdownLink to="/admin/room-types" icon={ShieldCheck} onClick={() => setIsAdminOpen(false)}>Loại phòng</DropdownLink>
                   <DropdownLink to="/admin/rooms" icon={Building2} onClick={() => setIsAdminOpen(false)}>Phòng</DropdownLink>
