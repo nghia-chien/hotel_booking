@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { apiRequest } from "../../api/client";
+import { getAdminUsers, updateUserRole, updateUserStatus } from "../../api/admin.api";
 import { useAuth } from "../../context/AuthContext";
 import { cn } from "../../components/ui/utils";
 import { 
@@ -29,13 +29,7 @@ interface User {
   createdAt: string;
 }
 
-interface UserListResponse {
-  success: boolean;
-  data: User[];
-  totalCount: number;
-  page: number;
-  limit: number;
-}
+
 
 const RoleBadge = ({ role }: { role: string }) => {
   const configs: Record<string, { bg: string; text: string; icon: any; label: string }> = {
@@ -71,12 +65,7 @@ export default function AdminUsers() {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiRequest<UserListResponse>(
-        `/api/admin/users?page=${page}&limit=${limit}&search=${search}`,
-        "GET",
-        undefined,
-        { auth: true }
-      );
+      const res = await getAdminUsers(page, limit, search);
       setUsers(res.data);
       setTotalCount(res.totalCount);
     } catch (err) {
@@ -95,7 +84,7 @@ export default function AdminUsers() {
     if (updatingId) return;
     setUpdatingId(userId);
     try {
-      await apiRequest(`/api/admin/users/${userId}/role`, "PATCH", { role: newRole }, { auth: true });
+      await updateUserRole(userId, newRole);
       setUsers(users.map(u => u._id === userId ? { ...u, role: newRole as any } : u));
     } catch (err) {
       alert((err as Error).message);
@@ -108,7 +97,7 @@ export default function AdminUsers() {
     if (updatingId) return;
     setUpdatingId(userId);
     try {
-      await apiRequest(`/api/admin/users/${userId}/status`, "PATCH", { isActive: !currentStatus }, { auth: true });
+      await updateUserStatus(userId, !currentStatus);
       setUsers(users.map(u => u._id === userId ? { ...u, isActive: !currentStatus } : u));
     } catch (err) {
       alert((err as Error).message);

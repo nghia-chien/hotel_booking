@@ -1,4 +1,5 @@
-import { apiRequest } from "../../api/client";
+
+import { checkInBooking, checkOutBooking, cancelBooking } from "../../api/admin.api";
 import { useAdminData } from "../../hooks/useAdminData";
 import { 
   Calendar, 
@@ -43,9 +44,7 @@ const AdminBookingsPage = () => {
     setError(null);
     setMessage(null);
     try {
-      await apiRequest(`/api/bookings/${id}/check-in`, "POST", null, {
-        auth: true
-      });
+      await checkInBooking(id);
       setMessage("Đã hoàn tất check-in.");
       void loadBookings();
     } catch (err) {
@@ -57,9 +56,7 @@ const AdminBookingsPage = () => {
     setError(null);
     setMessage(null);
     try {
-      await apiRequest(`/api/bookings/${id}/check-out`, "POST", null, {
-        auth: true
-      });
+      await checkOutBooking(id);
       setMessage("Đã hoàn tất check-out.");
       void loadBookings();
     } catch (err) {
@@ -72,9 +69,7 @@ const AdminBookingsPage = () => {
     setError(null);
     setMessage(null);
     try {
-      await apiRequest(`/api/bookings/${id}/cancel`, "POST", {}, {
-        auth: true
-      });
+      await cancelBooking(id);
       setMessage("Đã huỷ đặt phòng và xử lý hoàn tiền thành công.");
       void loadBookings();
     } catch (err) {
