@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { getDashboardStats, type DashboardStats } from "../../api/admin.api";
 import { cn } from "../../components/ui/utils";
+import { StatusBadge, AdminPageHeader } from "../../components/admin";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -72,27 +73,19 @@ export default function AdminDashboard() {
   return (
     <div className="max-w-7xl mx-auto space-y-10 py-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-[var(--color-border)]">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2 block">
-            Tổng quan hệ thống
-          </span>
-          <h1 className="font-serif text-4xl font-bold text-[var(--color-text-primary)]">
-            Admin Dashboard
-          </h1>
-          <p className="text-[var(--color-text-secondary)] text-sm mt-3 max-w-md leading-relaxed">
-            Theo dõi hiệu suất kinh doanh, quản lý các yêu cầu đặt phòng và báo cáo doanh thu theo thời gian thực.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
+      <AdminPageHeader
+        eyebrow="Tổng quan hệ thống"
+        title="Admin Dashboard"
+        subtitle="Theo dõi hiệu suất kinh doanh, quản lý các yêu cầu đặt phòng và báo cáo doanh thu theo thời gian thực."
+        actions={
           <Link
             to="/admin/calendar"
             className="px-4 py-2.5 bg-[var(--color-surface)] hover:bg-gray-200 text-[var(--color-text-primary)] text-sm font-semibold rounded-xl transition-all flex items-center gap-2"
           >
             Xem lịch phòng <ChevronRight className="w-4 h-4" />
           </Link>
-        </div>
-      </header>
+        }
+      />
 
       {/* Row 1: KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -307,27 +300,5 @@ function QuickStat({ label, value, trend }: { label: string; value: string; tren
         <span className="text-[10px] font-medium text-emerald-600">{trend}</span>
       </div>
     </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const configs: Record<string, { bg: string; text: string; label: string }> = {
-    Confirmed: { bg: "bg-emerald-50", text: "text-emerald-700", label: "Đã xác nhận" },
-    Pending: { bg: "bg-amber-50", text: "text-amber-700", label: "Chờ duyệt" },
-    Cancelled: { bg: "bg-red-50", text: "text-red-700", label: "Đã hủy" },
-    CheckedIn: { bg: "bg-blue-50", text: "text-blue-700", label: "Đã nhận phòng" },
-    CheckedOut: { bg: "bg-gray-50", text: "text-gray-700", label: "Đã trả phòng" },
-  };
-
-  const config = configs[status] || { bg: "bg-gray-50", text: "text-gray-700", label: status };
-
-  return (
-    <span className={cn(
-      "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-transparent",
-      config.bg,
-      config.text
-    )}>
-      {config.label}
-    </span>
   );
 }

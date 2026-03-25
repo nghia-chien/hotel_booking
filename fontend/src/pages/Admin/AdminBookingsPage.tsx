@@ -1,16 +1,14 @@
-import { useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
-import { cn } from "../../components/ui/utils";
+import { useAdminData } from "../../hooks/useAdminData";
 import { 
   Calendar, 
-  CheckCircle2, 
   Clock, 
-  XCircle,
   ArrowRightLeft,
   User,
   Phone,
   DoorOpen
 } from "lucide-react";
+import { StatusBadge, AdminPageHeader, AlertMessage } from "../../components/admin";
 
 interface Booking {
   _id: string;
@@ -29,39 +27,17 @@ interface Booking {
   };
 }
 
-interface BookingsResponse {
-  success: boolean;
-  data: Booking[];
-}
-
 const AdminBookingsPage = () => {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-
-  const loadBookings = async () => {
-    setError(null);
-    setMessage(null);
-    setLoading(true);
-    try {
-      const res = await apiRequest<BookingsResponse>(
-        "/api/bookings",
-        "GET",
-        undefined,
-        { auth: true }
-      );
-      setBookings(res.data);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void loadBookings();
-  }, []);
+  const {
+    data: bookingsData,
+    loading,
+    error,
+    success: message,
+    setError,
+    setSuccess: setMessage,
+    reload: loadBookings,
+  } = useAdminData<Booking[]>({ path: "/api/bookings" });
+  const bookings = bookingsData ?? [];
 
   const handleCheckIn = async (id: string) => {
     setError(null);
@@ -109,33 +85,15 @@ const AdminBookingsPage = () => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-[var(--color-border)]">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2 block">
-            Hệ thống quản trị
-          </span>
-          <h1 className="font-serif text-3xl font-bold text-[var(--color-text-primary)]">
-            Quản lý Đặt phòng
-          </h1>
-          <p className="text-[var(--color-text-secondary)] text-sm mt-2">
-            Theo dõi phòng, thông tin khách hàng, duyệt Check-in/Check-out và Huỷ phòng.
-          </p>
-        </div>
-      </header>
+      <AdminPageHeader
+        eyebrow="Hệ thống quản trị"
+        title="Quản lý Đặt phòng"
+        subtitle="Theo dõi phòng, thông tin khách hàng, duyệt Check-in/Check-out và Huỷ phòng."
+      />
 
       {/* Notifications */}
-      {error && (
-        <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-100 flex items-center gap-3">
-          <XCircle className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm font-medium">{error}</p>
-        </div>
-      )}
-      {message && (
-        <div className="bg-emerald-50 text-emerald-700 p-4 rounded-xl border border-emerald-100 flex items-center gap-3">
-          <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm font-medium">{message}</p>
-        </div>
-      )}
+      <AlertMessage type="error" message={error || ""} />
+      <AlertMessage type="success" message={message || ""} />
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[300px]">
@@ -243,25 +201,6 @@ const AdminBookingsPage = () => {
   );
 };
 
-function StatusBadge({ status }: { status: string }) {
-  const configs: Record<string, { bg: string; text: string; label: string }> = {
-    Confirmed: { bg: "bg-emerald-50 text-emerald-700 border-emerald-200", text: "", label: "Đã xác nhận" },
-    Pending: { bg: "bg-amber-50 text-amber-700 border-amber-200", text: "", label: "Chờ duyệt" },
-    Cancelled: { bg: "bg-red-50 text-red-700 border-red-200", text: "", label: "Đã hủy" },
-    CheckedIn: { bg: "bg-blue-50 text-blue-700 border-blue-200", text: "", label: "Đã nhận phòng" },
-    CheckedOut: { bg: "bg-gray-50 text-gray-700 border-gray-200", text: "", label: "Đã trả phòng" },
-  };
 
-  const config = configs[status] || { bg: "bg-gray-50 text-gray-700 border-gray-200", text: "", label: status };
-
-  return (
-    <span className={cn(
-      "px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider",
-      config.bg
-    )}>
-      {config.label}
-    </span>
-  );
-}
 
 export default AdminBookingsPage;

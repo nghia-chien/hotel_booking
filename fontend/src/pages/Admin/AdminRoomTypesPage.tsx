@@ -1,5 +1,6 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useState } from "react";
 import { apiRequest } from "../../api/client";
+import { useAdminData } from "../../hooks/useAdminData";
 import { cn } from "../../components/ui/utils";
 import { 
   Plus, 
@@ -12,6 +13,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from "lucide-react";
+import { AdminPageHeader, AlertMessage } from "../../components/admin";
 
 interface RoomType {
   _id: string;
@@ -21,16 +23,19 @@ interface RoomType {
   defaultCapacity: number;
 }
 
-interface ListResponse {
-  success: boolean;
-  data: RoomType[];
-}
+
 
 const AdminRoomTypesPage = () => {
-  const [items, setItems] = useState<RoomType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const {
+    data: itemsData,
+    loading,
+    error,
+    success: message,
+    setError,
+    setSuccess: setMessage,
+    reload: load,
+  } = useAdminData<RoomType[]>({ path: "/api/room-types" });
+  const items = itemsData ?? [];
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -45,26 +50,6 @@ const AdminRoomTypesPage = () => {
     setBasePrice(100);
     setDefaultCapacity(2);
   };
-
-  const load = async () => {
-    setError(null);
-    setMessage(null);
-    setLoading(true);
-    try {
-      const res = await apiRequest<ListResponse>("/api/room-types", "GET", undefined, {
-        auth: true
-      });
-      setItems(res.data);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void load();
-  }, []);
 
   const startEdit = (rt: RoomType) => {
     setEditingId(rt._id);
@@ -118,19 +103,11 @@ const AdminRoomTypesPage = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-10 py-6 animate-in fade-in duration-500">
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-[var(--color-border)]">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2 block">
-            Cấu hình hệ thống
-          </span>
-          <h1 className="font-serif text-3xl font-bold text-[var(--color-text-primary)]">
-            Loại phòng
-          </h1>
-          <p className="text-[var(--color-text-secondary)] text-sm mt-2">
-            Quản lý các hạng phòng, giá cơ bản và sức chứa mặc định của khách sạn.
-          </p>
-        </div>
-      </header>
+      <AdminPageHeader
+        eyebrow="Cấu hình hệ thống"
+        title="Loại phòng"
+        subtitle="Quản lý các hạng phòng, giá cơ bản và sức chứa mặc định của khách sạn."
+      />
 
       {/* Form Section */}
       <section className="bg-white rounded-3xl p-8 shadow-[var(--shadow-sm)] border border-[var(--color-border)]">
@@ -213,22 +190,8 @@ const AdminRoomTypesPage = () => {
       </section>
 
       {/* Messages */}
-      {(error || message) && (
-        <div className="animate-in slide-in-from-top-2 duration-300">
-           {error && (
-             <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-100 flex items-center gap-3">
-               <AlertCircle className="w-5 h-5" />
-               <p className="text-sm font-medium">{error}</p>
-             </div>
-           )}
-           {message && (
-             <div className="bg-emerald-50 text-emerald-700 p-4 rounded-xl border border-emerald-100 flex items-center gap-3">
-               <CheckCircle2 className="w-5 h-5" />
-               <p className="text-sm font-medium">{message}</p>
-             </div>
-           )}
-        </div>
-      )}
+      <AlertMessage type="error" message={error || ""} />
+      <AlertMessage type="success" message={message || ""} />
 
       {/* List Section */}
       <section className="space-y-4">

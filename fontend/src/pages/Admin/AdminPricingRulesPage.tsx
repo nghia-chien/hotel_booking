@@ -14,6 +14,7 @@ import {
   Tent,
   ArrowRight
 } from "lucide-react";
+import { AdminPageHeader, AlertMessage } from "../../components/admin";
 
 interface RoomType {
   _id: string;
@@ -141,19 +142,11 @@ const AdminPricingRulesPage = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-10 py-6 animate-in fade-in duration-500">
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-[var(--color-border)]">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2 block">
-            Cấu hình doanh thu
-          </span>
-          <h1 className="font-serif text-3xl font-bold text-[var(--color-text-primary)]">
-            Giá theo mùa & Sự kiện
-          </h1>
-          <p className="text-[var(--color-text-secondary)] text-sm mt-2">
-            Thiết lập các quy tắc thay đổi giá tự động dựa trên thời điểm, ngày lễ hoặc cuối tuần.
-          </p>
-        </div>
-      </header>
+      <AdminPageHeader
+        eyebrow="Cấu hình doanh thu"
+        title="Giá theo mùa & Sự kiện"
+        subtitle="Thiết lập các quy tắc thay đổi giá tự động dựa trên thời điểm, ngày lễ hoặc cuối tuần."
+      />
 
       {/* Form Section */}
       <section className="bg-white rounded-3xl p-8 shadow-[var(--shadow-sm)] border border-[var(--color-border)]">
@@ -284,22 +277,8 @@ const AdminPricingRulesPage = () => {
       </section>
 
       {/* Messages */}
-      {(error || message) && (
-        <div className="animate-in slide-in-from-top-2 duration-300">
-           {error && (
-             <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-100 flex items-center gap-3">
-               <AlertCircle className="w-5 h-5" />
-               <p className="text-sm font-medium">{error}</p>
-             </div>
-           )}
-           {message && (
-             <div className="bg-emerald-50 text-emerald-700 p-4 rounded-xl border border-emerald-100 flex items-center gap-3">
-               <CheckCircle2 className="w-5 h-5" />
-               <p className="text-sm font-medium">{message}</p>
-             </div>
-           )}
-        </div>
-      )}
+      <AlertMessage type="error" message={error || ""} />
+      <AlertMessage type="success" message={message || ""} />
 
       {/* List Section */}
       <section className="space-y-4">
