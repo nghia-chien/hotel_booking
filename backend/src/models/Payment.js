@@ -39,14 +39,14 @@ const paymentSchema = new mongoose.Schema(
 
     // ── VNPay fields ──────────────────────────────────────────────────────────
     vnpTxnRef: {
-      type: String,  // txnRef bạn tự tạo (BK<timestamp>), dùng để tra cứu
+      type: String,  
       index: true,
     },
     vnpTransactionNo: {
-      type: String,  // mã giao dịch phía VNPay trả về
+      type: String,  
     },
 
-    // ── Metadata (lưu raw params VNPay, refund info, v.v.) ───────────────────
+    // ── Metadata (store raw params VNPay, refund info, v.v.) ───────────────────
     metadata: {
       type: Object,
     },

@@ -10,6 +10,7 @@ import { Calendar } from "./ui/calendar";
 import { apiRequest } from "../api/client";
 import { createBooking } from "../api/booking.api";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "react-i18next"
 
 interface PriceResponse {
   success: boolean;
@@ -27,6 +28,7 @@ export function BookingCard({
   roomId: string;
   capacity: number;
 }) {
+  const { t } = useTranslation()
   const navigate = useNavigate();
   const { user } = useAuth();
   const [checkIn, setCheckIn] = useState<Date>();
@@ -102,7 +104,7 @@ export function BookingCard({
     return res.data._id;
   };
 
-   // Thêm phòng vào giỏ, chuyển sang MyBookings để thanh toán sau
+   // add room to cart, go to MyBookings to pay later
   const handleAddRoom = async () => {
     if (!user) {
       navigate("/login", { state: { from: { pathname: window.location.pathname } } });
@@ -124,7 +126,7 @@ export function BookingCard({
     }
   };
 
-   // Đặt phòng + thanh toán ngay qua VNPay
+   // book room + pay immediately via VNPay
   const handleBookAndPayVNPay = async () => {
     if (!user) {
       navigate("/login", { state: { from: { pathname: window.location.pathname } } });
@@ -135,11 +137,11 @@ export function BookingCard({
     setBookingLoading(true);
 
     try {
-      // Bước 1: tạo booking, lấy _id
+      // step 1: create booking, get _id
       const bookingId = await createBookingForThisRoom();
       if (!bookingId) throw new Error("Không tạo được booking");
 
-      // Bước 2: tạo VNPay order, nhận paymentUrl
+      // step 2: create VNPay order, get paymentUrl
       // FIX: added /api prefix
       const res = await apiRequest<{
         success: boolean;
@@ -182,11 +184,11 @@ export function BookingCard({
 
   return (
     <div className="bg-white border border-black/5 rounded-xl p-5 shadow-sm space-y-4">
-      <h3 className="text-lg font-semibold text-[#1F1F1F]">Đặt phòng</h3>
+      <h3 className="text-lg font-semibold text-[#1F1F1F]">{t('bookingForm.title')}</h3>
 
       <div className="grid grid-cols-1 gap-3">
         <div>
-          <p className="text-sm text-[#666666] mb-2">Ngày nhận phòng</p>
+          <p className="text-sm text-[#666666] mb-2">{t('bookingForm.checkIn')}</p>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -195,7 +197,7 @@ export function BookingCard({
               >
                 <CalendarIcon className="mr-2 h-4 w-4 text-[#2C2C2C]" />
                 <span className="text-[#2C2C2C]">
-                  {checkIn ? format(checkIn, "MMM dd, yyyy") : "Chọn ngày"}
+                  {checkIn ? format(checkIn, "MMM dd, yyyy") : t('bookingForm.selectDate')}
                 </span>
               </Button>
             </PopoverTrigger>
@@ -208,7 +210,7 @@ export function BookingCard({
                   // Disable past dates
                   if (date < new Date(new Date().setHours(0,0,0,0))) return true;
                   // Disable booked dates
-                  return bookedDates.some(b => 
+                  return bookedDates.some((b: any) => 
                     date >= new Date(b.checkIn.setHours(0,0,0,0)) && 
                     date < new Date(b.checkOut.setHours(0,0,0,0))
                   );
@@ -219,7 +221,7 @@ export function BookingCard({
         </div>
 
         <div>
-          <p className="text-sm text-[#666666] mb-2">Ngày trả phòng</p>
+          <p className="text-sm text-[#666666] mb-2">{t('bookingForm.checkOut')}</p>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -228,7 +230,7 @@ export function BookingCard({
               >
                 <CalendarIcon className="mr-2 h-4 w-4 text-[#2C2C2C]" />
                 <span className="text-[#2C2C2C]">
-                  {checkOut ? format(checkOut, "MMM dd, yyyy") : "Chọn ngày"}
+                  {checkOut ? format(checkOut, "MMM dd, yyyy") : t('bookingForm.selectDate')}
                 </span>
               </Button>
             </PopoverTrigger>
@@ -245,11 +247,11 @@ export function BookingCard({
                   // Must not overlap with a booking that starts after check-in
                   if (checkIn) {
                     const nextBooking = bookedDates
-                      .filter(b => b.checkIn > checkIn)
-                      .sort((a,b) => a.checkIn.getTime() - b.checkIn.getTime())[0];
+                      .filter((b: any) => b.checkIn > checkIn)
+                      .sort((a: any, b: any) => a.checkIn.getTime() - b.checkIn.getTime())[0];
                     if (nextBooking && date > nextBooking.checkIn) return true;
                   }
-                  return bookedDates.some(b => 
+                  return bookedDates.some((b: any) => 
                     date > new Date(b.checkIn.setHours(0,0,0,0)) && 
                     date <= new Date(b.checkOut.setHours(0,0,0,0))
                   );
@@ -260,7 +262,7 @@ export function BookingCard({
         </div>
 
         <div>
-          <p className="text-sm text-[#666666] mb-2">Số khách</p>
+          <p className="text-sm text-[#666666] mb-2">{t('bookingForm.guests')}</p>
           <Popover open={guestsOpen} onOpenChange={setGuestsOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -269,14 +271,14 @@ export function BookingCard({
               >
                 <Users className="mr-2 h-4 w-4 text-[#2C2C2C]" />
                 <span className="text-[#2C2C2C]">
-                  {guests} khách (tối đa {capacity})
+                  {t('bookingForm.guestsCount', { count: guests, max: capacity })}
                 </span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-64" align="start">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-[#2C2C2C]">Khách</span>
+                  <span className="text-sm text-[#2C2C2C]">{t('bookingForm.guestLabel')}</span>
                   <div className="flex items-center gap-3">
                     <Button
                       size="sm"
@@ -303,7 +305,7 @@ export function BookingCard({
                   className="w-full bg-[#2C2C2C] hover:bg-[#3A3A3A] text-white"
                   onClick={() => setGuestsOpen(false)}
                 >
-                  Xong
+                  {t('bookingForm.done')}
                 </Button>
               </div>
             </PopoverContent>
@@ -317,7 +319,7 @@ export function BookingCard({
             onClick={quotePrice}
             disabled={!canQuote || loadingPrice}
           >
-            {loadingPrice ? "Đang tính giá..." : "Tính giá"}
+            {loadingPrice ? t('bookingForm.calculating') : t('bookingForm.quotePrice')}
           </Button>
 
           {priceError && (
@@ -327,7 +329,7 @@ export function BookingCard({
           {summaryText && (
             <div className="rounded-xl bg-[#F7F2EA] border border-black/5 p-3">
               <p className="text-sm text-black/60">
-                {summaryText.nights} đêm · ${summaryText.perNight}/đêm
+                {t('bookingForm.summary', { nights: summaryText.nights, price: summaryText.perNight })}
               </p>
               <p className="text-2xl font-semibold text-[#2B2B2B]">
                 ${summaryText.total}
@@ -342,14 +344,14 @@ export function BookingCard({
               onClick={handleAddRoom}
               disabled={!canQuote || bookingLoading}
             >
-              {bookingLoading ? "Đang xử lý..." : "Thêm phòng"}
+              {bookingLoading ? t('bookingForm.processing') : t('bookingForm.addRoom')}
             </Button>
             <Button
               className="rounded-xl bg-[#2C2C2C] hover:bg-[#3A3A3A] text-white"
               onClick={handleBookAndPayVNPay}
               disabled={!canQuote || bookingLoading}
             >
-              {bookingLoading ? "Đang xử lý..." : "Đặt & thanh toán"}
+              {bookingLoading ? t('bookingForm.processing') : t('bookingForm.bookAndPay')}
             </Button>
           </div>
 
@@ -361,10 +363,10 @@ export function BookingCard({
 
       <div>
         <p className="text-xs text-black/50 mb-2">
-          Gợi ý: hãy bấm "Tính giá" để xem tổng tiền trước khi đặt.
+          {t('bookingForm.hint')}
         </p>
         <Input
-          placeholder="Yêu cầu đặc biệt (tuỳ chọn) — sẽ bổ sung ở bước sau"
+          placeholder={t('bookingForm.specialRequest')}
           disabled
         />
       </div>

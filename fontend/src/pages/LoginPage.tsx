@@ -1,9 +1,11 @@
 import { type FormEvent, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 
 const LoginPage = () => {
   const { login } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation() as { state?: { from?: Location } };
 
@@ -34,14 +36,12 @@ const LoginPage = () => {
 
   return (
     <div className="max-w-md mx-auto bg-white border border-gray-100 shadow-sm rounded-2xl p-8">
-      <h2 className="text-2xl font-bold mb-2">Đăng nhập</h2>
-      <p className="text-sm text-gray-500 mb-6">
-        Truy cập để đặt phòng và quản lý booking của bạn.
-      </p>
+      <h2 className="text-2xl font-bold mb-2">{t('login.title')}</h2>
+      <p className="text-sm text-gray-500 mb-6">{t('login.subtitle')}</p>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
-          <label className="block text-sm mb-1 text-gray-700">Email</label>
+          <label className="block text-sm mb-1 text-gray-700">{t('login.email')}</label>
           <input
             type="email"
             placeholder="you@example.com"
@@ -52,7 +52,7 @@ const LoginPage = () => {
           />
         </div>
         <div>
-          <label className="block text-sm mb-1 text-gray-700">Mật khẩu</label>
+          <label className="block text-sm mb-1 text-gray-700">{t('login.password')}</label>
           <input
             type="password"
             placeholder="••••••••"
@@ -62,21 +62,14 @@ const LoginPage = () => {
             required
           />
           <div className="mt-2 text-right">
-            <Link
-              to="/forgot-password"
-              className="text-sm text-blue-600 hover:underline"
-            >
-              Quên mật khẩu?
+            <Link to="/forgot-password" className="text-sm text-blue-600 hover:underline">
+              {t('login.forgotPassword')}
             </Link>
           </div>
         </div>
         {error && <p className="text-red-600 text-sm">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white p-2 rounded-lg disabled:opacity-60 hover:bg-blue-700 transition"
-        >
-          {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+        <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white p-2 rounded-lg disabled:opacity-60 hover:bg-blue-700 transition">
+          {loading ? t('login.submitting') : t('login.submit')}
         </button>
       </form>
     </div>

@@ -24,61 +24,61 @@ export const createNotification = async (userId, type, data) => {
 
     switch (type) {
       case "booking_confirmed":
-        title = "Booking đã được xác nhận";
-        message = `Phòng ${data.roomName || "của bạn"} đã được xác nhận cho ngày ${data.checkIn}.`;
+        title = "Booking Confirmed";
+        message = `Room ${data.roomName || "of yours"} has been confirmed for ${data.checkIn}.`;
         link = `/my-bookings/${data.bookingId}`;
         emailHtml = `
           <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-            <h1 style="color: #1D9E75;">Xác nhận đặt phòng thành công</h1>
-            <p>Chào <b>${user.fullName}</b>,</p>
-            <p>Phòng <b>${data.roomName}</b> của bạn đã được xác nhận.</p>
-            <p><b>Ngày nhận phòng:</b> ${data.checkIn}</p>
-            <p><b>Tổng cộng:</b> ${data.totalPrice?.toLocaleString()} USD</p>
+            <h1 style="color: #1D9E75;">Booking Confirmed Successfully</h1>
+            <p>Hi <b>${user.fullName}</b>,</p>
+            <p>Your room <b>${data.roomName}</b> has been confirmed.</p>
+            <p><b>Check-in Date:</b> ${data.checkIn}</p>
+            <p><b>Total Price:</b> ${data.totalPrice?.toLocaleString()} USD</p>
             <hr/>
-            <p style="font-size: 12px; color: #888;">Cảm ơn bạn đã lựa chọn dịch vụ của chúng tôi!</p>
+            <p style="font-size: 12px; color: #888;">Thank you for choosing our service!</p>
           </div>
         `;
         break;
       case "booking_cancelled":
-        title = "Booking đã bị huỷ";
-        message = `Booking phòng ${data.roomName || ""} của bạn đã bị huỷ. ${data.reason ? `Lý do: ${data.reason}` : ""}`;
+        title = "Booking Cancelled";
+        message = `Your booking for room ${data.roomName || ""} has been cancelled. ${data.reason ? `Reason: ${data.reason}` : ""}`;
         link = `/my-bookings/${data.bookingId}`;
         emailHtml = `
           <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-            <h1 style="color: #E24B4A;">Thông báo huỷ phòng</h1>
-            <p>Chào <b>${user.fullName}</b>,</p>
-            <p>Booking phòng <b>${data.roomName}</b> đã bị huỷ trên hệ thống.</p>
-            ${data.reason ? `<p><b>Lý do:</b> ${data.reason}</p>` : ""}
-            <p>Vui lòng liên hệ bộ phận CSKH nếu bạn cần hỗ trợ thêm.</p>
+            <h1 style="color: #E24B4A;">Cancellation Notice</h1>
+            <p>Hi <b>${user.fullName}</b>,</p>
+            <p>Booking for room <b>${data.roomName}</b> has been cancelled in our system.</p>
+            ${data.reason ? `<p><b>Reason:</b> ${data.reason}</p>` : ""}
+            <p>Please contact customer support if you need further assistance.</p>
           </div>
         `;
         break;
       case "payment_success":
-        title = "Thanh toán thành công";
-        message = `Giao dịch ${data.transactionId} số tiền ${data.amount?.toLocaleString()} USD đã được xác nhận.`;
+        title = "Payment Successful";
+        message = `Transaction ${data.transactionId} for ${data.amount?.toLocaleString()} USD has been confirmed.`;
         link = `/my-bookings/${data.bookingId}`;
         emailHtml = `
           <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-            <h1 style="color: #1D9E75;">Thanh toán thành công</h1>
-            <p>Chào <b>${user.fullName}</b>,</p>
-            <p>Hệ thống đã ghi nhận thanh toán cho booking của bạn.</p>
-            <p><b>Mã GD:</b> ${data.transactionId}</p>
-            <p><b>Số tiền:</b> ${data.amount?.toLocaleString()} USD</p>
-            <p>Phòng của bạn hiện đã ở trạng thái đã xác nhận.</p>
+            <h1 style="color: #1D9E75;">Payment Successful</h1>
+            <p>Hi <b>${user.fullName}</b>,</p>
+            <p>We have received the payment for your booking.</p>
+            <p><b>Transaction ID:</b> ${data.transactionId}</p>
+            <p><b>Amount:</b> ${data.amount?.toLocaleString()} USD</p>
+            <p>Your booking status is now set to confirmed.</p>
           </div>
         `;
         break;
       case "refund_processed":
-        title = "Hoàn tiền đã xử lý";
-        message = `Số tiền ${data.amount?.toLocaleString()} USD đã được hoàn trả. Dự kiến nhận từ 3-5 ngày qua VNPay.`;
+        title = "Refund Processed";
+        message = `An amount of ${data.amount?.toLocaleString()} USD has been refunded. Expect to receive it within 3-5 business days.`;
         link = `/my-bookings/${data.bookingId}`;
         emailHtml = `
           <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-            <h1 style="color: #BA7517;">Hoàn tiền thành công</h1>
-            <p>Chào <b>${user.fullName}</b>,</p>
-            <p>Yêu cầu hoàn tiền cho booking của bạn đã được xử lý.</p>
-            <p><b>Số tiền hoàn:</b> ${data.amount?.toLocaleString()} USD</p>
-            <p>Dự kiến tiền sẽ về tài khoản của bạn trong vòng 3-5 ngày làm việc.</p>
+            <h1 style="color: #BA7517;">Refund Successful</h1>
+            <p>Hi <b>${user.fullName}</b>,</p>
+            <p>The refund request for your booking has been processed.</p>
+            <p><b>Refund Amount:</b> ${data.amount?.toLocaleString()} USD</p>
+            <p>The funds are expected to return to your account within 3-5 business days.</p>
           </div>
         `;
         break;
@@ -93,7 +93,6 @@ export const createNotification = async (userId, type, data) => {
     });
 
     const emailPromise = (async () => {
-      // Skip if credentials are not configured
       if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
         console.log("Email credentials not found, skipping email.");
         return;

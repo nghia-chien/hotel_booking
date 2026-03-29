@@ -50,9 +50,6 @@ export default function PropertyGrid({
         <p className="font-medium text-[var(--color-text-secondary)]">
           {emptyMessage ?? 'Không tìm thấy phòng phù hợp.'}
         </p>
-        <p className="text-sm text-[var(--color-text-muted)] mt-1">
-          Thử thay đổi ngày, số khách hoặc bộ lọc.
-        </p>
       </div>
     );
   }

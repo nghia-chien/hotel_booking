@@ -1,6 +1,7 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
-// Map mã lỗi VNPay → thông báo tiếng Việt
+
 const VNP_MESSAGES: Record<string, string> = {
   "00": "Giao dịch thành công",
   "07": "Giao dịch bị nghi ngờ (liên quan tới lừa đảo, giao dịch bất thường).",
@@ -17,13 +18,14 @@ const VNP_MESSAGES: Record<string, string> = {
   "99": "Lỗi không xác định.",
 };
 
-// Route này nhận redirect từ backend:
+// Route get redirect from backend:
 //   /payment/result?status=success
 //   /payment/result?status=failed&code=24
-// Backend đã verify hash và cập nhật DB rồi — frontend chỉ hiển thị kết quả.
+// Backend verify hash and update DB 
 export default function PaymentResultPage() {
   const [searchParams] = useSearchParams();
   const navigate       = useNavigate();
+  const { t }          = useTranslation();
 
   const status = searchParams.get("status");   // "success" | "failed"
   const code   = searchParams.get("code") ?? "99";
@@ -44,20 +46,14 @@ export default function PaymentResultPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">Thanh toán thành công!</h1>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">{t('payments.success')}</h1>
             <p className="text-gray-500 mb-6">{message}</p>
             <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => navigate("/my-bookings")}
-                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
-              >
-                Xem đặt phòng
+              <button onClick={() => navigate("/my-bookings")} className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
+                {t('myBookings.title')}
               </button>
-              <button
-                onClick={() => navigate("/")}
-                className="px-6 py-2.5 border border-gray-300 text-gray-600 rounded-lg font-medium hover:bg-gray-50 transition"
-              >
-                Về trang chủ
+              <button onClick={() => navigate("/")} className="px-6 py-2.5 border border-gray-300 text-gray-600 rounded-lg font-medium hover:bg-gray-50 transition">
+                {t('notFound.back')}
               </button>
             </div>
           </>
@@ -69,21 +65,15 @@ export default function PaymentResultPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-gray-800 mb-2">
-              {code === "24" ? "Giao dịch bị huỷ" : "Thanh toán thất bại"}
+              {code === "24" ? t('payments.cancel') : t('common.error')}
             </h1>
             <p className="text-gray-500 mb-6">{message}</p>
             <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => navigate(-1)}
-                className="px-6 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition"
-              >
-                Thử lại
+              <button onClick={() => navigate(-1)} className="px-6 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition">
+                {t('common.retry')}
               </button>
-              <button
-                onClick={() => navigate("/")}
-                className="px-6 py-2.5 border border-gray-300 text-gray-600 rounded-lg font-medium hover:bg-gray-50 transition"
-              >
-                Về trang chủ
+              <button onClick={() => navigate("/")} className="px-6 py-2.5 border border-gray-300 text-gray-600 rounded-lg font-medium hover:bg-gray-50 transition">
+                {t('notFound.back')}
               </button>
             </div>
           </>

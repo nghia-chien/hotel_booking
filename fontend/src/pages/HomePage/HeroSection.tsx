@@ -1,4 +1,5 @@
 import type { PropertySearchParams } from '../../types/property';
+import { useTranslation } from 'react-i18next';
 import BookingSearchForm from '../../components/search/BookingSearchForm';
 
 interface HeroSectionProps {
@@ -7,6 +8,7 @@ interface HeroSectionProps {
 }
 
 export default function HeroSection({ onSearch, loading }: HeroSectionProps) {
+  const { t } = useTranslation();
   return (
     <section className="relative min-h-[620px] flex flex-col items-center justify-center overflow-hidden px-4 py-20">
       {/* BACKGROUND */}
@@ -28,21 +30,14 @@ export default function HeroSection({ onSearch, loading }: HeroSectionProps) {
       {/* CONTENT */}
       <div className="relative z-10 text-center max-w-4xl mx-auto w-full flex flex-col items-center">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm mb-8">
-          <span>🎉</span> 124.8K+ Khách hàng hài lòng
+          <span>{t('hero.badge')}</span>
         </div>
-
         <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-          Nghỉ dưỡng tại những Resort tuyệt vời,
+          {t('hero.title1')}
           <br />
-          <span className="text-[var(--color-primary)]">
-            Lưu trú trong Khách sạn sang trọng.
-          </span>
+          <span className="text-[var(--color-primary)]">{t('hero.title2')}</span>
         </h1>
-
-        <p className="text-white/70 text-lg max-w-xl mx-auto mb-10">
-          Tìm kiếm và đặt phòng nhanh chóng — hơn 1,000 lựa chọn phù hợp với mọi
-          nhu cầu.
-        </p>
+        <p className="text-white/70 text-lg max-w-xl mx-auto mb-10">{t('hero.subtitle')}</p>
 
         <BookingSearchForm
           variant="hero"

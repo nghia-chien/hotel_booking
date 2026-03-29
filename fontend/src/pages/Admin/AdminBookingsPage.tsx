@@ -1,4 +1,4 @@
-
+import { useTranslation } from "react-i18next";
 import { checkInBooking, checkOutBooking, cancelBooking } from "../../api/admin.api";
 import { useAdminData } from "../../hooks/useAdminData";
 import { 
@@ -29,6 +29,9 @@ interface Booking {
 }
 
 const AdminBookingsPage = () => {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === "vi" ? "vi-VN" : "en-US";
+
   const {
     data: bookingsData,
     loading,
@@ -45,7 +48,7 @@ const AdminBookingsPage = () => {
     setMessage(null);
     try {
       await checkInBooking(id);
-      setMessage("Đã hoàn tất check-in.");
+      setMessage(t('admin.bookings.messages.checkInSuccess'));
       void loadBookings();
     } catch (err) {
       setError((err as Error).message);
@@ -57,7 +60,7 @@ const AdminBookingsPage = () => {
     setMessage(null);
     try {
       await checkOutBooking(id);
-      setMessage("Đã hoàn tất check-out.");
+      setMessage(t('admin.bookings.messages.checkOutSuccess'));
       void loadBookings();
     } catch (err) {
       setError((err as Error).message);
@@ -65,12 +68,12 @@ const AdminBookingsPage = () => {
   };
 
   const handleCancel = async (id: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn huỷ đặt phòng này? Nếu khách đã thanh toán, hệ thống sẽ tự động hoàn tiền.")) return;
+    if (!window.confirm(t('admin.bookings.messages.confirmCancel'))) return;
     setError(null);
     setMessage(null);
     try {
       await cancelBooking(id);
-      setMessage("Đã huỷ đặt phòng và xử lý hoàn tiền thành công.");
+      setMessage(t('admin.bookings.messages.cancelSuccess'));
       void loadBookings();
     } catch (err) {
       setError((err as Error).message);
@@ -81,9 +84,9 @@ const AdminBookingsPage = () => {
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
       <AdminPageHeader
-        eyebrow="Hệ thống quản trị"
-        title="Quản lý Đặt phòng"
-        subtitle="Theo dõi phòng, thông tin khách hàng, duyệt Check-in/Check-out và Huỷ phòng."
+        eyebrow={t('admin.bookings.eyebrow')}
+        title={t('admin.bookings.title')}
+        subtitle={t('admin.bookings.subtitle')}
       />
 
       {/* Notifications */}
@@ -110,21 +113,23 @@ const AdminBookingsPage = () => {
                    <div>
                      <div className="flex items-center gap-2 mb-1.5">
                        <span className="text-sm font-bold text-[var(--color-text-primary)]">
-                         {new Date(b.checkIn).toLocaleDateString('vi-VN')}
+                         {new Date(b.checkIn).toLocaleDateString(dateLocale)}
                        </span>
                        <ArrowRightLeft className="w-3 h-3 text-[var(--color-text-muted)]" />
                        <span className="text-sm font-bold text-[var(--color-text-primary)]">
-                         {new Date(b.checkOut).toLocaleDateString('vi-VN')}
+                         {new Date(b.checkOut).toLocaleDateString(dateLocale)}
                        </span>
                      </div>
                      <div className="flex items-center gap-2 mt-2 font-mono text-xs text-[var(--color-text-secondary)]">
                         <span className="bg-gray-100 px-2 py-0.5 rounded-md">#{b._id.substring(0, 8)}</span>
-                        <span className="font-sans font-bold text-[var(--color-text-primary)] ml-2">{b.totalPrice.toLocaleString()} ₫</span>
+                        <span className="font-sans font-bold text-[var(--color-text-primary)] ml-2">
+                          {t('admin.bookings.priceFormat', { price: b.totalPrice.toLocaleString() })}
+                        </span>
                      </div>
                      <div className="mt-3 flex gap-2 items-center text-xs">
                         <StatusBadge status={b.status} />
-                        {b.paymentStatus === "Paid" && <span className="px-2 py-0.5 rounded border border-blue-200 bg-blue-50 text-blue-700 font-bold uppercase tracking-wider">Đã thanh toán</span>}
-                        {b.paymentStatus === "Refunded" && <span className="px-2 py-0.5 rounded border border-orange-200 bg-orange-50 text-orange-700 font-bold uppercase tracking-wider">Đã hoàn tiền</span>}
+                        {b.paymentStatus === "Paid" && <span className="px-2 py-0.5 rounded border border-blue-200 bg-blue-50 text-blue-700 font-bold uppercase tracking-wider">{t('admin.bookings.status.paid')}</span>}
+                        {b.paymentStatus === "Refunded" && <span className="px-2 py-0.5 rounded border border-orange-200 bg-orange-50 text-orange-700 font-bold uppercase tracking-wider">{t('admin.bookings.status.refunded')}</span>}
                      </div>
                    </div>
 
@@ -132,11 +137,11 @@ const AdminBookingsPage = () => {
                       <div className="flex items-center justify-between">
                          <div className="flex items-center gap-2 text-sm">
                            <User className="w-4 h-4 text-gray-400" />
-                           <span className="font-bold text-gray-900">{b.customer?.fullName || "Khách ẩn danh"}</span>
+                           <span className="font-bold text-gray-900">{b.customer?.fullName || t('admin.bookings.anonymousGuest')}</span>
                          </div>
                          <div className="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
                            <DoorOpen className="w-3.5 h-3.5" />
-                           <span className="font-black">Phòng {b.room?.roomNumber || "N/A"}</span>
+                           <span className="font-black">{t('admin.bookings.roomNumber', { number: b.room?.roomNumber || "N/A" })}</span>
                          </div>
                       </div>
                       {b.customer?.phone && (
@@ -161,7 +166,7 @@ const AdminBookingsPage = () => {
                     onClick={() => handleCancel(b._id)}
                     className="px-4 py-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold uppercase tracking-wider rounded-xl transition-all"
                   >
-                    Huỷ Phòng
+                    {t('admin.bookings.actions.cancel')}
                   </button>
                 )}
                 {b.status === "Confirmed" && (
@@ -169,7 +174,7 @@ const AdminBookingsPage = () => {
                     onClick={() => handleCheckIn(b._id)}
                     className="px-5 py-2.5 bg-[var(--color-primary)] text-[var(--color-text-primary)] text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm hover:opacity-90 transition-all flex items-center gap-2"
                   >
-                    Check-in
+                    {t('admin.bookings.actions.checkIn')}
                   </button>
                 )}
                 {b.status === "CheckedIn" && (
@@ -177,7 +182,7 @@ const AdminBookingsPage = () => {
                     onClick={() => handleCheckOut(b._id)}
                     className="px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm hover:bg-emerald-700 transition-all flex items-center gap-2"
                   >
-                    Check-out
+                    {t('admin.bookings.actions.checkOut')}
                   </button>
                 )}
               </div>
@@ -187,7 +192,7 @@ const AdminBookingsPage = () => {
           {!loading && bookings.length === 0 && (
             <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-[var(--color-border)]">
               <Clock className="w-10 h-10 text-[var(--color-text-muted)] mx-auto mb-4" />
-              <p className="text-[var(--color-text-secondary)] font-medium">Chưa có booking nào trong danh sách.</p>
+              <p className="text-[var(--color-text-secondary)] font-medium">{t('admin.bookings.emptyList')}</p>
             </div>
           )}
         </div>
@@ -195,7 +200,5 @@ const AdminBookingsPage = () => {
     </div>
   );
 };
-
-
 
 export default AdminBookingsPage;

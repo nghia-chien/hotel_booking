@@ -1,8 +1,10 @@
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; 
 import StarRating from '../../components/ui/StarRating';
 
 export default function AwardSection() {
   const navigate = useNavigate();
+  const { t } = useTranslation(); 
 
   return (
     <section
@@ -24,26 +26,24 @@ export default function AwardSection() {
           {/* LEFT CONTENT */}
           <div>
             <span className="text-[var(--color-primary)] text-xs font-bold uppercase tracking-widest mb-4 block">
-              Giải thưởng quốc tế
+              {t('awardSection.eyebrow')}
             </span>
             <h2 className="font-serif text-4xl font-bold text-white leading-tight mb-6">
-              Được công nhận toàn cầu với các giải thưởng dịch vụ khách sạn xuất
-              sắc.
+              {t('awardSection.title')}
             </h2>
             <p className="text-white/60 text-lg mb-10">
-              Chúng tôi không chỉ cung cấp chỗ ở — chúng tôi tạo ra kỳ nghỉ đáng
-              nhớ.
+              {t('awardSection.subtitle')}
             </p>
             <div className="flex gap-12">
               {[
-                { number: '15+', label: 'Năm kinh nghiệm' },
-                { number: '50+', label: 'Giải thưởng' },
+                { number: '15+', labelKey: 'awardSection.stats.years' },
+                { number: '50+', labelKey: 'awardSection.stats.awards' },
               ].map((s) => (
-                <div key={s.label}>
+                <div key={s.labelKey}>
                   <p className="font-serif text-4xl font-bold text-[var(--color-primary)]">
                     {s.number}
                   </p>
-                  <p className="text-white/60 text-sm mt-1">{s.label}</p>
+                  <p className="text-white/60 text-sm mt-1">{t(s.labelKey)}</p>
                 </div>
               ))}
             </div>
@@ -68,11 +68,11 @@ export default function AwardSection() {
                   Switzerland
                 </p>
                 <p className="text-xs text-[var(--color-text-muted)] mt-2">
-                  4 khách · 2 phòng ngủ · 2 WC
+                  {t('awardSection.card.specs')}
                 </p>
                 <div className="flex items-center justify-between mt-4">
                   <span className="text-lg font-bold text-[var(--color-text-primary)]">
-                    $246/đêm
+                    {t('awardSection.card.price')}
                   </span>
                   <StarRating rating={4.9} size="sm" showValue />
                 </div>
@@ -80,7 +80,7 @@ export default function AwardSection() {
                   onClick={() => navigate('/rooms')}
                   className="w-full mt-4 bg-[var(--color-primary)] text-[var(--color-primary-foreground)] rounded-xl py-2.5 font-bold text-sm hover:bg-[var(--color-primary-dark)] transition-colors cursor-pointer"
                 >
-                  Đặt ngay
+                  {t('awardSection.card.bookNow')}
                 </button>
               </div>
             </div>

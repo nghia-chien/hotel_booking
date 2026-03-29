@@ -4,7 +4,7 @@ import { calculateBookingPrice } from "../utils/pricing.js";
 
 const router = express.Router();
 
-// Public endpoint: lấy tất cả các phòng
+// Public endpoint: get all rooms
 router.get("/", async (req, res, next) => {
   try {
     const rooms = await Room.find({ isActive: true }).populate("roomType");
@@ -17,7 +17,7 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-// Public endpoint: lấy thông tin phòng + loại phòng cho trang khách
+
 router.get("/:id", async (req, res, next) => {
   try {
     const room = await Room.findById(req.params.id).populate("roomType");
@@ -37,7 +37,7 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
-// Public endpoint: tính giá theo khoảng ngày (pricing rules)
+// Public endpoint: calculate price by date range (pricing rules)
 router.get("/:id/price", async (req, res, next) => {
   try {
     const { checkIn, checkOut, guests } = req.query;
@@ -119,7 +119,7 @@ router.get("/:id/price", async (req, res, next) => {
   }
 });
 
-// Public endpoint: lấy các ngày đã được đặt của phòng này để disable trên lịch
+// Public endpoint: get booked dates of this room to disable on calendar
 router.get("/:id/booked-dates", async (req, res, next) => {
   try {
     const Room = (await import("../models/Room.js")).default;
@@ -133,7 +133,7 @@ router.get("/:id/booked-dates", async (req, res, next) => {
     const bookings = await Booking.find({
       room: room._id,
       status: { $in: ["Pending", "Confirmed", "CheckedIn"] },
-      // Chỉ lấy các booking từ hôm nay trở đi để tối ưu
+      // Only get bookings from today onwards to optimize
       checkOut: { $gte: new Date() }
     }).select("checkIn checkOut");
 

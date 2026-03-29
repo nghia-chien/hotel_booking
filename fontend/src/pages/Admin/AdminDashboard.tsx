@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   LineChart,
   Line,
@@ -22,6 +23,8 @@ import { cn } from "../../components/ui/utils";
 import { StatusBadge, AdminPageHeader } from "../../components/admin";
 
 export default function AdminDashboard() {
+  const { t } = useTranslation();
+
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,17 +37,17 @@ export default function AdminDashboard() {
         if (response.success) {
           setStats(response.data);
         } else {
-          setError("Không thể tải số liệu thống kê.");
+          setError(t('admin.dashboard.error.loadFailed'));
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Đã xảy ra lỗi.");
+        setError(err instanceof Error ? err.message : t('admin.dashboard.error.generic'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchStats();
-  }, []);
+  }, [t]);
 
   if (loading) {
     return (
@@ -62,7 +65,7 @@ export default function AdminDashboard() {
           onClick={() => window.location.reload()}
           className="mt-4 px-4 py-2 bg-white rounded-lg text-sm font-semibold shadow-sm border border-red-200 hover:bg-red-50 transition-colors"
         >
-          Thử lại
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -74,15 +77,15 @@ export default function AdminDashboard() {
     <div className="max-w-7xl mx-auto space-y-10 py-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header */}
       <AdminPageHeader
-        eyebrow="Tổng quan hệ thống"
-        title="Admin Dashboard"
-        subtitle="Theo dõi hiệu suất kinh doanh, quản lý các yêu cầu đặt phòng và báo cáo doanh thu theo thời gian thực."
+        eyebrow={t('admin.dashboard.eyebrow')}
+        title={t('admin.dashboard.pageTitle')}
+        subtitle={t('admin.dashboard.subtitle')}
         actions={
           <Link
             to="/admin/calendar"
             className="px-4 py-2.5 bg-[var(--color-surface)] hover:bg-gray-200 text-[var(--color-text-primary)] text-sm font-semibold rounded-xl transition-all flex items-center gap-2"
           >
-            Xem lịch phòng <ChevronRight className="w-4 h-4" />
+            {t('admin.dashboard.viewCalendar')} <ChevronRight className="w-4 h-4" />
           </Link>
         }
       />
@@ -90,29 +93,29 @@ export default function AdminDashboard() {
       {/* Row 1: KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <KPICard
-          title="Đơn đặt hôm nay"
+          title={t('admin.dashboard.kpi.todayBookings.title')}
           value={stats.todayBookings}
           icon={<Clock className="w-5 h-5" />}
-          description="Lượt đặt phòng mới"
+          description={t('admin.dashboard.kpi.todayBookings.desc')}
         />
         <KPICard
-          title="Doanh thu ngày"
-          value={`${stats.todayRevenue.toLocaleString()} VNĐ`}
+          title={t('admin.dashboard.kpi.todayRevenue.title')}
+          value={`${stats.todayRevenue.toLocaleString()} VND`}
           icon={<DollarSign className="w-5 h-5" />}
-          description="Doanh thu thực nhận"
+          description={t('admin.dashboard.kpi.todayRevenue.desc')}
           highlight
         />
         <KPICard
-          title="Tỷ lệ lấp đầy"
+          title={t('admin.dashboard.kpi.occupancy.title')}
           value={`${stats.occupancyRate}%`}
           icon={<Percent className="w-5 h-5" />}
-          description="Hiệu suất sử dụng phòng"
+          description={t('admin.dashboard.kpi.occupancy.desc')}
         />
         <KPICard
-          title="Đang chờ duyệt"
+          title={t('admin.dashboard.kpi.pending.title')}
           value={stats.pendingBookings}
           icon={<Users className="w-5 h-5" />}
-          description="Booking cần xác nhận"
+          description={t('admin.dashboard.kpi.pending.desc')}
         />
       </div>
 
@@ -121,12 +124,12 @@ export default function AdminDashboard() {
         <div className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-[var(--shadow-sm)] border border-[var(--color-border)]">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-xl font-bold text-[var(--color-text-primary)]">Doanh thu 7 ngày qua</h2>
-              <p className="text-xs text-[var(--color-text-muted)] mt-1 font-medium italic">Đơn vị: VNĐ</p>
+              <h2 className="text-xl font-bold text-[var(--color-text-primary)]">{t('admin.dashboard.chart.title')}</h2>
+              <p className="text-xs text-[var(--color-text-muted)] mt-1 font-medium italic">{t('admin.dashboard.chart.unit')}</p>
             </div>
             <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--color-surface)] rounded-full border border-[var(--color-border)]">
               <div className="w-2 h-2 rounded-full bg-[var(--color-primary)]"></div>
-              <span className="text-[10px] font-bold text-[var(--color-text-primary)] uppercase tracking-wider">Tổng thu</span>
+              <span className="text-[10px] font-bold text-[var(--color-text-primary)] uppercase tracking-wider">{t('admin.dashboard.chart.totalRevenue')}</span>
             </div>
           </div>
           <div className="h-[350px] w-full">
@@ -156,7 +159,7 @@ export default function AdminDashboard() {
                   }}
                   itemStyle={{ fontSize: '13px', fontWeight: 'bold', color: '#111827' }}
                   labelStyle={{ fontSize: '11px', color: '#6B7280', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}
-                  formatter={(value: any) => [`${Number(value).toLocaleString()} USD`, "Doanh thu"]}
+                  formatter={(value: any) => [`${Number(value).toLocaleString()} VND`, t('admin.dashboard.chart.tooltipLabel')]}
                 />
                 <Line
                   type="monotone"
@@ -173,17 +176,16 @@ export default function AdminDashboard() {
 
         {/* Recent Actions / Info */}
         <div className="bg-white p-8 rounded-3xl shadow-[var(--shadow-sm)] border border-[var(--color-border)] flex flex-col">
-           <h3 className="text-lg font-bold text-[var(--color-text-primary)] mb-6 border-b border-[var(--color-border)] pb-4">
-              Phân tích nhanh
-           </h3>
-           
-           
-           <div className="mt-8 p-6 bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)]">
-              <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-2">Lời khuyên ADM</p>
-              <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed italic">
-                "Hôm nay có 12 lượt khách sẽ check-out. Hãy chuẩn bị các báo cáo doanh thu cuối ngày trước 17:00."
-              </p>
-           </div>
+          <h3 className="text-lg font-bold text-[var(--color-text-primary)] mb-6 border-b border-[var(--color-border)] pb-4">
+            {t('admin.dashboard.analysis.title')}
+          </h3>
+
+          <div className="mt-8 p-6 bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)]">
+            <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-2">{t('admin.dashboard.analysis.adviceLabel')}</p>
+            <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed italic">
+              {t('admin.dashboard.analysis.adviceContent')}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -191,23 +193,23 @@ export default function AdminDashboard() {
       <div className="bg-white rounded-3xl shadow-[var(--shadow-lg)] border border-[var(--color-border)] overflow-hidden">
         <div className="px-8 py-6 flex items-center justify-between border-b border-[var(--color-border)]">
           <h2 className="text-xl font-bold text-[var(--color-text-primary)] flex items-center gap-3">
-            Đặt phòng gần đây
+            {t('admin.dashboard.recentBookings.title')}
           </h2>
           <Link
             to="/admin/bookings"
             className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-primary-dark)] transition-colors flex items-center gap-2 group"
           >
-            Xem tất cả <ExternalLink className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+            {t('admin.dashboard.recentBookings.viewAll')} <ExternalLink className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-[var(--color-surface)]">
-                <th className="px-8 py-4 text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Khách hàng</th>
-                <th className="px-8 py-4 text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Số phòng</th>
-                <th className="px-8 py-4 text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Trạng thái</th>
-                <th className="px-8 py-4 text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-[0.2em] text-right">Hành động</th>
+                <th className="px-8 py-4 text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-[0.2em]">{t('admin.dashboard.recentBookings.table.customer')}</th>
+                <th className="px-8 py-4 text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-[0.2em]">{t('admin.dashboard.recentBookings.table.room')}</th>
+                <th className="px-8 py-4 text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-[0.2em]">{t('admin.dashboard.recentBookings.table.status')}</th>
+                <th className="px-8 py-4 text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-[0.2em] text-right">{t('admin.dashboard.recentBookings.table.action')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)] text-[var(--color-text-primary)]">
@@ -219,7 +221,7 @@ export default function AdminDashboard() {
                   </td>
                   <td className="px-8 py-5">
                     <span className="px-2.5 py-1 bg-white border border-[var(--color-border)] rounded-md text-xs font-bold">
-                      Phòng {booking.room}
+                      {t('admin.dashboard.recentBookings.roomPrefix', { number: booking.room })}
                     </span>
                   </td>
                   <td className="px-8 py-5">
@@ -230,7 +232,7 @@ export default function AdminDashboard() {
                       to={`/admin/bookings?id=${booking.id}`}
                       className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--color-text-primary)] hover:underline decoration-[var(--color-primary)] decoration-2 underline-offset-4"
                     >
-                      Chi tiết <ChevronRight className="w-3.5 h-3.5" />
+                      {t('admin.dashboard.recentBookings.detail')} <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
                   </td>
                 </tr>
@@ -243,9 +245,9 @@ export default function AdminDashboard() {
   );
 }
 
-function KPICard({ title, value, icon, description, highlight }: { 
-  title: string; 
-  value: string | number; 
+function KPICard({ title, value, icon, description, highlight }: {
+  title: string;
+  value: string | number;
   icon: React.ReactNode;
   description?: string;
   highlight?: boolean;
@@ -253,8 +255,8 @@ function KPICard({ title, value, icon, description, highlight }: {
   return (
     <div className={cn(
       "p-6 rounded-3xl transition-all duration-300 border",
-      highlight 
-        ? "bg-[var(--color-primary)] border-transparent shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)]" 
+      highlight
+        ? "bg-[var(--color-primary)] border-transparent shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)]"
         : "bg-white border-[var(--color-border)] shadow-[var(--shadow-sm)] hover:border-gray-300"
     )}>
       <div className="flex items-center justify-between mb-4">

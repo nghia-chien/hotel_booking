@@ -1,13 +1,13 @@
 import Booking from "../models/Booking.js";
 
 export const startBookingCron = () => {
-  // Chạy mỗi 1 phút để kiểm tra và tiến hành hủy
+  // Run every 1 minute to check and cancel
   setInterval(async () => {
     try {
-      // Lấy thời điểm 15 phút trước
+      // Get the time 15 minutes ago
       const expirationTime = new Date(Date.now() - 15 * 60 * 1000);
       
-      // Update các booking đang Pending được tạo trước thời gian đó
+      // Update pending bookings created before that time
       const result = await Booking.updateMany(
         {
           status: "Pending",
@@ -28,5 +28,5 @@ export const startBookingCron = () => {
     } catch (error) {
       console.error("[Cron] Lỗi khi quét tự động hủy booking:", error);
     }
-  }, 60 * 1000); // 1 phút
+  }, 60 * 1000); 
 };

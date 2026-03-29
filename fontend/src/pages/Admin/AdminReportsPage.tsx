@@ -8,11 +8,11 @@ import {
   TrendingUp, 
   Users, 
   Hotel,
-
   Search,
   AlertCircle
 } from "lucide-react";
 import { AdminPageHeader, AlertMessage } from "../../components/admin";
+import { useTranslation } from "react-i18next";
 
 interface OccupancyResponse {
   success: boolean;
@@ -46,13 +46,15 @@ interface RoomTypeListResponse {
 const toISODate = (d: Date) => d.toISOString().slice(0, 10);
 
 export default function AdminReportsPage() {
+  const { t } = useTranslation();
+
   const [startDate, setStartDate] = useState(() => toISODate(new Date()));
   const [endDate, setEndDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 7);
     return toISODate(d);
   });
-
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [occupancy, setOccupancy] = useState<OccupancyResponse["data"] | null>(
@@ -114,21 +116,25 @@ export default function AdminReportsPage() {
     <div className="max-w-7xl mx-auto space-y-10 py-6 animate-in fade-in duration-500">
       {/* Header */}
       <AdminPageHeader
-        eyebrow="Phân tích số liệu"
-        title="Báo cáo & Thống kê"
-        subtitle="Theo dõi hiệu suất lấp đầy phòng và các danh mục dịch vụ phổ biến nhất."
+        eyebrow={t('admin.reports.eyebrow')}
+        title={t('admin.reports.pageTitle')}
+        subtitle={t('admin.reports.subtitle')}
       />
 
       {/* Filter Section */}
       <section className="bg-white rounded-3xl p-8 shadow-[var(--shadow-sm)] border border-[var(--color-border)]">
         <div className="flex items-center gap-3 mb-6">
           <Calendar className="w-5 h-5 text-[var(--color-text-muted)]" />
-          <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--color-text-primary)]">Khoảng thời gian báo cáo</h2>
+          <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--color-text-primary)]">
+            {t('admin.reports.filter.title')}
+          </h2>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Từ ngày</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">
+              {t('admin.reports.filter.startDate')}
+            </label>
             <input
               type="date"
               className="w-full bg-[var(--color-surface)] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
@@ -137,7 +143,9 @@ export default function AdminReportsPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Đến ngày</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">
+              {t('admin.reports.filter.endDate')}
+            </label>
             <input
               type="date"
               className="w-full bg-[var(--color-surface)] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
@@ -155,7 +163,7 @@ export default function AdminReportsPage() {
             ) : (
               <Search className="w-4 h-4" />
             )}
-            Xem báo cáo
+            {t('admin.reports.filter.submit')}
           </button>
         </div>
 
@@ -171,8 +179,12 @@ export default function AdminReportsPage() {
            </div>
            
            <div>
-             <h3 className="text-lg font-bold text-[var(--color-text-primary)] mb-1">Occupancy Rate</h3>
-             <p className="text-xs text-[var(--color-text-muted)] font-medium mb-8 italic">Hiệu suất lấp đầy phòng</p>
+             <h3 className="text-lg font-bold text-[var(--color-text-primary)] mb-1">
+               {t('admin.reports.occupancy.title')}
+             </h3>
+             <p className="text-xs text-[var(--color-text-muted)] font-medium mb-8 italic">
+               {t('admin.reports.occupancy.subtitle')}
+             </p>
              
              {occupancy ? (
                <div className="space-y-8">
@@ -193,31 +205,37 @@ export default function AdminReportsPage() {
                    <div className="flex items-center justify-between text-xs font-bold text-[var(--color-text-secondary)]">
                       <div className="flex items-center gap-2">
                          <Hotel className="w-4 h-4 text-[var(--color-text-muted)]" />
-                         <span>{occupancy.occupiedRooms ?? 0} phòng đang được đặt</span>
+                         <span>{t('admin.reports.occupancy.bookedRooms', { count: occupancy.occupiedRooms ?? 0 })}</span>
                       </div>
-                      <span>Tổng: {occupancy.totalRooms}</span>
+                      <span>{t('admin.reports.occupancy.totalRooms', { count: occupancy.totalRooms })}</span>
                    </div>
                  </div>
                </div>
              ) : (
-               <div className="py-10 text-center text-[var(--color-text-muted)] italic text-sm">Chưa có dữ liệu thống kê.</div>
+               <div className="py-10 text-center text-[var(--color-text-muted)] italic text-sm">
+                 {t('admin.reports.occupancy.noData')}
+               </div>
              )}
            </div>
 
            <div className="mt-10 p-5 bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] flex items-center gap-4">
               <TrendingUp className="w-8 h-8 text-emerald-600 opacity-50" />
               <p className="text-[10px] font-medium text-[var(--color-text-secondary)] leading-relaxed uppercase tracking-widest">
-                Xu hướng lấp đầy phòng {occupancy && occupancy.occupancyRate > 70 ? "Vượt ngưỡng" : "Ổn định"}
+                {t('admin.reports.occupancy.trend')} {occupancy && occupancy.occupancyRate > 70 ? t('admin.reports.occupancy.overThreshold') : t('admin.reports.occupancy.stable')}
               </p>
            </div>
         </div>
 
         {/* Popular Room Types Card */}
-        <div className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-[var(--shadow-sm)] border border-[var(--color-border)]">
+        <div className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-[var(--shadow-sm)] border border-[var(--color-border)] flex flex-col">
           <div className="flex items-center justify-between mb-8 border-b border-[var(--color-border)] pb-4">
             <div>
-               <h3 className="text-lg font-bold text-[var(--color-text-primary)] mb-1">Hạng phòng phổ biến</h3>
-               <p className="text-xs text-[var(--color-text-muted)] font-medium italic">Sắp xếp theo số lượt đặt phòng</p>
+               <h3 className="text-lg font-bold text-[var(--color-text-primary)] mb-1">
+                 {t('admin.reports.popularRooms.title')}
+               </h3>
+               <p className="text-xs text-[var(--color-text-muted)] font-medium italic">
+                 {t('admin.reports.popularRooms.subtitle')}
+               </p>
             </div>
             <BarChart3 className="w-6 h-6 text-[var(--color-text-muted)]" />
           </div>
@@ -225,7 +243,7 @@ export default function AdminReportsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {popular.length === 0 && (
               <div className="md:col-span-2 py-20 text-center text-[var(--color-text-muted)] italic text-sm border-2 border-dashed border-[var(--color-border)] rounded-3xl">
-                Chưa có dữ liệu đặt phòng cho khoảng thời gian này.
+                {t('admin.reports.popularRooms.noData')}
               </div>
             )}
             {popular.map((p, idx) => (
@@ -242,7 +260,9 @@ export default function AdminReportsPage() {
                         <p className="text-sm font-bold text-[var(--color-text-primary)]">
                            {roomTypeNameById.get(p._id) ?? p._id}
                         </p>
-                        <p className="text-[10px] text-[var(--color-text-muted)] font-mono tracking-tighter">ID: {p._id}</p>
+                        <p className="text-[10px] text-[var(--color-text-muted)] font-mono tracking-tighter">
+                          {t('admin.reports.popularRooms.idLabel')} {p._id}
+                        </p>
                      </div>
                   </div>
                 </div>
@@ -250,11 +270,13 @@ export default function AdminReportsPage() {
                 <div className="flex items-end justify-between">
                    <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-text-secondary)]">
                       <Users className="w-3.5 h-3.5" />
-                      <span>{p.bookings} lượt đặt</span>
+                      <span>{t('admin.reports.popularRooms.bookingsCount', { count: p.bookings })}</span>
                    </div>
                    <div className="flex items-center gap-1.5 text-[var(--color-primary-dark)]">
                       <TrendingUp className="w-4 h-4" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Hot</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">
+                        {t('admin.reports.popularRooms.hot')}
+                      </span>
                    </div>
                 </div>
               </div>
@@ -262,10 +284,12 @@ export default function AdminReportsPage() {
           </div>
           
           {popular.length > 0 && (
-            <div className="mt-8 flex items-center gap-2 px-4 py-3 bg-amber-50 rounded-xl border border-amber-100">
-               <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Gợi ý quản trị:</span>
+            <div className="mt-8 flex items-center gap-2 px-4 py-3 bg-amber-50 rounded-xl border border-amber-100 mt-auto">
+               <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">
+                 {t('admin.reports.popularRooms.suggestionLabel')}
+               </span>
                <p className="text-xs text-amber-700 font-medium">
-                  Hãy cân nhắc tăng giá cơ bản cho hạng phòng {roomTypeNameById.get(popular[0]._id) || "phổ biến nhất"} vào mùa cao điểm.
+                 {t('admin.reports.popularRooms.suggestionText', { roomName: roomTypeNameById.get(popular[0]._id) || t('admin.reports.popularRooms.mostPopularFallback') })}
                </p>
             </div>
           )}

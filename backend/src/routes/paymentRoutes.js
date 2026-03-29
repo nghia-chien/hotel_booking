@@ -48,8 +48,8 @@ router.post("/vnpay/create-order", authenticate, async (req, res, next) => {
 });
 
 // ─── GET /api/payments/vnpay/return ──────────────────────────────────────────
-// VNPay gọi endpoint này sau khi user thanh toán.
-// Backend verify → redirect về frontend (không cần frontend gọi thêm API).
+// VNPay called this endpoint after the user paid.
+// Backend verify → redirect to frontend (no need for frontend to call additional API).
 
 router.get("/vnpay/return", async (req, res) => {
   console.log("\n========== [VNPay] RETURN ==========");
@@ -76,8 +76,8 @@ router.get("/vnpay/return", async (req, res) => {
 });
 
 // ─── POST /api/payments/vnpay/ipn ─────────────────────────────────────────────
-// Server-to-server notification từ VNPay — backup khi user đóng browser sớm.
-// Phải trả về { RspCode, Message } đúng format, không redirect.
+// Server-to-server notification from VNPay — backup when user closes browser early.
+// Must return { RspCode, Message } in the correct format, do not redirect.
 
 router.post("/vnpay/ipn", async (req, res) => {
   console.log("\n========== [VNPay] IPN ==========");

@@ -1,40 +1,38 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next'; 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import StarRating from '../../components/ui/StarRating';
 import { cn } from '../../components/ui/utils';
-import type { Testimonial } from '../../types/property';
 
-const TESTIMONIALS: Testimonial[] = [
+const TESTIMONIALS = [
   {
     id: '1',
-    quote:
-      'Tôi đã đặt phòng qua đây và trải nghiệm thực sự tuyệt vời! Quy trình nhanh chóng, phòng sạch sẽ và nhân viên rất thân thiện.',
-    author: 'Nguyễn Minh Tuấn',
-    location: 'Hà Nội',
+    quoteKey: 'testimonials.list.0.quote',
+    authorKey: 'testimonials.list.0.author',
+    locationKey: 'testimonials.list.0.location',
     rating: 5,
     avatar: 'NT',
   },
   {
     id: '2',
-    quote:
-      'Giá cả hợp lý, phòng đẹp hơn mong đợi. Sẽ tiếp tục sử dụng dịch vụ cho những chuyến đi tiếp theo.',
-    author: 'Trần Thị Lan',
-    location: 'TP. Hồ Chí Minh',
+    quoteKey: 'testimonials.list.1.quote',
+    authorKey: 'testimonials.list.1.author',
+    locationKey: 'testimonials.list.1.location',
     rating: 5,
     avatar: 'TL',
   },
   {
     id: '3',
-    quote:
-      'Hệ thống đặt phòng trực quan, dễ dùng. Tôi thích tính năng xem lịch và giá theo ngày.',
-    author: 'Phạm Quốc Hùng',
-    location: 'Đà Nẵng',
+    quoteKey: 'testimonials.list.2.quote',
+    authorKey: 'testimonials.list.2.author',
+    locationKey: 'testimonials.list.2.location',
     rating: 4,
     avatar: 'PH',
   },
 ];
 
 export default function TestimonialSection() {
+  const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
   const current = TESTIMONIALS[activeIndex];
 
@@ -42,10 +40,10 @@ export default function TestimonialSection() {
     <section className="py-20 bg-[var(--color-primary)] rounded-b-3xl">
       <div className="max-w-3xl mx-auto px-4 text-center">
         <p className="text-[var(--color-primary-foreground)]/60 text-xs font-bold uppercase tracking-widest mb-3">
-          Khách hàng nói gì
+          {t('testimonials.eyebrow')}
         </p>
         <h2 className="font-serif text-3xl font-bold text-[var(--color-primary-foreground)] mb-12">
-          Trải nghiệm thực từ khách hàng của chúng tôi
+          {t('testimonials.title')}
         </h2>
 
         {/* CARD */}
@@ -54,17 +52,17 @@ export default function TestimonialSection() {
             <StarRating rating={current.rating} size="md" />
           </div>
           <blockquote className="font-serif text-xl text-[var(--color-text-primary)] italic leading-relaxed mb-8">
-            "{current.quote}"
+            "{t(current.quoteKey)}"
           </blockquote>
           <div className="flex flex-col items-center gap-2">
             <div className="w-14 h-14 rounded-full bg-[var(--color-surface)] border-2 border-[var(--color-primary)]/20 flex items-center justify-center font-bold text-[var(--color-text-primary)] text-lg">
               {current.avatar}
             </div>
             <p className="font-semibold text-[var(--color-text-primary)]">
-              {current.author}
+              {t(current.authorKey)}
             </p>
             <p className="text-sm text-[var(--color-text-secondary)]">
-              {current.location}
+              {t(current.locationKey)}
             </p>
           </div>
         </div>

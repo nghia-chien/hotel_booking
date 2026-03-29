@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next"; 
 import { apiRequest } from "../../api/client";
 import { cn } from "../../components/ui/utils";
 import { 
@@ -6,12 +7,10 @@ import {
   Trash2, 
   Calendar, 
   Tag, 
+  Tent,
   Percent, 
   DollarSign, 
   Clock,
-  CheckCircle2,
-  AlertCircle,
-  Tent,
   ArrowRight
 } from "lucide-react";
 import { AdminPageHeader, AlertMessage } from "../../components/admin";
@@ -39,6 +38,9 @@ interface ListResponse<T> {
 }
 
 const AdminPricingRulesPage = () => {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === "vi" ? "vi-VN" : "en-US";
+  
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const [rules, setRules] = useState<PricingRule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -91,7 +93,7 @@ const AdminPricingRulesPage = () => {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (new Date(startDate) > new Date(endDate)) {
-        setError("Ngày bắt đầu không thể sau ngày kết thúc.");
+        setError(t('admin.pricingRules.msg.dateError'));
         return;
     }
 
@@ -113,7 +115,7 @@ const AdminPricingRulesPage = () => {
         },
         { auth: true }
       );
-      setMessage("Đã tạo luật giá mới thành công.");
+      setMessage(t('admin.pricingRules.msg.createSuccess'));
       setName("");
       setValue(10);
       setApplyWeekend(false);
@@ -125,14 +127,14 @@ const AdminPricingRulesPage = () => {
   };
 
   const remove = async (id: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa luật giá này?")) return;
+    if (!window.confirm(t('admin.pricingRules.msg.confirmDelete'))) return;
     setError(null);
     setMessage(null);
     try {
       await apiRequest(`/api/pricing-rules/${id}`, "DELETE", undefined, {
         auth: true
       });
-      setMessage("Đã xóa luật giá.");
+      setMessage(t('admin.pricingRules.msg.deleteSuccess'));
       void load();
     } catch (err) {
       setError((err as Error).message);
@@ -141,27 +143,27 @@ const AdminPricingRulesPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-10 py-6 animate-in fade-in duration-500">
-      {/* Header */}
       <AdminPageHeader
-        eyebrow="Cấu hình doanh thu"
-        title="Giá theo mùa & Sự kiện"
-        subtitle="Thiết lập các quy tắc thay đổi giá tự động dựa trên thời điểm, ngày lễ hoặc cuối tuần."
+        eyebrow={t('admin.pricingRules.eyebrow')}
+        title={t('admin.pricingRules.pageTitle')}
+        subtitle={t('admin.pricingRules.subtitle')}
       />
 
-      {/* Form Section */}
       <section className="bg-white rounded-3xl p-8 shadow-[var(--shadow-sm)] border border-[var(--color-border)]">
         <div className="flex items-center gap-3 mb-8 border-b border-[var(--color-border)] pb-4">
           <div className="p-2 bg-[var(--color-surface)] rounded-lg text-[var(--color-text-primary)]">
             <Plus className="w-4 h-4" />
           </div>
           <h2 className="text-lg font-bold text-[var(--color-text-primary)]">
-            Tạo quy tắc giá mới
+            {t('admin.pricingRules.form.title')}
           </h2>
         </div>
 
         <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Loại phòng áp dụng</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">
+              {t('admin.pricingRules.form.roomType')}
+            </label>
             <select
               className="w-full bg-[var(--color-surface)] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--color-primary)] transition-all appearance-none cursor-pointer"
               value={roomType}
@@ -177,21 +179,25 @@ const AdminPricingRulesPage = () => {
           </div>
 
           <div className="space-y-1.5 md:col-span-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Tên quy tắc (Vd: Mùa du lịch Hè 2024)</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">
+              {t('admin.pricingRules.form.ruleName')}
+            </label>
             <div className="relative">
               <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
               <input
                 className="w-full bg-[var(--color-surface)] border-none rounded-xl pl-10 pr-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Vd: Ngày lễ Quốc khánh 02/09"
+                placeholder={t('admin.pricingRules.form.ruleNamePlaceholder')}
                 required
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Kiểu thay đổi giá</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">
+              {t('admin.pricingRules.form.priceType')}
+            </label>
             <select
               className="w-full bg-[var(--color-surface)] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--color-primary)] transition-all appearance-none cursor-pointer"
               value={priceType}
@@ -199,13 +205,15 @@ const AdminPricingRulesPage = () => {
                 setPriceType(e.target.value as "fixed" | "percentage")
               }
             >
-              <option value="percentage">Tăng theo phần trăm (%)</option>
-              <option value="fixed">Cộng thêm số tiền cố định (USD)</option>
+              <option value="percentage">{t('admin.pricingRules.form.typePercentage')}</option>
+              <option value="fixed">{t('admin.pricingRules.form.typeFixed')}</option>
             </select>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Ngày bắt đầu</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">
+              {t('admin.pricingRules.form.startDate')}
+            </label>
             <input
               type="date"
               className="w-full bg-[var(--color-surface)] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
@@ -216,7 +224,9 @@ const AdminPricingRulesPage = () => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Ngày kết thúc</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">
+              {t('admin.pricingRules.form.endDate')}
+            </label>
             <input
               type="date"
               className="w-full bg-[var(--color-surface)] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
@@ -227,7 +237,9 @@ const AdminPricingRulesPage = () => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Giá trị tăng thêm</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1">
+              {t('admin.pricingRules.form.value')}
+            </label>
             <div className="relative">
               {priceType === "percentage" ? (
                 <Percent className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
@@ -252,7 +264,9 @@ const AdminPricingRulesPage = () => {
                 checked={applyWeekend}
                 onChange={(e) => setApplyWeekend(e.target.checked)}
               />
-              <span className="text-sm font-bold text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]">Cuối tuần (T7, CN)</span>
+              <span className="text-sm font-bold text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]">
+                {t('admin.pricingRules.form.applyWeekend')}
+              </span>
             </label>
             <label className="flex items-center gap-3 group cursor-pointer">
               <input
@@ -261,7 +275,9 @@ const AdminPricingRulesPage = () => {
                 checked={applyHolidays}
                 onChange={(e) => setApplyHolidays(e.target.checked)}
               />
-              <span className="text-sm font-bold text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]">Sự kiện & Ngày lễ</span>
+              <span className="text-sm font-bold text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]">
+                {t('admin.pricingRules.form.applyHolidays')}
+              </span>
             </label>
           </div>
 
@@ -270,19 +286,19 @@ const AdminPricingRulesPage = () => {
               type="submit"
               className="px-8 py-3 bg-black text-white text-sm font-bold uppercase tracking-widest rounded-xl shadow-[var(--shadow-sm)] hover:bg-gray-800 transition-all flex items-center gap-2"
             >
-              Áp dụng quy tắc
+              {t('admin.pricingRules.form.submit')}
             </button>
           </div>
         </form>
       </section>
 
-      {/* Messages */}
       <AlertMessage type="error" message={error || ""} />
       <AlertMessage type="success" message={message || ""} />
 
-      {/* List Section */}
       <section className="space-y-4">
-        <h3 className="text-lg font-bold text-[var(--color-text-primary)] px-2">Quy tắc đang hiệu lực</h3>
+        <h3 className="text-lg font-bold text-[var(--color-text-primary)] px-2">
+          {t('admin.pricingRules.list.title')}
+        </h3>
         
         {loading ? (
           <div className="flex items-center justify-center py-20 bg-white rounded-3xl border border-[var(--color-border)]">
@@ -299,7 +315,7 @@ const AdminPricingRulesPage = () => {
                   <button
                     className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors"
                     onClick={() => remove(r._id)}
-                    title="Gỡ bỏ quy tắc"
+                    title={t('admin.pricingRules.list.removeAction')}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -310,15 +326,19 @@ const AdminPricingRulesPage = () => {
                 
                 <div className="bg-[var(--color-surface)] rounded-2xl p-4 space-y-3">
                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-[var(--color-text-muted)] uppercase tracking-widest">Thời gian</span>
+                      <span className="text-[var(--color-text-muted)] uppercase tracking-widest">
+                        {t('admin.pricingRules.list.duration')}
+                      </span>
                       <div className="flex items-center gap-2 text-[var(--color-text-primary)]">
-                         <span>{new Date(r.startDate).toLocaleDateString('vi-VN')}</span>
+                         <span>{new Date(r.startDate).toLocaleDateString(dateLocale)}</span>
                          <ArrowRight className="w-3 h-3" />
-                         <span>{new Date(r.endDate).toLocaleDateString('vi-VN')}</span>
+                         <span>{new Date(r.endDate).toLocaleDateString(dateLocale)}</span>
                       </div>
                    </div>
                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-[var(--color-text-muted)] uppercase tracking-widest">Biến động giá</span>
+                      <span className="text-[var(--color-text-muted)] uppercase tracking-widest">
+                        {t('admin.pricingRules.list.priceChange')}
+                      </span>
                       <span className="px-2.5 py-1 bg-[var(--color-primary)] rounded-lg text-black">
                          {r.priceType === "percentage" ? `+${r.value}%` : `+${r.value.toLocaleString()} USD`}
                       </span>
@@ -328,12 +348,12 @@ const AdminPricingRulesPage = () => {
                 <div className="mt-4 flex gap-3">
                    {r.applyWeekend && (
                      <span className="flex items-center gap-1 text-[10px] font-black uppercase text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
-                        <Clock className="w-3 h-3" /> Weekend
+                        <Clock className="w-3 h-3" /> {t('admin.pricingRules.list.tagWeekend')}
                      </span>
                    )}
                    {r.applyHolidays && (
                      <span className="flex items-center gap-1 text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
-                        <Calendar className="w-3 h-3" /> Holiday
+                        <Calendar className="w-3 h-3" /> {t('admin.pricingRules.list.tagHoliday')}
                      </span>
                    )}
                 </div>
@@ -342,7 +362,9 @@ const AdminPricingRulesPage = () => {
             
             {!loading && rules.length === 0 && (
               <div className="md:col-span-2 text-center py-20 bg-white rounded-3xl border-2 border-dashed border-[var(--color-border)]">
-                <p className="text-[var(--color-text-muted)] font-medium italic">Không có quy tắc giá nào được cài đặt.</p>
+                <p className="text-[var(--color-text-muted)] font-medium italic">
+                  {t('admin.pricingRules.noData')}
+                </p>
               </div>
             )}
           </div>

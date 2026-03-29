@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 
 dotenv.config();
 
-const ACCESS_TOKEN_EXPIRES_IN = "15m";
+const ACCESS_TOKEN_EXPIRES_IN = "1d";
 const REFRESH_TOKEN_EXPIRES_IN = "7d";
 
 const ACCESS_SECRET =

@@ -15,7 +15,7 @@ import {
   Loader2,
   CreditCard
 } from "lucide-react";
-
+import { useTranslation } from "react-i18next";
 type ProfileFields = {
   fullName: string;
   phone: string;
@@ -33,7 +33,7 @@ export default function ProfilePage() {
   const [isUploading, setIsUploading] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [passwordMsg, setPasswordMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
-
+  const { t } = useTranslation();
   const {
     register: regProfile,
     handleSubmit: handleProfileSubmit,
@@ -108,7 +108,7 @@ export default function ProfilePage() {
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
   const avatarUrl = user.avatar ? (user.avatar.startsWith("http") ? user.avatar : `${API_URL}${user.avatar}`) : null;
 
-  return (
+return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row items-center gap-8 bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
         <div className="relative group">
@@ -143,7 +143,7 @@ export default function ProfilePage() {
             className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors font-semibold text-sm"
           >
             <CreditCard className="w-4 h-4" />
-            Lịch sử thanh toán
+            {t('payments.history')}
           </Link>
         </div>
       </div>
@@ -153,16 +153,16 @@ export default function ProfilePage() {
         <section className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm space-y-6">
           <div className="flex items-center gap-2 border-b border-gray-50 pb-4">
             <User className="w-5 h-5 text-blue-600" />
-            <h2 className="text-xl font-bold text-gray-900">Thông tin cá nhân</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('profile.title')}</h2> {/* Dùng "Hồ sơ cá nhân" thay cho "Thông tin cá nhân" */}
           </div>
 
           <form onSubmit={handleProfileSubmit(onProfileSubmit)} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Họ và tên</label>
+              <label className="text-sm font-medium text-gray-700">{t('profile.fullName')}</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
-                  {...regProfile("fullName", { required: "Họ tên là bắt buộc" })}
+                  {...regProfile("fullName", { required: t('profile.validation.nameRequired') })}
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                   placeholder="Nguyễn Văn A"
                 />
@@ -171,7 +171,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Số điện thoại</label>
+              <label className="text-sm font-medium text-gray-700">{t('profile.phone')}</label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -183,7 +183,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Địa chỉ</label>
+              <label className="text-sm font-medium text-gray-700">{t('profile.address')}</label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -209,7 +209,7 @@ export default function ProfilePage() {
               className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isProfileSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              Lưu thay đổi
+              {t('profile.saveChanges')} {/* Cần thêm vào i18n */}
             </button>
           </form>
         </section>
@@ -218,27 +218,27 @@ export default function ProfilePage() {
         <section className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm space-y-6">
           <div className="flex items-center gap-2 border-b border-gray-50 pb-4">
             <Lock className="w-5 h-5 text-blue-600" />
-            <h2 className="text-xl font-bold text-gray-900">Đổi mật khẩu</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('profile.changePassword')}</h2>
           </div>
 
           <form onSubmit={handlePasswordSubmit(onPasswordSubmit)} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Mật khẩu hiện tại</label>
+              <label className="text-sm font-medium text-gray-700">{t('profile.currentPassword')}</label>
               <input
                 type="password"
-                {...regPassword("currentPassword", { required: "Vui lòng nhập mật khẩu hiện tại" })}
+                {...regPassword("currentPassword", { required: t('profile.validation.currentPasswordRequired') })}
                 className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
               />
               {passwordErrors.currentPassword && <p className="text-xs text-red-500">{passwordErrors.currentPassword.message}</p>}
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Mật khẩu mới</label>
+              <label className="text-sm font-medium text-gray-700">{t('profile.newPassword')}</label>
               <input
                 type="password"
                 {...regPassword("newPassword", { 
-                  required: "Vui lòng nhập mật khẩu mới",
-                  minLength: { value: 6, message: "Mật khẩu phải từ 6 ký tự" }
+                  required: t('profile.validation.newPasswordRequired'),
+                  minLength: { value: 6, message: t('profile.validation.passwordMinLength') }
                 })}
                 className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
               />
@@ -246,12 +246,12 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Xác nhận mật khẩu mới</label>
+              <label className="text-sm font-medium text-gray-700">{t('profile.confirmNewPassword')}</label>
               <input
                 type="password"
                 {...regPassword("confirmPassword", { 
-                  required: "Vui lòng xác nhận mật khẩu mới",
-                  validate: (val) => val === newPassword || "Mật khẩu xác nhận không khớp"
+                  required: t('profile.validation.confirmPasswordRequired'),
+                  validate: (val) => val === newPassword || t('profile.validation.passwordMismatch')
                 })}
                 className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
               />
@@ -273,7 +273,7 @@ export default function ProfilePage() {
               className="w-full py-2.5 bg-gray-900 hover:bg-black text-white font-semibold rounded-xl transition-all shadow-md shadow-gray-900/10 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isPasswordSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              Đổi mật khẩu
+              {t('profile.changePassword')}
             </button>
           </form>
         </section>

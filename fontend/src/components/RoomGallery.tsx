@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { toImageUrl } from "../utils/format"
 
 interface Props {
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export default function RoomGallery({ images = [], roomNumber }: Props) {
+  const { t } = useTranslation()
   const [activeImage, setActiveImage] = useState(images[0] || "")
 
   const hero = activeImage
@@ -21,12 +23,12 @@ export default function RoomGallery({ images = [], roomNumber }: Props) {
         {hero ? (
           <img
             src={hero}
-            alt={`Phòng ${roomNumber}`}
+            alt={t('roomGallery.imageAlt', { roomNumber })}
             className="w-full h-full object-cover"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-sm text-black/50">
-            Chưa có ảnh phòng
+            {t('roomGallery.noImage')}
           </div>
         )}
       </div>
@@ -37,6 +39,7 @@ export default function RoomGallery({ images = [], roomNumber }: Props) {
             <img
               key={img}
               src={toImageUrl(img)}
+              alt={t('roomGallery.thumbnailAlt')}
               className={`w-16 h-16 rounded-xl object-cover cursor-pointer border`}
               onClick={() => setActiveImage(img)}
             />

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Heart, MapPin } from 'lucide-react';
 import type { PropertyCardProps } from '../../types/property';
 import { Badge, PropertyAmenityIcon, StarRating } from '../ui';
@@ -21,11 +22,13 @@ export default function PropertyCard({
   onFavorite,
   className,
 }: PropertyCardProps) {
+  const { t } = useTranslation();
+
   const isFeatured = variant === 'featured';
   const isCompact = variant === 'compact';
 
   const displayPrice = pricePerNight ?? totalPrice ?? 0;
-  const displayLabel = priceLabel ?? (pricePerNight != null ? '/đêm' : 'tổng tiền');
+  const displayLabel = priceLabel ?? (pricePerNight != null ? t('propertyCard.perNight') : t('propertyCard.totalPrice'));
 
   return (
     <article
@@ -52,7 +55,7 @@ export default function PropertyCard({
 
         {isFeatured && (
           <Badge variant="primary" size="sm" className="absolute top-3 left-3">
-            Nổi bật
+            {t('propertyCard.featured')}
           </Badge>
         )}
 
@@ -113,7 +116,7 @@ export default function PropertyCard({
                 }}
                 className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
               >
-                Đặt ngay
+                {t('propertyCard.bookNow')}
               </button>
             )}
           </div>

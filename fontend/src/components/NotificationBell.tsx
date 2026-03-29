@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Bell, CheckCircle2, XCircle, CreditCard, RefreshCw, Star } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiRequest } from "../api/client";
 import { formatDistanceToNow } from "date-fns";
-import { vi } from "date-fns/locale";
+import { vi, enUS } from "date-fns/locale"; // Import locales you need
 
 interface Notification {
   _id: string;
@@ -22,11 +23,15 @@ interface NotificationSummaryResponse {
 }
 
 export default function NotificationBell() {
+  const { t, i18n } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // Determine date-fns locale based on i18next language
+  const dateLocale = i18n.language === "vi" ? vi : enUS;
 
   const fetchSummary = async () => {
     try {
@@ -98,10 +103,12 @@ export default function NotificationBell() {
       {isOpen && (
         <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
           <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
-            <h3 className="font-bold text-gray-900 text-sm italic tracking-tight uppercase">Thông báo</h3>
+            <h3 className="font-bold text-gray-900 text-sm italic tracking-tight uppercase">
+              {t('notifications.title')}
+            </h3>
             {unreadCount > 0 && (
               <span className="text-[10px] bg-blue-100 text-blue-600 px-2.5 py-0.5 rounded-full font-black uppercase tracking-widest">
-                {unreadCount} Mới
+                {t('notifications.newCount', { count: unreadCount })}
               </span>
             )}
           </div>
@@ -125,7 +132,7 @@ export default function NotificationBell() {
                       {n.message}
                     </p>
                     <p className="text-[9px] text-gray-400 mt-1 font-medium">
-                      {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: vi })}
+                      {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: dateLocale })}
                     </p>
                   </div>
                   {!n.isRead && <div className="w-2 h-2 bg-blue-500 rounded-full mt-2.5 flex-shrink-0 animate-pulse" />}
@@ -137,8 +144,8 @@ export default function NotificationBell() {
                   <Bell className="w-6 h-6 opacity-20" />
                 </div>
                 <div>
-                   <p className="text-xs font-bold text-gray-500">Mọi thứ đều yên tĩnh</p>
-                   <p className="text-[10px] text-gray-400">Bạn sẽ nhận được thông báo khi có cập nhật mới.</p>
+                   <p className="text-xs font-bold text-gray-500">{t('notifications.emptyTitle')}</p>
+                   <p className="text-[10px] text-gray-400">{t('notifications.emptyDesc')}</p>
                 </div>
               </div>
             )}
@@ -149,7 +156,7 @@ export default function NotificationBell() {
             onClick={() => setIsOpen(false)}
             className="block text-center p-3 text-xs font-black text-blue-600 hover:bg-blue-600 hover:text-white transition-all border-t border-gray-50 uppercase tracking-widest bg-gray-50/50"
           >
-            Xem tất cả
+            {t('notifications.viewAll')}
           </Link>
         </div>
       )}
