@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import {
   Calendar as CalendarIcon,
@@ -25,6 +26,7 @@ export default function BookingSearchForm({
   variant = 'hero',
   className,
 }: BookingSearchFormProps) {
+  const { t } = useTranslation();
   const [checkIn, setCheckIn] = useState<Date | undefined>();
   const [checkOut, setCheckOut] = useState<Date | undefined>();
   const [guests, setGuests] = useState(2);
@@ -89,8 +91,8 @@ export default function BookingSearchForm({
             : 'flex gap-2 items-center'
         )}
       >
-        {/* FIELD 2: Nhận phòng */}
-        <FieldWrapper label="Nhận phòng" className={isCompact ? 'flex-1' : ''}>
+        {/* FIELD 1: Check-in */}
+        <FieldWrapper label={t('bookingSearch.checkInLabel')} className={isCompact ? 'flex-1' : ''}>
           <Popover open={checkInOpen} onOpenChange={setCheckInOpen}>
             <PopoverTrigger asChild>
               <button
@@ -105,7 +107,7 @@ export default function BookingSearchForm({
                       : 'text-[var(--color-text-muted)]'
                   }
                 >
-                  {checkIn ? format(checkIn, 'dd MMM yyyy') : 'Chọn ngày'}
+                  {checkIn ? format(checkIn, 'dd MMM yyyy') : t('bookingSearch.selectDate')}
                 </span>
               </button>
             </PopoverTrigger>
@@ -123,8 +125,8 @@ export default function BookingSearchForm({
           </Popover>
         </FieldWrapper>
 
-        {/* FIELD 3: Trả phòng */}
-        <FieldWrapper label="Trả phòng" className={isCompact ? 'flex-1' : ''}>
+        {/* FIELD 2: Check-out */}
+        <FieldWrapper label={t('bookingSearch.checkOutLabel')} className={isCompact ? 'flex-1' : ''}>
           <Popover open={checkOutOpen} onOpenChange={setCheckOutOpen}>
             <PopoverTrigger asChild>
               <button
@@ -139,7 +141,7 @@ export default function BookingSearchForm({
                       : 'text-[var(--color-text-muted)]'
                   }
                 >
-                  {checkOut ? format(checkOut, 'dd MMM yyyy') : 'Chọn ngày'}
+                  {checkOut ? format(checkOut, 'dd MMM yyyy') : t('bookingSearch.selectDate')}
                 </span>
               </button>
             </PopoverTrigger>
@@ -159,8 +161,8 @@ export default function BookingSearchForm({
           </Popover>
         </FieldWrapper>
 
-        {/* FIELD 4: Số khách */}
-        <FieldWrapper label="Số khách" className={isCompact ? 'flex-1' : ''}>
+        {/* FIELD 3: Guests */}
+        <FieldWrapper label={t('bookingSearch.guestsLabel')} className={isCompact ? 'flex-1' : ''}>
           <Popover open={guestsOpen} onOpenChange={setGuestsOpen}>
             <PopoverTrigger asChild>
               <button
@@ -169,14 +171,14 @@ export default function BookingSearchForm({
               >
                 <Users className="w-4 h-4 text-[var(--color-text-muted)]" />
                 <span className="text-[var(--color-text-primary)]">
-                  {guests} khách
+                  {t('bookingSearch.guestsCount', { count: guests })}
                 </span>
               </button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-52">
               <div className="p-3 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Số khách</span>
+                  <span className="text-sm font-medium">{t('bookingSearch.guestsLabel')}</span>
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => setGuests((g) => Math.max(1, g - 1))}
@@ -202,7 +204,7 @@ export default function BookingSearchForm({
                   className="w-full"
                   onClick={() => setGuestsOpen(false)}
                 >
-                  Xong
+                  {t('bookingSearch.done')}
                 </Button>
               </div>
             </PopoverContent>
@@ -224,12 +226,12 @@ export default function BookingSearchForm({
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                Đang tìm...
+                {t('bookingSearch.searching')}
               </>
             ) : (
               <>
                 <Search className="w-4 h-4 mr-2" />
-                Tìm kiếm
+                {t('bookingSearch.searchButton')}
               </>
             )}
           </Button>

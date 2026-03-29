@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { apiRequest } from "../api/client";
 import {
   Calendar,
@@ -47,6 +48,7 @@ interface Booking {
 };
 
 export default function BookingDetailPage() {
+  const { t } = useTranslation(); 
   const { id } = useParams();
   const navigate = useNavigate();
   const [booking, setBooking] = useState<Booking | null>(null);
@@ -112,7 +114,7 @@ export default function BookingDetailPage() {
       );
       setHasReviewed(true);
       setShowReviewModal(false);
-      alert("Cảm ơn bạn đã đánh giá!");
+      alert(t('bookingDetail.alerts.reviewSuccess'));
     } catch (err) {
       alert((err as Error).message);
     } finally {
@@ -130,7 +132,7 @@ export default function BookingDetailPage() {
         }
       });
 
-      if (!resp.ok) throw new Error("Không thể tải hoá đơn");
+      if (!resp.ok) throw new Error(t('bookingDetail.alerts.invoiceError'));
 
       const blob = await resp.blob();
       const url = window.URL.createObjectURL(blob);
@@ -152,7 +154,7 @@ export default function BookingDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-        <p className="text-gray-500">Đang tải thông tin booking...</p>
+        <p className="text-gray-500">{t('bookingDetail.loadingInfo')}</p>
       </div>
     );
   }
@@ -161,10 +163,10 @@ export default function BookingDetailPage() {
     return (
       <div className="max-w-2xl mx-auto text-center space-y-4">
         <XCircle className="w-16 h-16 text-red-500 mx-auto" />
-        <h2 className="text-2xl font-bold">Không tìm thấy booking</h2>
-        <p className="text-gray-600">{error || "Có lỗi xảy ra khi tải dữ liệu."}</p>
+        <h2 className="text-2xl font-bold">{t('bookingDetail.error.title')}</h2>
+        <p className="text-gray-600">{error || t('bookingDetail.error.message')}</p>
         <button onClick={() => navigate("/my-bookings")} className="text-blue-600 hover:underline">
-          Quay lại danh sách
+          {t('bookingDetail.error.backToList')}
         </button>
       </div>
     );
@@ -184,7 +186,7 @@ export default function BookingDetailPage() {
         className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
       >
         <ChevronLeft className="w-4 h-4" />
-        Quay lại
+        {t('bookingDetail.back')}
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -196,7 +198,7 @@ export default function BookingDetailPage() {
                 <img src={roomImage} alt={booking.room.name} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
-                  Phòng chưa có ảnh
+                  {t('bookingDetail.noImage')}
                 </div>
               )}
               <div className="absolute top-4 left-4">
@@ -235,12 +237,12 @@ export default function BookingDetailPage() {
                     <Moon className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{nights} đêm</p>
-                    <p className="text-xs text-gray-500">{booking.guests} khách</p>
+                    <p className="text-sm font-medium">{t('bookingDetail.nightsCount', { count: nights })}</p>
+                    <p className="text-xs text-gray-500">{t('bookingDetail.guestsCount', { count: booking.guests })}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-gray-400">Tổng cộng</p>
+                  <p className="text-xs text-gray-400">{t('bookingDetail.total')}</p>
                   <p className="text-lg font-bold text-blue-600">{booking.totalPrice.toLocaleString()} $</p>
                 </div>
               </div>
@@ -250,15 +252,15 @@ export default function BookingDetailPage() {
           <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
             <h2 className="font-bold flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-gray-400" />
-              Chi tiết giá
+              {t('bookingDetail.priceDetail')}
             </h2>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">{nights} đêm × {pricePerNight.toLocaleString()} $</span>
+                <span className="text-gray-500">{t('bookingDetail.nightsCount', { count: nights })} × {pricePerNight.toLocaleString()} $</span>
                 <span className="font-medium text-gray-900">{booking.totalPrice.toLocaleString()} $</span>
               </div>
               <div className="flex justify-between text-sm font-bold border-t border-gray-100 pt-3">
-                <span>Tổng tiền (đã bao gồm VAT)</span>
+                <span>{t('bookingDetail.totalVat')}</span>
                 <span className="text-blue-600">{booking.totalPrice.toLocaleString()} $</span>
               </div>
             </div>
@@ -271,13 +273,13 @@ export default function BookingDetailPage() {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center space-y-4">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <QrCode className="w-5 h-5 text-gray-400" />
-                <h3 className="font-bold">Mã nhận phòng</h3>
+                <h3 className="font-bold">{t('bookingDetail.qr.title')}</h3>
               </div>
               <div className="inline-block p-4 bg-gray-50 rounded-2xl border border-gray-200">
                 <QRCodeSVG value={booking._id} size={150} level="M" />
               </div>
               <p className="text-xs text-gray-500 leading-relaxed">
-                Vui lòng xuất trình mã này cho nhân viên lễ tân khi làm thủ tục nhận phòng.
+                {t('bookingDetail.qr.instruction')}
               </p>
             </div>
           )}
@@ -289,7 +291,7 @@ export default function BookingDetailPage() {
               className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-all shadow-lg shadow-gray-900/10 disabled:opacity-50"
             >
               {downloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-              Tải hoá đơn (PDF)
+              {t('bookingDetail.actions.downloadInvoice')}
             </button>
           )}
 
@@ -299,23 +301,23 @@ export default function BookingDetailPage() {
               className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
             >
               <MessageSquare className="w-5 h-5" />
-              Đánh giá phòng này
+              {t('bookingDetail.actions.reviewRoom')}
             </button>
           )}
 
           {booking.status === "CheckedOut" && hasReviewed && (
             <div className="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-              <p className="text-sm font-bold text-emerald-700">Bạn đã đánh giá phòng này</p>
+              <p className="text-sm font-bold text-emerald-700">{t('bookingDetail.actions.reviewed')}</p>
             </div>
           )}
 
           <div className="bg-blue-50 rounded-2xl p-6 border border-blue-100">
-            <h4 className="text-blue-800 font-bold mb-2">Hỗ trợ?</h4>
+            <h4 className="text-blue-800 font-bold mb-2">{t('bookingDetail.support.title')}</h4>
             <p className="text-sm text-blue-700 leading-relaxed mb-4">
-              Nếu bạn cần thay đổi hoặc có yêu cầu đặc biệt cho booking này, vui lòng liên hệ bộ phận chăm sóc khách hàng.
+              {t('bookingDetail.support.desc')}
             </p>
-            <p className="font-bold text-blue-900">Hotline: 1900 1234</p>
+            <p className="font-bold text-blue-900">{t('bookingDetail.support.hotline')} 1900 1234</p>
           </div>
         </div>
       </div>
@@ -325,8 +327,8 @@ export default function BookingDetailPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="p-6 bg-blue-600 text-white relative">
-              <h3 className="text-xl font-bold text-center">Đánh giá kỳ nghỉ của bạn</h3>
-              <p className="text-blue-100 text-sm text-center mt-1">Trải nghiệm của bạn sẽ giúp ích cho những khách hàng khác!</p>
+              <h3 className="text-xl font-bold text-center">{t('bookingDetail.reviewModal.title')}</h3>
+              <p className="text-blue-100 text-sm text-center mt-1">{t('bookingDetail.reviewModal.subtitle')}</p>
               <button
                 onClick={() => setShowReviewModal(false)}
                 className="absolute top-4 right-4 p-1 hover:bg-white/10 rounded-full transition-colors"
@@ -337,7 +339,7 @@ export default function BookingDetailPage() {
             </div>
             <form onSubmit={handleReviewSubmit} className="p-8 space-y-6">
               <div className="space-y-3 text-center">
-                <label className="text-sm font-bold text-gray-500 uppercase tracking-widest">Chất lượng phòng</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-widest">{t('bookingDetail.reviewModal.roomQuality')}</label>
                 <div className="flex justify-center gap-2">
                   {[1, 2, 3, 4, 5].map((s) => (
                     <button
@@ -355,7 +357,7 @@ export default function BookingDetailPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-500 uppercase tracking-widest flex justify-between">
-                  Nhận xét
+                  {t('bookingDetail.reviewModal.commentLabel')}
                   <span className={`${comment.length > 500 ? "text-red-500" : "text-gray-300"}`}>{comment.length}/500</span>
                 </label>
                 <textarea
@@ -365,14 +367,14 @@ export default function BookingDetailPage() {
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   disabled={submitting}
-                  placeholder="Chia sẻ cảm nhận của bạn về phòng, dịch vụ, trang thiết bị..."
+                  placeholder={t('bookingDetail.reviewModal.commentPlaceholder')}
                   className="w-full px-4 py-3 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all resize-none text-gray-700"
                 />
               </div>
 
               <div className="flex items-center gap-3 p-4 bg-yellow-50 rounded-2xl border border-yellow-100 text-yellow-800 text-xs leading-relaxed">
                 <AlertCircle className="w-5 h-5 shrink-0" />
-                Đánh giá này sẽ được hiển thị công khai trên trang chi tiết phòng.
+                {t('bookingDetail.reviewModal.publicNotice')}
               </div>
 
               <button
@@ -383,9 +385,9 @@ export default function BookingDetailPage() {
                 {submitting ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Đang gửi...
+                    {t('bookingDetail.reviewModal.submitting')}
                   </>
-                ) : "Gửi đánh giá ngay"}
+                ) : t('bookingDetail.reviewModal.submit')}
               </button>
             </form>
           </div>

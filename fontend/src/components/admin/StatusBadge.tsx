@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { cn } from "../ui/utils";
 
 type BookingStatus =
@@ -16,13 +17,13 @@ interface StatusBadgeProps {
 
 const STATUS_CONFIGS: Record<
   BookingStatus,
-  { bg: string; text: string; label: string }
+  { bg: string; text: string; labelKey: string }
 > = {
-  Confirmed:  { bg: "bg-emerald-50", text: "text-emerald-700", label: "Đã xác nhận" },
-  Pending:    { bg: "bg-amber-50",   text: "text-amber-700",   label: "Chờ duyệt" },
-  Cancelled:  { bg: "bg-red-50",     text: "text-red-700",     label: "Đã hủy" },
-  CheckedIn:  { bg: "bg-blue-50",    text: "text-blue-700",    label: "Đã nhận phòng" },
-  CheckedOut: { bg: "bg-gray-50",    text: "text-gray-700",    label: "Đã trả phòng" },
+  Confirmed:  { bg: "bg-emerald-50", text: "text-emerald-700", labelKey: "statusBadge.Confirmed" },
+  Pending:    { bg: "bg-amber-50",   text: "text-amber-700",   labelKey: "statusBadge.Pending" },
+  Cancelled:  { bg: "bg-red-50",     text: "text-red-700",     labelKey: "statusBadge.Cancelled" },
+  CheckedIn:  { bg: "bg-blue-50",    text: "text-blue-700",    labelKey: "statusBadge.CheckedIn" },
+  CheckedOut: { bg: "bg-gray-50",    text: "text-gray-700",    labelKey: "statusBadge.CheckedOut" },
 };
 
 const FALLBACK = { bg: "bg-gray-50", text: "text-gray-700" };
@@ -32,21 +33,21 @@ export function StatusBadge({
   variant = "pill",
   className,
 }: StatusBadgeProps) {
-  const config = STATUS_CONFIGS[status as BookingStatus] ?? {
-    ...FALLBACK,
-    label: status,
-  };
+  const { t } = useTranslation();
+  
+  const config = STATUS_CONFIGS[status as BookingStatus];
+
   return (
     <span
       className={cn(
         "px-3 py-1 text-[10px] font-bold uppercase tracking-wider border border-transparent",
         variant === "pill" ? "rounded-full" : "rounded-lg",
-        config.bg,
-        config.text,
+        config ? config.bg : FALLBACK.bg,
+        config ? config.text : FALLBACK.text,
         className
       )}
     >
-      {config.label}
+      {config ? t(config.labelKey) : status}
     </span>
   );
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { getAdminUsers, updateUserRole, updateUserStatus } from "../../api/admin.api";
 import { useAuth } from "../../context/AuthContext";
 import { cn } from "../../components/ui/utils";
@@ -7,17 +8,14 @@ import {
   Search, 
   ChevronLeft, 
   ChevronRight, 
-  Shield,
-  ShieldCheck,
-  ShieldAlert,
   UserCheck,
   UserX,
   Loader2,
   Mail,
   Calendar,
-  MoreHorizontal
 } from "lucide-react";
 import { format } from "date-fns";
+import { vi, enUS } from "date-fns/locale";
 import { AdminPageHeader } from "../../components/admin";
 
 interface User {
@@ -30,29 +28,8 @@ interface User {
 }
 
 
-
-const RoleBadge = ({ role }: { role: string }) => {
-  const configs: Record<string, { bg: string; text: string; icon: any; label: string }> = {
-    admin: { bg: "bg-purple-50", text: "text-purple-700", icon: ShieldAlert, label: "Quản trị viên" },
-    staff: { bg: "bg-blue-50", text: "text-blue-700", icon: ShieldCheck, label: "Nhân viên" },
-    user: { bg: "bg-gray-50", text: "text-gray-700", icon: Shield, label: "Khách hàng" },
-  };
-  const config = configs[role] || configs.user;
-  const Icon = config.icon;
-
-  return (
-    <span className={cn(
-      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-transparent transition-colors",
-      config.bg,
-      config.text
-    )}>
-      <Icon className="w-3 h-3" />
-      {config.label}
-    </span>
-  );
-};
-
 export default function AdminUsers() {
+  const { t, i18n } = useTranslation();
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +38,8 @@ export default function AdminUsers() {
   const [limit] = useState(10);
   const [search, setSearch] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const dateLocale = i18n.language === "vi" ? vi : enUS;
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -114,42 +93,39 @@ export default function AdminUsers() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-10 py-6 animate-in fade-in duration-500">
-      {/* Header */}
       <AdminPageHeader
-        eyebrow="Quản trị nhân sự"
-        title="Tài khoản người dùng"
-        subtitle="Phân quyền hệ thống, quản lý trạng thái hoạt động và thông tin cơ bản của người dùng."
+        eyebrow={t('admin.users.eyebrow')}
+        title={t('admin.users.title')}
+        subtitle={t('admin.users.subtitle')}
       />
 
-      {/* Toolbar */}
       <div className="bg-white p-6 rounded-3xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] flex flex-col md:flex-row gap-6">
         <div className="relative flex-1 group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary-dark)] transition-colors" />
           <input 
             type="text"
-            placeholder="Tìm kiếm theo họ tên hoặc địa chỉ email..."
+            placeholder={t('admin.users.searchPlaceholder')}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full pl-12 pr-4 h-[48px] bg-[var(--color-surface)] border-none rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-[var(--color-primary)] transition-all outline-none shadow-inner"
           />
         </div>
         <div className="flex items-center gap-4 bg-[var(--color-surface)] px-5 rounded-xl border border-[var(--color-border)]">
-           <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Sắp xếp:</span>
-           <span className="text-[10px] font-bold text-[var(--color-text-primary)]">Mặc định (Mới nhất)</span>
+           <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">{t('admin.users.sortLabel')}</span>
+           <span className="text-[10px] font-bold text-[var(--color-text-primary)]">{t('admin.users.sortDefault')}</span>
         </div>
       </div>
 
-      {/* Table Section */}
       <div className="bg-white rounded-[32px] border border-[var(--color-border)] shadow-[var(--shadow-lg)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-[var(--color-surface)] text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-[0.2em]">
-                <th className="px-8 py-5">Thành viên</th>
-                <th className="px-8 py-5">Phân quyền</th>
-                <th className="px-8 py-5 text-center">Trạng thái</th>
-                <th className="px-8 py-5">Thông tin đăng ký</th>
-                <th className="px-8 py-5 text-right">Phê duyệt</th>
+                <th className="px-8 py-5">{t('admin.users.table.member')}</th>
+                <th className="px-8 py-5">{t('admin.users.table.role')}</th>
+                <th className="px-8 py-5 text-center">{t('admin.users.table.status')}</th>
+                <th className="px-8 py-5">{t('admin.users.table.info')}</th>
+                <th className="px-8 py-5 text-right">{t('admin.users.table.action')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)] text-[var(--color-text-primary)]">
@@ -169,7 +145,7 @@ export default function AdminUsers() {
                         </div>
                         <div className="flex flex-col gap-0.5">
                           <span className="font-bold text-sm tracking-tight flex items-center gap-2">
-                             {u.fullName} {isSelf && <span className="text-[8px] bg-black text-white px-2 py-0.5 rounded-full font-black uppercase tracking-widest">TÔI</span>}
+                             {u.fullName} {isSelf && <span className="text-[8px] bg-black text-white px-2 py-0.5 rounded-full font-black uppercase tracking-widest">{t('admin.users.selfTag')}</span>}
                           </span>
                           <span className="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5 focus:text-[var(--color-primary-dark)]">
                              <Mail className="w-3 h-3" /> {u.email}
@@ -190,9 +166,9 @@ export default function AdminUsers() {
                             'bg-gray-50 text-gray-700'
                           )}
                         >
-                          <option value="user">USER</option>
-                          <option value="staff">STAFF</option>
-                          <option value="admin">ADMIN</option>
+                          <option value="user">{t('admin.users.roles.userCaps')}</option>
+                          <option value="staff">{t('admin.users.roles.staffCaps')}</option>
+                          <option value="admin">{t('admin.users.roles.adminCaps')}</option>
                         </select>
                       </div>
                     </td>
@@ -203,10 +179,10 @@ export default function AdminUsers() {
                        <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-text-secondary)]">
                              <Calendar className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
-                             {format(new Date(u.createdAt), "dd MMM, yyyy")}
+                             {format(new Date(u.createdAt), "dd MMM, yyyy", { locale: dateLocale })}
                           </div>
                           <span className="text-[10px] font-mono text-[var(--color-text-muted)] uppercase ml-5 tracking-tighter">
-                             At {format(new Date(u.createdAt), "HH:mm")}
+                             {t('admin.users.atTime', { time: format(new Date(u.createdAt), "HH:mm") })}
                           </span>
                        </div>
                     </td>
@@ -225,7 +201,7 @@ export default function AdminUsers() {
                                 : "text-[var(--color-text-muted)] hover:bg-emerald-50 hover:text-emerald-500 hover:border-emerald-100",
                               isSelf && "opacity-0"
                             )}
-                            title={u.isActive ? "Vô hiệu hóa tài khoản" : "Kích hoạt tài khoản"}
+                            title={u.isActive ? t('admin.users.actions.deactivate') : t('admin.users.actions.activate')}
                           >
                             {u.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
                           </button>
@@ -239,22 +215,22 @@ export default function AdminUsers() {
           </table>
         </div>
 
-        {/* Empty State */}
         {!loading && users.length === 0 && (
           <div className="py-24 text-center group">
             <div className="p-8 bg-[var(--color-surface)] rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
               <Users className="w-10 h-10 text-[var(--color-text-muted)]" />
             </div>
-            <h3 className="text-xl font-bold text-[var(--color-text-primary)]">Dữ liệu trống</h3>
-            <p className="text-[var(--color-text-secondary)] text-sm mt-2 font-medium italic">Không tìm thấy bất kỳ người dùng nào khớp với từ khóa "{search}".</p>
+            <h3 className="text-xl font-bold text-[var(--color-text-primary)]">{t('admin.users.empty.title')}</h3>
+            <p className="text-[var(--color-text-secondary)] text-sm mt-2 font-medium italic">
+              {t('admin.users.empty.desc', { search })}
+            </p>
           </div>
         )}
 
-        {/* Pagination Section */}
         {totalPages > 1 && (
           <div className="px-8 py-8 bg-[var(--color-surface)]/50 border-t border-[var(--color-border)] flex flex-col md:flex-row items-center justify-between gap-6">
             <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">
-              Showing page {page} of {totalPages} <span className="text-[var(--color-text-primary)] ml-2 opacity-50">/</span> Total {totalCount} members
+              {t('admin.users.pagination.info', { current: page, total: totalPages, members: totalCount })}
             </span>
             <div className="flex items-center gap-3">
               <button
@@ -298,6 +274,7 @@ export default function AdminUsers() {
 }
 
 function StatusBadge({ isActive, onClick, disabled }: { isActive: boolean; onClick: () => void; disabled: boolean }) {
+  const { t } = useTranslation();
   return (
     <button 
       disabled={disabled}
@@ -311,7 +288,7 @@ function StatusBadge({ isActive, onClick, disabled }: { isActive: boolean; onCli
       )}
     >
       <div className={cn("w-1.5 h-1.5 rounded-full", isActive ? "bg-emerald-500 animate-pulse" : "bg-red-500")}></div>
-      {isActive ? "Đang hoạt động" : "Đã vô hiệu"}
+      {isActive ? t('admin.users.status.active') : t('admin.users.status.inactive')}
     </button>
   );
 }

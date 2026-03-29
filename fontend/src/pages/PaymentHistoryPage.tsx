@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { apiRequest } from "../api/client";
-import { 
-  CreditCard, 
-  Search, 
+import {
+  CreditCard,
+  Search,
   Calendar as CalendarIcon,
   ChevronRight,
   Loader2,
@@ -45,11 +46,12 @@ interface Payment {
 }
 
 const StatusBadge = ({ status }: { status: string }) => {
+  const { t } = useTranslation(); // Khởi tạo t() cho component con này
   const configs: Record<string, { color: string; icon: any; label: string }> = {
-    SUCCESS: { color: "bg-emerald-100 text-emerald-700", icon: CheckCircle2, label: "Thành công" },
-    FAILED: { color: "bg-red-100 text-red-700", icon: XCircle, label: "Thất bại" },
-    PENDING: { color: "bg-gray-100 text-gray-700", icon: Clock, label: "Đang xử lý" },
-    REFUNDED: { color: "bg-yellow-100 text-yellow-700", icon: RefreshCcw, label: "Đã hoàn tiền" },
+    SUCCESS: { color: "bg-emerald-100 text-emerald-700", icon: CheckCircle2, label: t('payments.status.SUCCESS') },
+    FAILED: { color: "bg-red-100 text-red-700", icon: XCircle, label: t('payments.status.FAILED') },
+    PENDING: { color: "bg-gray-100 text-gray-700", icon: Clock, label: t('payments.status.PENDING') },
+    REFUNDED: { color: "bg-yellow-100 text-yellow-700", icon: RefreshCcw, label: t('payments.status.REFUNDED') },
   };
 
   const config = configs[status] || { color: "bg-gray-100 text-gray-700", icon: Clock, label: status };
@@ -64,6 +66,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 };
 
 export default function PaymentHistoryPage() {
+  const { t } = useTranslation(); // Khởi tạo t() cho trang chính
   const navigate = useNavigate();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [filteredPayments, setFilteredPayments] = useState<Payment[]>([]);
@@ -120,7 +123,7 @@ export default function PaymentHistoryPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-        <p className="text-gray-500">Đang tải lịch sử thanh toán...</p>
+        <p className="text-gray-500">{t('payments.loading')}</p>
       </div>
     );
   }
@@ -129,31 +132,31 @@ export default function PaymentHistoryPage() {
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Lịch sử thanh toán</h1>
-          <p className="text-gray-500 text-sm">Quản lý và tra cứu các giao dịch của bạn tại đây.</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('payments.history')}</h1>
+          <p className="text-gray-500 text-sm">{t('payments.historySubtitle')}</p>
         </div>
       </div>
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="space-y-1">
-          <label className="text-xs font-semibold text-gray-400 uppercase tracking-tighter">Trạng thái</label>
-          <select 
+          <label className="text-xs font-semibold text-gray-400 uppercase tracking-tighter">{t('payments.filter.statusLabel')}</label>
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="w-full h-10 border-gray-200 rounded-xl bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
           >
-            <option value="ALL">Tất cả trạng thái</option>
-            <option value="SUCCESS">Thành công</option>
-            <option value="FAILED">Thất bại</option>
-            <option value="REFUNDED">Hoàn tiền</option>
-            <option value="PENDING">Chờ xử lý</option>
+            <option value="ALL">{t('payments.filter.all')}</option>
+            <option value="SUCCESS">{t('payments.status.SUCCESS')}</option>
+            <option value="FAILED">{t('payments.status.FAILED')}</option>
+            <option value="REFUNDED">{t('payments.status.REFUNDED')}</option>
+            <option value="PENDING">{t('payments.status.PENDING')}</option>
           </select>
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-semibold text-gray-400 uppercase tracking-tighter">Từ ngày</label>
-          <input 
+          <label className="text-xs font-semibold text-gray-400 uppercase tracking-tighter">{t('payments.filter.startDate')}</label>
+          <input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
@@ -162,8 +165,8 @@ export default function PaymentHistoryPage() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-semibold text-gray-400 uppercase tracking-tighter">Đến ngày</label>
-          <input 
+          <label className="text-xs font-semibold text-gray-400 uppercase tracking-tighter">{t('payments.filter.endDate')}</label>
+          <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
@@ -178,21 +181,21 @@ export default function PaymentHistoryPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-50 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                <th className="px-6 py-4">Mã giao dịch</th>
-                <th className="px-6 py-4">Sản phẩm / Kỳ hạn</th>
-                <th className="px-6 py-4 text-right">Số tiền</th>
-                <th className="px-6 py-4 text-center">Trạng thái</th>
-                <th className="px-6 py-4 text-right">Ngày thực hiện</th>
+                <th className="px-6 py-4">{t('payments.table.transactionId')}</th>
+                <th className="px-6 py-4">{t('payments.table.product')}</th>
+                <th className="px-6 py-4 text-right">{t('payments.table.amount')}</th>
+                <th className="px-6 py-4 text-center">{t('payments.table.status')}</th>
+                <th className="px-6 py-4 text-right">{t('payments.table.date')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filteredPayments.map((p) => {
                 const booking = p.booking || p.bookings?.[0];
-                const roomInfo = booking?.roomType?.name || (booking?.room?.roomNumber ? `Phòng ${booking.room.roomNumber}` : "N/A");
+                const roomInfo = booking?.roomType?.name || (booking?.room?.roomNumber ? t('payments.table.room', { number: booking.room.roomNumber }) : "N/A");
                 const bookingId = booking?._id;
 
                 return (
-                  <tr 
+                  <tr
                     key={p._id}
                     onClick={() => bookingId && navigate(`/my-bookings/${bookingId}`)}
                     className="hover:bg-blue-50/30 transition-colors cursor-pointer group"
@@ -234,8 +237,8 @@ export default function PaymentHistoryPage() {
               <CreditCard className="w-8 h-8 text-gray-400" />
             </div>
             <div>
-              <p className="text-gray-900 font-bold">Không tìm thấy giao dịch nào</p>
-              <p className="text-gray-400 text-sm">Thử điều chỉnh bộ lọc để tìm kiếm kết quả khác.</p>
+              <p className="text-gray-900 font-bold">{t('payments.empty.title')}</p>
+              <p className="text-gray-400 text-sm">{t('payments.empty.subtitle')}</p>
             </div>
           </div>
         )}

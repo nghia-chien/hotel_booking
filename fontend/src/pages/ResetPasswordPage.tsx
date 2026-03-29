@@ -31,7 +31,7 @@ export default function ResetPasswordPage() {
   return (
     <div className="max-w-md mx-auto bg-white border border-gray-100 shadow-sm rounded-2xl p-8 space-y-4">
       <div>
-        <h2 className="text-2xl font-bold mb-2">Đặt mật khẩu mới</h2>
+        <h2 className="text-2xl font-bold mb-2">t('resetpassword.title').</h2>
         <p className="text-sm text-gray-500">
           Dán token reset và đặt mật khẩu mới.
         </p>

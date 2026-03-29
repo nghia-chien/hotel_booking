@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Star } from "lucide-react";
 import { Slider } from "./ui/slider";
 import { Checkbox } from "./ui/checkbox";
@@ -23,6 +24,8 @@ export function FilterSidebar({
   minRating,
   onMinRatingChange,
 }: FilterSidebarProps) {
+  const { t } = useTranslation();
+
   const amenities = [
     AMENITY_MAP.wifi,
     AMENITY_MAP.tv,
@@ -51,16 +54,18 @@ export function FilterSidebar({
   return (
     <div className="bg-white rounded-2xl p-6 shadow-[var(--shadow-sm)] border border-[var(--color-border)] sticky top-8">
       <h2 className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-6 border-b border-[var(--color-border)] pb-4">
-        Bộ lọc tìm kiếm
+        {t('filterSidebar.title')}
       </h2>
 
       {/* Price Range */}
       <div className="mb-8 border-b border-[var(--color-border)] pb-8">
         <label className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] block mb-4">
-          Khoảng giá
+          {t('filterSidebar.priceRange')}
         </label>
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-medium text-[var(--color-text-primary)]">Tầm giá</span>
+          <span className="text-sm font-medium text-[var(--color-text-primary)]">
+            {t('filterSidebar.priceLabel')}
+          </span>
           <span className="text-sm font-semibold text-[var(--color-text-secondary)]">
             ${minPrice} - ${maxPrice}
           </span>
@@ -82,7 +87,7 @@ export function FilterSidebar({
       {/* Amenities */}
       <div className="mb-8 border-b border-[var(--color-border)] pb-8">
         <label className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] block mb-4">
-          Tiện ích
+          {t('filterSidebar.amenities')}
         </label>
         <div className="space-y-3">
           {amenities.map((amenity) => {
@@ -99,7 +104,7 @@ export function FilterSidebar({
                   className="flex items-center gap-2 text-sm text-[var(--color-text-primary)] cursor-pointer group-hover:text-[var(--color-text-secondary)] transition-colors"
                 >
                   <Icon className="h-4 w-4 text-[var(--color-text-secondary)]" />
-                  {amenity.label}
+                  {t(amenity.labelKey)}
                 </label>
               </div>
             );
@@ -110,7 +115,7 @@ export function FilterSidebar({
       {/* Guest Ratings */}
       <div>
         <label className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] block mb-4">
-          Đánh giá
+          {t('filterSidebar.rating')}
         </label>
         <div className="space-y-2">
           {ratings.map((rating) => (
@@ -130,7 +135,9 @@ export function FilterSidebar({
                   minRating === rating ? 'fill-white' : 'fill-yellow-400'
                 )}
               />
-              <span className="text-sm font-medium">{rating}+ Sao</span>
+              <span className="text-sm font-medium">
+                {t('filterSidebar.stars', { count: rating })}
+              </span>
             </button>
           ))}
         </div>

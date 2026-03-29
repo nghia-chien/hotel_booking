@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import BookingSearchForm from "../components/search/BookingSearchForm"
 import { FilterSidebar } from "../components/FilterSideBar"
@@ -17,6 +18,7 @@ import type { AmenityKey } from "../constants/amenities"
 import type { PropertyCardProps } from "../types/property"
 
 const RoomsPage = () => {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { rooms: cachedRooms } = useData()
@@ -157,8 +159,8 @@ const RoomsPage = () => {
         className="mb-8"
       />
 
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8">
-        <aside>
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8 items-start">
+        <aside className="sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto no-scrollbar rounded-3xl">
           <FilterSidebar
             minPrice={minPrice}
             maxPrice={maxPrice}
@@ -178,9 +180,7 @@ const RoomsPage = () => {
         <section>
           <div className="flex items-center justify-between mb-6">
             <p className="text-sm font-medium text-[var(--color-text-secondary)]">
-              {loading
-                ? "Đang tìm kiếm phòng phù hợp..."
-                : `${filteredResults.length} phòng có sẵn cho kỳ nghỉ của bạn`}
+              {loading ? t('search.searching') : t('search.available', { count: filteredResults.length })}
             </p>
 
             {error && <p className="text-sm text-red-600">{error}</p>}
@@ -190,7 +190,7 @@ const RoomsPage = () => {
             items={mappedItems}
             loading={loading}
             columns={3}
-            emptyMessage="Không tìm thấy phòng phù hợp. Hãy thử thay đổi ngày hoặc bộ lọc."
+            emptyMessage={t('search.noResult')}
           />
         </section>
       </div>

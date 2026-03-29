@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Building2,
   ChevronDown,
@@ -21,11 +22,17 @@ import { cn } from './ui/utils';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { t, i18n } = useTranslation();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const adminMenuRef = useRef<HTMLDivElement>(null);
+
+  const toggleLanguage = () => {
+    const nextLang = i18n.language === 'vi' ? 'en' : 'vi';
+    i18n.changeLanguage(nextLang);
+  };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -55,10 +62,10 @@ export default function Navbar() {
 
         {/* DESKTOP NAV */}
         <nav className="hidden md:flex items-center gap-1 flex-1">
-          {/* <NavLinkItem to="/">Trang chủ</NavLinkItem> */}
-          <NavLinkItem to="/rooms">Tìm phòng</NavLinkItem>
+          {/* <NavLinkItem to="/">{t('header.home')}</NavLinkItem> */}
+          <NavLinkItem to="/rooms">{t('header.searchRoom')}</NavLinkItem>
           
-          {user && !isStaffOrAdmin && <NavLinkItem to="/my-bookings">Booking của tôi</NavLinkItem>}
+          {user && !isStaffOrAdmin && <NavLinkItem to="/my-bookings">{t('header.myBookings')}</NavLinkItem>}
           
           {isStaffOrAdmin && (
             <div className="relative" ref={adminMenuRef}>
@@ -66,35 +73,42 @@ export default function Navbar() {
                 onClick={() => setIsAdminOpen(!isAdminOpen)}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface)] transition-colors cursor-pointer"
               >
-                Quản lý
+                {t('header.manage')}
                 <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", isAdminOpen && "rotate-180")} />
               </button>
               
               {isAdminOpen && (
                 <div className="absolute left-0 top-full mt-2 w-56 bg-white rounded-xl shadow-[var(--shadow-lg)] border border-[var(--color-border)] py-2 z-50">
-                  <DropdownLink to="/admin" icon={LayoutDashboard} onClick={() => setIsAdminOpen(false)}>Dashboard</DropdownLink>
-                  <DropdownLink to="/admin/bookings" icon={LayoutDashboard} onClick={() => setIsAdminOpen(false)}>Quản lý booking</DropdownLink>
-                  <DropdownLink to="/admin/room-types" icon={ShieldCheck} onClick={() => setIsAdminOpen(false)}>Loại phòng</DropdownLink>
-                  <DropdownLink to="/admin/rooms" icon={Building2} onClick={() => setIsAdminOpen(false)}>Phòng</DropdownLink>
-                  <DropdownLink to="/admin/pricing-rules" icon={Calendar} onClick={() => setIsAdminOpen(false)}>Giá theo mùa</DropdownLink>
-                  <DropdownLink to="/admin/reviews" icon={Star} onClick={() => setIsAdminOpen(false)}>Đánh giá</DropdownLink>
-                  <DropdownLink to="/admin/calendar" icon={Calendar} onClick={() => setIsAdminOpen(false)}>Lịch phòng</DropdownLink>
-                  <DropdownLink to="/admin/reports" icon={BarChart3} onClick={() => setIsAdminOpen(false)}>Báo cáo</DropdownLink>
+                  <DropdownLink to="/admin" icon={LayoutDashboard} onClick={() => setIsAdminOpen(false)}>{t('header.dashboard')}</DropdownLink>
+                  <DropdownLink to="/admin/bookings" icon={LayoutDashboard} onClick={() => setIsAdminOpen(false)}>{t('header.manageBookings')}</DropdownLink>
+                  <DropdownLink to="/admin/room-types" icon={ShieldCheck} onClick={() => setIsAdminOpen(false)}>{t('header.roomTypes')}</DropdownLink>
+                  <DropdownLink to="/admin/rooms" icon={Building2} onClick={() => setIsAdminOpen(false)}>{t('header.rooms')}</DropdownLink>
+                  <DropdownLink to="/admin/pricing-rules" icon={Calendar} onClick={() => setIsAdminOpen(false)}>{t('header.pricingRules')}</DropdownLink>
+                  <DropdownLink to="/admin/reviews" icon={Star} onClick={() => setIsAdminOpen(false)}>{t('header.reviews')}</DropdownLink>
+                  <DropdownLink to="/admin/calendar" icon={Calendar} onClick={() => setIsAdminOpen(false)}>{t('header.calendar')}</DropdownLink>
+                  <DropdownLink to="/admin/reports" icon={BarChart3} onClick={() => setIsAdminOpen(false)}>{t('header.reports')}</DropdownLink>
                   {user?.role === 'admin' && (
                     <>
                       <div className="h-px bg-[var(--color-border)] my-1 mx-2" />
-                      <DropdownLink to="/admin/users" icon={Users} onClick={() => setIsAdminOpen(false)}>Quản lý user</DropdownLink>
+                      <DropdownLink to="/admin/users" icon={Users} onClick={() => setIsAdminOpen(false)}>{t('header.users')}</DropdownLink>
                     </>
                   )}
                 </div>
               )}
             </div>
           )}
-          {/* {user && <NavLinkItem to="/profile">Hồ sơ</NavLinkItem>} */}
+          {/* {user && <NavLinkItem to="/profile">{t('header.profile')}</NavLinkItem>} */}
         </nav>
 
         {/* ACTIONS */}
         <div className="flex items-center gap-2 md:gap-3">
+          <button 
+            onClick={toggleLanguage}
+            className="flex items-center px-2 py-1.5 rounded-lg text-[10px] md:text-sm font-bold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface)] border border-[var(--color-border)] transition-colors cursor-pointer mr-1 uppercase"
+          >
+            {i18n.language === 'vi' ? '🇻🇳 VI' : '🇺🇸 EN'}
+          </button>
+
           {user ? (
             <>
               <NotificationBell />
@@ -123,13 +137,13 @@ export default function Navbar() {
                       <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] mt-1">{user.role}</p>
                     </div>
                     <div className="py-1">
-                      <DropdownLink to="/my-bookings" icon={Calendar} onClick={() => setUserMenuOpen(false)}>Booking của tôi</DropdownLink>
-                      <DropdownLink to="/profile" icon={User} onClick={() => setUserMenuOpen(false)}>Hồ sơ</DropdownLink>
+                      <DropdownLink to="/my-bookings" icon={Calendar} onClick={() => setUserMenuOpen(false)}>{t('header.myBookings')}</DropdownLink>
+                      <DropdownLink to="/profile" icon={User} onClick={() => setUserMenuOpen(false)}>{t('header.profile')}</DropdownLink>
                     </div>
                     <div className="py-1 border-t border-[var(--color-border)]">
                       <button onClick={() => { logout(); setUserMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium cursor-pointer">
                         <LogOut className="w-4 h-4" />
-                        Đăng xuất
+                        {t('header.logout')}
                       </button>
                     </div>
                   </div>
@@ -138,8 +152,8 @@ export default function Navbar() {
             </>
           ) : (
             <div className="flex items-center gap-1 md:gap-2">
-              <Link to="/login" className="px-3 py-2 text-sm font-medium rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface)] transition-colors">Đăng nhập</Link>
-              <Link to="/register" className="px-4 py-2 text-sm font-bold rounded-lg bg-[var(--color-primary-foreground)] text-white hover:opacity-90 transition-opacity shadow-sm">Đăng ký</Link>
+              <Link to="/login" className="px-3 py-2 text-sm font-medium rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface)] transition-colors">{t('header.login')}</Link>
+              <Link to="/register" className="px-4 py-2 text-sm font-bold rounded-lg bg-[var(--color-primary-foreground)] text-white hover:opacity-90 transition-opacity shadow-sm">{t('header.register')}</Link>
             </div>
           )}
 
@@ -153,34 +167,34 @@ export default function Navbar() {
       {/* MOBILE NAV */}
       {mobileOpen && (
         <div className="md:hidden border-t border-[var(--color-border)] bg-white px-4 py-4 space-y-1 animate-in slide-in-from-top duration-200">
-          <MobileLink to="/" onClick={() => setMobileOpen(false)}>Trang chủ</MobileLink>
-          <MobileLink to="/rooms" onClick={() => setMobileOpen(false)}>Tìm phòng</MobileLink>
+          <MobileLink to="/" onClick={() => setMobileOpen(false)}>{t('header.home')}</MobileLink>
+          <MobileLink to="/rooms" onClick={() => setMobileOpen(false)}>{t('header.searchRoom')}</MobileLink>
           {user && (
             <>
-              <MobileLink to="/my-bookings" onClick={() => setMobileOpen(false)}>Booking của tôi</MobileLink>
-              <MobileLink to="/profile" onClick={() => setMobileOpen(false)}>Hồ sơ</MobileLink>
+              <MobileLink to="/my-bookings" onClick={() => setMobileOpen(false)}>{t('header.myBookings')}</MobileLink>
+              <MobileLink to="/profile" onClick={() => setMobileOpen(false)}>{t('header.profile')}</MobileLink>
               {isStaffOrAdmin && (
                 <>
-                  <p className="px-3 pt-4 pb-2 text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] border-t border-[var(--color-border)] mt-2">Hệ thống Quản lý</p>
-                  <MobileLink to="/admin/bookings" onClick={() => setMobileOpen(false)}>Quản lý booking</MobileLink>
-                  <MobileLink to="/admin/room-types" onClick={() => setMobileOpen(false)}>Loại phòng</MobileLink>
-                  <MobileLink to="/admin/rooms" onClick={() => setMobileOpen(false)}>Phòng</MobileLink>
-                  <MobileLink to="/admin/pricing-rules" onClick={() => setMobileOpen(false)}>Giá theo mùa</MobileLink>
-                  <MobileLink to="/admin/reviews" onClick={() => setMobileOpen(false)}>Đánh giá</MobileLink>
-                  <MobileLink to="/admin/calendar" onClick={() => setMobileOpen(false)}>Lịch phòng</MobileLink>
-                  <MobileLink to="/admin/reports" onClick={() => setMobileOpen(false)}>Báo cáo</MobileLink>
-                  {user.role === 'admin' && <MobileLink to="/admin/users" onClick={() => setMobileOpen(false)}>Quản lý user</MobileLink>}
+                  <p className="px-3 pt-4 pb-2 text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] border-t border-[var(--color-border)] mt-2">{t('header.manage')}</p>
+                  <MobileLink to="/admin/bookings" onClick={() => setMobileOpen(false)}>{t('header.manageBookings')}</MobileLink>
+                  <MobileLink to="/admin/room-types" onClick={() => setMobileOpen(false)}>{t('header.roomTypes')}</MobileLink>
+                  <MobileLink to="/admin/rooms" onClick={() => setMobileOpen(false)}>{t('header.rooms')}</MobileLink>
+                  <MobileLink to="/admin/pricing-rules" onClick={() => setMobileOpen(false)}>{t('header.pricingRules')}</MobileLink>
+                  <MobileLink to="/admin/reviews" onClick={() => setMobileOpen(false)}>{t('header.reviews')}</MobileLink>
+                  <MobileLink to="/admin/calendar" onClick={() => setMobileOpen(false)}>{t('header.calendar')}</MobileLink>
+                  <MobileLink to="/admin/reports" onClick={() => setMobileOpen(false)}>{t('header.reports')}</MobileLink>
+                  {user.role === 'admin' && <MobileLink to="/admin/users" onClick={() => setMobileOpen(false)}>{t('header.users')}</MobileLink>}
                 </>
               )}
               <button onClick={() => { logout(); setMobileOpen(false); }} className="w-full text-left px-3 py-3 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3">
-                <LogOut className="w-4 h-4" /> Đăng xuất
+                <LogOut className="w-4 h-4" /> {t('header.logout')}
               </button>
             </>
           )}
           {!user && (
             <div className="flex flex-col gap-2 pt-4">
-              <Link to="/login" onClick={() => setMobileOpen(false)} className="w-full text-center px-4 py-3 rounded-xl text-sm font-bold border border-[var(--color-border)] text-[var(--color-text-primary)]">Đăng nhập</Link>
-              <Link to="/register" onClick={() => setMobileOpen(false)} className="w-full text-center px-4 py-3 rounded-xl text-sm font-bold bg-[var(--color-primary-foreground)] text-white">Đăng ký</Link>
+              <Link to="/login" onClick={() => setMobileOpen(false)} className="w-full text-center px-4 py-3 rounded-xl text-sm font-bold border border-[var(--color-border)] text-[var(--color-text-primary)]">{t('header.login')}</Link>
+              <Link to="/register" onClick={() => setMobileOpen(false)} className="w-full text-center px-4 py-3 rounded-xl text-sm font-bold bg-[var(--color-primary-foreground)] text-white">{t('header.register')}</Link>
             </div>
           )}
         </div>
