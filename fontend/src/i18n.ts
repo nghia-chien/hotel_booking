@@ -1047,7 +1047,7 @@ const vi = {
       eyebrow: "Hệ thống quản trị",
       title: "Quản lý Đặt phòng",
       subtitle: "Theo dõi phòng, thông tin khách hàng, duyệt Check-in/Check-out và Huỷ phòng.",
-      priceFormat: "{{price}} ₫",
+      priceFormat: "{{price}} $",
       anonymousGuest: "Khách ẩn danh",
       roomNumber: "Phòng {{number}}",
       emptyList: "Chưa có booking nào trong danh sách.",

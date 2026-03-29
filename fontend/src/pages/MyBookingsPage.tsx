@@ -133,7 +133,7 @@ const MyBookingsPage = () => {
                 {new Date(b.checkIn).toLocaleDateString()} – {new Date(b.checkOut).toLocaleDateString()}
               </p>
               <p className="text-sm text-gray-600">{t('myBookings.status', { status: b.status, payment: b.paymentStatus })}</p>
-              <p className="text-sm">{t('myBookings.total')} <span className="font-semibold">{b.totalPrice.toLocaleString("vi-VN")} ₫</span></p>
+              <p className="text-sm">{t('myBookings.total')} <span className="font-semibold">{b.totalPrice.toLocaleString("vi-VN")} $</span></p>
             </div>
             <div className="flex flex-col gap-2 items-end">
               {eligibleForPay(b) && (

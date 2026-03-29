@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { apiRequest } from "../../api/client";
 
 interface Booking {
@@ -15,10 +16,13 @@ interface BookingsResponse {
 }
 
 const MyBookingsPage = () => {
+  const { t, i18n } = useTranslation();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  const dateLocale = i18n.language === "vi" ? "vi-VN" : "en-US";
 
   const loadBookings = async () => {
     setError(null);
@@ -44,36 +48,26 @@ const MyBookingsPage = () => {
   }, []);
 
   const handleCancel = async (id: string) => {
+    if (!window.confirm(t('myBookings.confirmCancel'))) return;
+    
     setError(null);
     setMessage(null);
     try {
       await apiRequest(`/api/bookings/${id}/cancel`, "POST", null, {
         auth: true
       });
-      setMessage("Booking cancelled");
+      setMessage(t('myBookings.cancelSuccess'));
       void loadBookings();
     } catch (err) {
       setError((err as Error).message);
     }
   };
 
-  // const handlePay = async (id: string) => {
-  //   setError(null);
-  //   setMessage(null);
-  //   try {
-  //     await apiRequest(`/api/bookings/${id}/pay`, "POST", null, {
-  //       auth: true
-  //     });
-  //     setMessage("Payment successful");
-  //     void loadBookings();
-  //   } catch (err) {
-  //     setError((err as Error).message);
-  //   }
-  // };
-
   return (
     <div className="p-6">
-      {loading && <p>Đang tải...</p>}
+      <h1 className="text-2xl font-bold mb-6">{t('myBookings.pageTitle')}</h1>
+      
+      {loading && <p className="text-gray-500">{t('common.loading')}</p>}
       {error && <p className="text-red-600 mb-2">{error}</p>}
       {message && <p className="text-green-600 mb-2">{message}</p>}
 
@@ -85,16 +79,16 @@ const MyBookingsPage = () => {
           >
             <div>
               <p className="font-semibold">
-                {new Date(b.checkIn).toLocaleDateString()} -{" "}
-                {new Date(b.checkOut).toLocaleDateString()}
+                {new Date(b.checkIn).toLocaleDateString(dateLocale)} -{" "}
+                {new Date(b.checkOut).toLocaleDateString(dateLocale)}
               </p>
               <p className="text-sm text-gray-600">
-                Trạng thái: {b.status}
+                {t('myBookings.statusLabel')}: {t(`status.${b.status}`, b.status)}
               </p>
               <p className="text-sm">
-                Tổng tiền:{" "}
+                {t('myBookings.totalLabel')}:{" "}
                 <span className="font-semibold">
-                  {b.totalPrice.toFixed(2)} $
+                  {b.totalPrice.toLocaleString()} $
                 </span>
               </p>
             </div>
@@ -103,9 +97,9 @@ const MyBookingsPage = () => {
               {(b.status === "Pending" || b.status === "Confirmed") && (
                 <button
                   onClick={() => handleCancel(b._id)}
-                  className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg"
+                  className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 transition-colors"
                 >
-                  Huỷ booking
+                  {t('myBookings.cancelButton')}
                 </button>
               )}
             </div>
@@ -113,8 +107,8 @@ const MyBookingsPage = () => {
         ))}
 
         {!loading && bookings.length === 0 && (
-          <p className="text-gray-600">
-            Bạn chưa có booking nào. Hãy đặt phòng tại trang Rooms.
+          <p className="text-gray-600 italic">
+            {t('myBookings.emptyState')}
           </p>
         )}
       </div>
