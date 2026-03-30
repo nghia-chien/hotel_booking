@@ -322,12 +322,12 @@ export const cancelBooking = async (req, res, next) => {
 
     // Chỉ kiểm tra deadline nếu là user thường, admin/staff không bị giới hạn
     const now = new Date();
-    if (!isAdminOrStaff && booking.cancellationDeadline && now > booking.cancellationDeadline) {
-      return res.status(400).json({
-        success: false,
-        message: "Cancellation deadline has passed"
-      });
-    }
+    // if (!isAdminOrStaff && booking.cancellationDeadline && now > booking.cancellationDeadline) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Cancellation deadline has passedctl"
+    //   });
+    // }
 
     const refundPercentage = booking.refundPercentage ?? 100;
     const wasAlreadyPaid = booking.paymentStatus === "Paid";

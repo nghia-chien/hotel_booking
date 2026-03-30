@@ -48,11 +48,11 @@ export default function NotificationBell() {
     }
   };
 
-  useEffect(() => {
-    void fetchSummary();
-    const interval = setInterval(fetchSummary, 30000); // Polling 30s
-    return () => clearInterval(interval);
-  }, []);
+  // useEffect(() => {
+  //   void fetchSummary();
+  //   const interval = setInterval(fetchSummary, 60000); // Polling 60s
+  //   return () => clearInterval(interval);
+  // }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

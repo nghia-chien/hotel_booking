@@ -12,9 +12,7 @@ import {
   QrCode,
   Loader2,
   CheckCircle2,
-  Clock,
   XCircle,
-  Archive,
   Star,
   MessageSquare,
   AlertCircle
@@ -114,7 +112,7 @@ export default function BookingDetailPage() {
       );
       setHasReviewed(true);
       setShowReviewModal(false);
-      alert(t('bookingDetail.alerts.reviewSuccess'));
+      
     } catch (err) {
       alert((err as Error).message);
     } finally {
