@@ -124,7 +124,7 @@ export default function RoomDetail() {
           {t('roomDetail.backBtn')}
         </Button>
         <h1 className="text-xl md:text-2xl font-semibold text-[#2C2C2C]">
-          {t('roomDetail.roomType')} · {room.roomType?.name || t('roomDetail.roomType')}
+          {room.roomType?.name || t('roomDetail.roomType')}
         </h1>
       </header>
 
@@ -140,7 +140,7 @@ export default function RoomDetail() {
                 <p className="text-xs uppercase tracking-wide text-black/50">
                   {room.roomType?.name || t('roomDetail.roomType')}
                 </p>
-                <h2 className="text-2xl font-semibold text-[#1F1F1F]">Phòng #{room.roomNumber}</h2>
+                <h2 className="text-2xl font-semibold text-[#1F1F1F]"> {t('roomDetail.roomnumber')} {room.roomNumber}</h2>
                 <p className="text-sm text-black/60 mt-1">{t('roomDetail.capacity', { count: room.capacity })}</p>
               </div>
               <div className="flex items-center gap-1 text-sm text-black/60">

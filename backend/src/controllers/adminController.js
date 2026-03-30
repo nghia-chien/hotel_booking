@@ -25,12 +25,12 @@ export const getDashboardStats = async (req, res) => {
       last7DaysRevenueData,
       recentBookings
     ] = await Promise.all([
-      // 1. Số booking tạo hôm nay
+      // 1. num booking created today
       Booking.countDocuments({
         createdAt: { $gte: startOfToday, $lte: endOfToday }
       }),
 
-      // 2. Tổng tiền booking confirmed hôm nay
+      // 2. total revenue of booking confirmed today
       Booking.aggregate([
         {
           $match: {
@@ -46,20 +46,20 @@ export const getDashboardStats = async (req, res) => {
         }
       ]),
 
-      // 3a. Tổng số phòng active
+      // 3a. total active rooms
       Room.countDocuments({ isActive: true }),
 
-      // 3b. Số phòng đang có booking active hôm nay
+      // 3b. num booking active today
       Booking.countDocuments({
         status: { $in: ["Confirmed", "CheckedIn"] },
         checkIn: { $lte: endOfToday },
         checkOut: { $gte: startOfToday }
       }),
 
-      // 4. Booking đang chờ xác nhận
+      // 4. num booking pending
       Booking.countDocuments({ status: "Pending" }),
 
-      // 5. Doanh thu 7 ngày gần nhất
+      // 5. revenue of last 7 days
       Booking.aggregate([
         {
           $match: {
@@ -76,7 +76,7 @@ export const getDashboardStats = async (req, res) => {
         { $sort: { _id: 1 } }
       ]),
 
-      // 6. 5 booking mới nhất
+      // 6. 5 booking new
       Booking.find()
         .sort({ createdAt: -1 })
         .limit(5)

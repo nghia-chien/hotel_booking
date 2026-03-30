@@ -23,10 +23,10 @@ export const startBookingCron = () => {
       );
 
       if (result.modifiedCount > 0) {
-        console.log(`[Cron] Đã tự động hủy ${result.modifiedCount} booking do quá hạn thanh toán (15 phút).`);
+        console.log(`[Cron] Auto Cancelled ${result.modifiedCount} booking`);
       }
     } catch (error) {
-      console.error("[Cron] Lỗi khi quét tự động hủy booking:", error);
+      console.error("[Cron] Error when auto cancelling booking:", error);
     }
   }, 60 * 1000); 
 };

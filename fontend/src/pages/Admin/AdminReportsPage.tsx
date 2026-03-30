@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../../api/client";
-import { cn } from "../../components/ui/utils";
 import { 
   BarChart3, 
   PieChart, 
@@ -9,7 +8,6 @@ import {
   Users, 
   Hotel,
   Search,
-  AlertCircle
 } from "lucide-react";
 import { AdminPageHeader, AlertMessage } from "../../components/admin";
 import { useTranslation } from "react-i18next";

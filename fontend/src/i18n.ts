@@ -42,7 +42,8 @@ const en = {
     noReviewsHint: "Be the first to share your experience!",
     basePrice: "Base Price", perNight: "/ night (before seasonal pricing)",
     actualPrice: "Actual price depends on stay dates and pricing rules.",
-    contact: "Contact", backToSearch: "Back to search", ratings: "({{count}} reviews)"
+    contact: "Contact", backToSearch: "Back to search", ratings: "({{count}} reviews)",
+    roomnumber: "Room "
   },
   myBookings: {
     title: "My Bookings", loading: "Loading...",
@@ -69,7 +70,8 @@ const en = {
     mockInstruction: "Enter your email.",
     mockTokenLabel: "Reset token:",
     goToReset: "Go to reset password page",
-    backToLogin: "Back to login"
+    backToLogin: "Back to login",
+    placeholder: "Enter your email"
   },
   resetPassword: {
     title: "Reset Password", newPassword: "New Password",
@@ -202,6 +204,8 @@ const en = {
     empty: "No notifications",
     emptyDesc: "You currently have no notifications in this category.",
     newCount: "{{count}} New",
+    viewAll: "View all",
+
   },
   roomGallery: {
     imageAlt: "Room {{roomNumber}}",
@@ -665,8 +669,8 @@ const en = {
       awards: "Awards"
     },
     card: {
-      specs: "{{count}} guests · {{rooms}} bedrooms · {{bathrooms}} bathrooms",
-      price: "${{price}}/night",
+      specs: " guests · bedrooms · bathrooms",
+      price: "200$/night",
       bookNow: "Book Now"
     }
   },
@@ -738,7 +742,8 @@ const vi = {
     noReviewsHint: "Hãy là người đầu tiên chia sẻ trải nghiệm!",
     basePrice: "Giá cơ bản", perNight: "/ đêm (chưa tính giá theo mùa)",
     actualPrice: "Giá thực tế khi đặt phòng sẽ tính theo ngày ở và pricing rules.",
-    contact: "Liên hệ", backToSearch: "Quay lại tìm phòng", ratings: "({{count}} đánh giá)"
+    contact: "Liên hệ", backToSearch: "Quay lại tìm phòng", ratings: "({{count}} đánh giá)",
+    roomnumber: "Phòng"
   },
   myBookings: {
     title: "Booking của tôi", loading: "Đang tải...",
@@ -915,6 +920,7 @@ const vi = {
     empty: "Không có thông báo",
     emptyDesc: "Bạn hiện không có thông báo nào trong danh mục này.",
     newCount: "{{count}} Mới",
+    viewAll: "Xem tất cả",
   },
   faq: { title: "Câu hỏi thường gặp" },
   policy: {
@@ -1365,8 +1371,8 @@ const vi = {
       awards: "Giải thưởng"
     },
     card: {
-      specs: "{{count}} khách · {{rooms}} phòng ngủ · {{bathrooms}} WC",
-      price: "${{price}}/đêm",
+      specs: "khách · phòng ngủ · WC",
+      price: "200$/đêm",
       bookNow: "Đặt ngay"
     }
   },
