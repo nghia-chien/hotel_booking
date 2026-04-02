@@ -1,7 +1,7 @@
 import type { PropertySearchParams } from '../../types/property';
 import { useTranslation } from '../../../node_modules/react-i18next';
 import BookingSearchForm from '../../components/search/BookingSearchForm';
-
+import bg from "@/assets/bg.jpg";
 interface HeroSectionProps {
   onSearch: (params: PropertySearchParams) => void;
   loading: boolean;
@@ -15,7 +15,7 @@ export default function HeroSection({ onSearch, loading }: HeroSectionProps) {
       <div
         className="absolute inset-0 z-0"
         style={{
-          background: 'url(/blog-banner-2.jpg)',
+          background: `url(${bg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
