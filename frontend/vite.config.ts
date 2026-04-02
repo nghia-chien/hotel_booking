@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: "/hotel_booking/",
+  base: "/",
   server: {
      proxy: {
       "/api": "http://localhost:3000"
