@@ -32,6 +32,8 @@ jobs:
 
       - name: Build project
         working-directory: ./frontend
+        env: 
+          VITE_API_URL: "https://hotel-booking-8elg.onrender.com"
         run: |
           yarn build
           cp dist/index.html dist/404.html

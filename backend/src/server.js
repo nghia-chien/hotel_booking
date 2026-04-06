@@ -30,12 +30,17 @@ app.use(
       if (!origin) return callback(null, true);
 
       const allowedOrigins = [
-        "http://localhost:8080",
-        "http://127.0.0.1:8080",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
         "http://localhost:5174",
         "http://127.0.0.1:5174",
-
+        "https://nghia-chien.github.io" // Link Frontend Github Pages của bạn
       ];
+
+      // Đọc URL từ biến môi trường (khuyên dùng khi deploy Backend)
+      if (process.env.FRONTEND_URL) {
+        allowedOrigins.push(...process.env.FRONTEND_URL.split(','));
+      }
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
