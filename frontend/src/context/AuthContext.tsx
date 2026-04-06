@@ -7,15 +7,7 @@ import {
 } from "react";
 import { apiRequest } from "../api/client";
 
-export interface AuthUser {
-  id: string;
-  fullName: string;
-  email: string;
-  role: "user" | "admin" | "staff";
-  avatar?: string;
-  phone?: string;
-  address?: string;
-}
+import type { User as AuthUser } from '../features/auth/types.js';
 
 interface AuthResponse {
   success: boolean;
@@ -35,6 +27,7 @@ interface AuthContextValue {
   updateProfile: (data: { fullName: string; phone?: string; address?: string }) => Promise<void>;
   changePassword: (data: { currentPassword: string; newPassword: string }) => Promise<void>;
   uploadAvatar: (file: File) => Promise<string>;
+  saveSession: (user: AuthUser, accessToken?: string, refreshToken?: string) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -165,7 +158,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout,
     updateProfile,
     changePassword,
-    uploadAvatar
+    uploadAvatar,
+    saveSession
   };
 
   return (

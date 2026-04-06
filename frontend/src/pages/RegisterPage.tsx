@@ -1,30 +1,24 @@
 import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "../../node_modules/react-i18next";
-import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "react-i18next";
+import { useAuthFeature } from "../features/auth/hooks";
 
 const RegisterPage = () => {
-  const { register } = useAuth();
+  const { register, loading, error } = useAuthFeature();
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
     try {
       await register(fullName, email, password);
       navigate("/", { replace: true });
     } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
+      // Error handled by hook
     }
   };
 

@@ -1,5 +1,5 @@
 import { useTranslation } from '../../../node_modules/react-i18next';
-import { Heart, MapPin } from 'lucide-react';
+import { Heart, MapPin, ShoppingCart } from 'lucide-react';
 import type { PropertyCardProps } from '../../types/property';
 import { Badge, PropertyAmenityIcon, StarRating } from '../ui';
 import { cn } from '../ui/utils';
@@ -19,6 +19,7 @@ export default function PropertyCard({
   variant = 'default',
   onViewDetails,
   onBook,
+  onAddToCart,
   onFavorite,
   className,
 }: PropertyCardProps) {
@@ -108,17 +109,31 @@ export default function PropertyCard({
           </div>
           <div className="flex flex-col items-end gap-1.5">
             <StarRating rating={rating ?? 0} size="sm" showValue />
-            {onBook && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onBook();
-                }}
-                className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                {t('propertyCard.bookNow')}
-              </button>
-            )}
+            <div className="flex items-center gap-1.5">
+              {onAddToCart && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddToCart();
+                  }}
+                  className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
+                  title={t('propertyCard.addToCart', 'Thêm vào giỏ')}
+                >
+                  <ShoppingCart className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {onBook && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onBook();
+                  }}
+                  className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+                >
+                  {t('propertyCard.bookNow')}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

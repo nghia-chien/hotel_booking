@@ -47,6 +47,8 @@ const en = {
   },
   myBookings: {
     title: "My Bookings", loading: "Loading...",
+    tabCart: "Cart ({{count}})",
+    tabHistory: "Booking history",
     status: "Status: {{status}} · Payment: {{payment}}",
     total: "Total:", unpaid: "Unpaid", pay: "Pay", cancel: "Cancel",
     cancelSuccess: "Booking cancelled", noBookings: "You have no bookings yet. Book a room on the Rooms page.",
@@ -130,11 +132,16 @@ const en = {
     }
   },
   payments: {
+    historyTitle: "Booking History",
+    historySubtitle: "All your past and upcoming bookings.",
+    filterAll: "All",
+    filterConfirmed: "Confirmed",
+    filterCompleted: "Completed",
+    filterCancelled: "Cancelled",
     success: "Payment Successful!", successMsg: "Your booking has been confirmed.",
     cancel: "Payment Cancelled", cancelMsg: "Your payment was cancelled. Your booking is still pending.",
     backToBookings: "Back to My Bookings",
     history: "Payment History", noPayments: "No payment history.",
-    historySubtitle: "Manage and track your transactions here.",
     loading: "Loading payment history...",
     status: {
       SUCCESS: "Success",
@@ -680,8 +687,21 @@ const en = {
     contact: "Contact us",
     backToSearch: "Back to search"
   },
+  cart: {
+    title: "Cart",
+    empty: "Your cart is empty.",
+    emptyHint: "Browse rooms to add.",
+    paySelected: "Pay {{count}} room(s)",
+    payAll: "Pay all in cart",
+    selectAll: "Select all",
+    autoCancel: "Auto-cancels in {{min}} min",
+    removeItem: "Remove",
+    continueShopping: "Add more rooms",
+  },
   bookingForm: {
     title: "Book a Room",
+    addedToCart: "✓ Added to cart! Continue browsing.",
+    addToCart: "Add to Cart",
     checkIn: "Check-in Date",
     checkOut: "Check-out Date",
     selectDate: "Select date",
@@ -747,6 +767,8 @@ const vi = {
   },
   myBookings: {
     title: "Booking của tôi", loading: "Đang tải...",
+    tabCart: "Giỏ phòng ({{count}})",
+    tabHistory: "Lịch sử đặt phòng",
     status: "Trạng thái: {{status}} · Thanh toán: {{payment}}",
     total: "Tổng tiền:", unpaid: "Chưa thanh toán", pay: "Thanh toán", cancel: "Huỷ booking",
     cancelSuccess: "Đã huỷ booking", noBookings: "Bạn chưa có booking nào. Hãy đặt phòng tại trang Rooms.",
@@ -841,11 +863,16 @@ const vi = {
     }
   },
   payments: {
+    historyTitle: "Lịch sử đặt phòng",
+    historySubtitle: "Toàn bộ lịch sử đặt phòng của bạn.",
+    filterAll: "Tất cả",
+    filterConfirmed: "Đã xác nhận",
+    filterCompleted: "Đã hoàn thành",
+    filterCancelled: "Đã hủy",
     success: "Thanh toán thành công!", successMsg: "Booking của bạn đã được xác nhận.",
     cancel: "Thanh toán bị huỷ", cancelMsg: "Thanh toán bị huỷ. Booking của bạn vẫn đang chờ.",
     backToBookings: "Quay lại Booking của tôi",
     history: "Lịch sử thanh toán", noPayments: "Không có lịch sử thanh toán.",
-    historySubtitle: "Quản lý và tra cứu các giao dịch của bạn tại đây.",
     loading: "Đang tải lịch sử thanh toán...",
     status: {
       SUCCESS: "Thành công",
@@ -1382,8 +1409,21 @@ const vi = {
     contact: "Liên hệ",
     backToSearch: "Quay lại tìm phòng"
   },
+  cart: {
+    title: "Giỏ phòng",
+    empty: "Giỏ phòng trống.",
+    emptyHint: "Hãy tìm và thêm phòng vào giỏ.",
+    paySelected: "Thanh toán {{count}} phòng",
+    payAll: "Thanh toán tất cả",
+    selectAll: "Chọn tất cả",
+    autoCancel: "Tự hủy sau {{min}} phút",
+    removeItem: "Xóa",
+    continueShopping: "Thêm phòng khác",
+  },
   bookingForm: {
     title: "Thông tin đặt phòng",
+    addedToCart: "✓ Đã thêm vào giỏ! Tiếp tục chọn phòng.",
+    addToCart: "Thêm vào giỏ",
     checkIn: "Ngày nhận phòng",
     checkOut: "Ngày trả phòng",
     selectDate: "Chọn ngày",

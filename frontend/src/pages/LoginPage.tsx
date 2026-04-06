@@ -1,36 +1,35 @@
 import { type FormEvent, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useTranslation } from "../../node_modules/react-i18next";
+import { useTranslation } from "react-i18next";
+import { useAuthFeature } from "../features/auth/hooks";
 import { useAuth } from "../context/AuthContext";
 
 const LoginPage = () => {
-  const { login } = useAuth();
+  const { login: executeLogin, loading, error } = useAuthFeature();
+  const { saveSession } = useAuth(); // We still need global session management
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const location = useLocation() as { state?: { from?: Location } };
+  const location = useLocation() as { state?: { from?: any } };
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
     try {
-      const user = await login(email, password);
+      const data = await executeLogin(email, password);
+      // Update global context with session data
+      saveSession(data.user, data.accessToken, data.refreshToken);
+      
       let redirectTo = "/";
-      if (user.role === "admin" || user.role === "staff") {
+      if (data.user.role === "admin" || data.user.role === "staff") {
         redirectTo = "/admin";
       } else if (location.state?.from?.pathname && location.state.from.pathname !== "/login") {
         redirectTo = location.state.from.pathname;
       }
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
+      // Error handled by hook's toast
     }
   };
 
@@ -62,7 +61,7 @@ const LoginPage = () => {
             required
           />
           <div className="mt-2 text-right">
-            <Link to="/forgot-password" className="text-sm text-blue-600 hover:underline">
+            <Link to="/forgot-password" size="sm" color="blue" className="text-sm text-blue-600 hover:underline">
               {t('login.forgotPassword')}
             </Link>
           </div>
@@ -76,4 +75,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default LoginPage;

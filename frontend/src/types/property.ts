@@ -23,6 +23,7 @@ export interface PropertyCardProps {
   category?: PropertyCategory
   isFavorited?: boolean
   onBook?: () => void
+  onAddToCart?: () => void
   onViewDetails?: () => void
   onFavorite?: (id: string) => void
   totalPrice?: number

@@ -1,79 +1,36 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Bell, CheckCircle2, XCircle, CreditCard, RefreshCw, Star, Trash2, CheckCircle, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useTranslation } from "../../node_modules/react-i18next";
-import { apiRequest } from "../api/client";
+import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
-
-interface Notification {
-  _id: string;
-  type: string;
-  title: string;
-  message: string;
-  link: string;
-  isRead: boolean;
-  createdAt: string;
-}
-
-interface NotificationListResponse {
-  success: boolean;
-  data: Notification[];
-  total: number;
-  unreadCount: number;
-}
+import { useNotificationFeature } from "../features/notification/hooks";
 
 export default function NotificationsPage() {
   const { t, i18n } = useTranslation();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { 
+    notifications, 
+    loading, 
+    fetchNotifications, 
+    markAsRead, 
+    markAllAsRead, 
+    deleteNotification 
+  } = useNotificationFeature();
+  
   const [filter, setFilter] = useState<"all" | "unread">("all");
 
   const dateLocale = i18n.language === "vi" ? vi : enUS;
 
-  const fetchFull = useCallback(async () => {
-    setLoading(true);
-    try {
-      const url = filter === "all" ? "/api/notifications?limit=50" : "/api/notifications?isRead=false&limit=50";
-      const res = await apiRequest<NotificationListResponse>(url, "GET", undefined, { auth: true });
-      setNotifications(res.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [filter]);
-
   useEffect(() => {
-    void fetchFull();
-  }, [fetchFull]);
+    void fetchNotifications();
+  }, [fetchNotifications]);
 
-  const handleMarkRead = async (id: string) => {
-    try {
-      await apiRequest(`/api/notifications/${id}/read`, "PATCH", undefined, { auth: true });
-      setNotifications(notifications.map(n => n._id === id ? { ...n, isRead: true } : n));
-    } catch (err) {
-       console.error(err);
+  const filteredNotifications = useMemo(() => {
+    if (filter === "unread") {
+      return notifications.filter(n => !n.isRead);
     }
-  };
-
-  const handleMarkAllRead = async () => {
-    try {
-      await apiRequest("/api/notifications/read-all", "PATCH", undefined, { auth: true });
-      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      await apiRequest(`/api/notifications/${id}`, "DELETE", undefined, { auth: true });
-      setNotifications(notifications.filter(n => n._id !== id));
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    return notifications;
+  }, [filter, notifications]);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -99,8 +56,9 @@ export default function NotificationsPage() {
         
         <div className="flex gap-2">
            <button 
-             onClick={handleMarkAllRead}
-             className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md active:scale-95"
+             onClick={markAllAsRead}
+             disabled={loading}
+             className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md active:scale-95 disabled:opacity-50"
            >
              <CheckCircle className="w-4 h-4" /> {t('notifications.markAllRead')}
            </button>
@@ -122,17 +80,17 @@ export default function NotificationsPage() {
         </button>
       </div>
 
-      {loading ? (
+      {loading && notifications.length === 0 ? (
         <div className="py-20 flex flex-col items-center justify-center text-gray-300 gap-4">
           <Loader2 className="w-12 h-12 animate-spin text-blue-100" />
           <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">{t('notifications.syncing')}</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {notifications.length > 0 ? (
-            notifications.map((n) => (
+          {filteredNotifications.length > 0 ? (
+            filteredNotifications.map((n) => (
               <div 
-                key={n._id}
+                key={n.id}
                 className={`group flex items-start gap-5 p-6 rounded-3xl border transition-all hover:shadow-xl hover:scale-[1.01] ${!n.isRead ? "bg-white border-blue-100 shadow-sm shadow-blue-500/5 ring-1 ring-blue-50/50" : "bg-gray-50/30 border-gray-100 grayscale-[0.5] opacity-80"}`}
               >
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 mt-1 transition-all group-hover:rotate-6 duration-300 ${!n.isRead ? "bg-blue-50/50 border border-blue-50 shadow-inner" : "bg-gray-100 shadow-inner"}`}>
@@ -155,8 +113,8 @@ export default function NotificationsPage() {
                    
                    <div className="flex items-center gap-6 pt-4 border-t border-gray-100/50">
                       <Link 
-                        to={n.link}
-                        onClick={() => handleMarkRead(n._id)}
+                        to={(n as any).link || '#'}
+                        onClick={() => markAsRead(n.id)}
                         className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 flex items-center gap-1 group/link"
                       >
                         {t('notifications.viewDetails')} <CheckCircle2 className="w-3.5 h-3.5 opacity-0 group-hover/link:opacity-100 transition-all -translate-x-1 group-hover/link:translate-x-0" />
@@ -164,7 +122,7 @@ export default function NotificationsPage() {
                       
                       {!n.isRead && (
                         <button 
-                          onClick={() => handleMarkRead(n._id)}
+                          onClick={() => markAsRead(n.id)}
                           className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-emerald-600 transition-colors pl-6 border-l border-gray-100"
                         >
                           {t('notifications.markAsRead')}
@@ -172,7 +130,7 @@ export default function NotificationsPage() {
                       )}
                       
                       <button 
-                        onClick={() => handleDelete(n._id)}
+                        onClick={() => deleteNotification(n.id)}
                         className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-red-500 transition-all ml-auto md:opacity-0 group-hover:opacity-100 flex items-center gap-1.5"
                       >
                          <Trash2 className="w-3.5 h-3.5" /> {t('common.delete')}
@@ -196,4 +154,4 @@ export default function NotificationsPage() {
       )}
     </div>
   );
-}
+}

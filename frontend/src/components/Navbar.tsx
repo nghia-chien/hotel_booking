@@ -14,15 +14,18 @@ import {
   Star,
   BarChart3,
   Users,
+  ShoppingCart,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import NotificationBell from './NotificationBell';
 import { cn } from './ui/utils';
 import logo from '@/assets/logo.png';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { cartCount } = useCart();
   const { t, i18n } = useTranslation();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -110,6 +113,14 @@ export default function Navbar() {
 
           {user ? (
             <>
+              {cartCount > 0 && (
+                <Link to="/my-bookings" className="relative p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface)] rounded-lg transition-colors cursor-pointer mr-1">
+                  <ShoppingCart className="w-5 h-5" />
+                  <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center translate-x-1/4 -translate-y-1/4">
+                    {cartCount}
+                  </span>
+                </Link>
+              )}
               <NotificationBell />
               <div className="relative" ref={userMenuRef}>
                 <button

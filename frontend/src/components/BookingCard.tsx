@@ -10,7 +10,8 @@ import { Calendar } from "./ui/calendar";
 import { apiRequest } from "../api/client";
 import { createBooking } from "../api/booking.api";
 import { useAuth } from "../context/AuthContext";
-import { useTranslation } from "../../node_modules/react-i18next"
+import { useTranslation } from "../../node_modules/react-i18next";
+import { useCart } from "../context/CartContext";
 
 interface PriceResponse {
   success: boolean;
@@ -31,6 +32,8 @@ export function BookingCard({
   const { t } = useTranslation()
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { addToCart } = useCart();
+  const [addedMsg, setAddedMsg] = useState<string | null>(null);
   const [checkIn, setCheckIn] = useState<Date>();
   const [checkOut, setCheckOut] = useState<Date>();
   const [guests, setGuests] = useState(2);
@@ -116,9 +119,9 @@ export function BookingCard({
     try {
       const bookingId = await createBookingForThisRoom();
       if (!bookingId) return;
-      navigate("/my-bookings", {
-        state: { message: "Đã thêm phòng chờ thanh toán." }
-      });
+      addToCart(bookingId);
+      setAddedMsg(t('bookingForm.addedToCart'));
+      setTimeout(() => setAddedMsg(null), 3000);
     } catch (err) {
       setBookingError((err as Error).message);
     } finally {
@@ -344,7 +347,7 @@ export function BookingCard({
               onClick={handleAddRoom}
               disabled={!canQuote || bookingLoading}
             >
-              {bookingLoading ? t('bookingForm.processing') : t('bookingForm.addRoom')}
+              {bookingLoading ? t('bookingForm.processing') : t('bookingForm.addToCart')}
             </Button>
             <Button
               className="rounded-xl bg-[#2C2C2C] hover:bg-[#3A3A3A] text-white"
@@ -354,6 +357,12 @@ export function BookingCard({
               {bookingLoading ? t('bookingForm.processing') : t('bookingForm.bookAndPay')}
             </Button>
           </div>
+
+          {addedMsg && (
+            <div className="text-sm text-emerald-600 font-medium py-1 text-center">
+              {addedMsg}
+            </div>
+          )}
 
           {bookingError && (
             <p className="text-sm text-red-600">{bookingError}</p>
