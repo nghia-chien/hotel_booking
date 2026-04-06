@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useTranslation } from "../../node_modules/react-i18next";
+import { useTranslation } from '../../node_modules/react-i18next';
 import { apiRequest } from "../api/client";
 import {
   Calendar,
@@ -46,7 +46,7 @@ interface Booking {
 };
 
 export default function BookingDetailPage() {
-  const { t } = useTranslation(); 
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const [booking, setBooking] = useState<Booking | null>(null);
@@ -112,7 +112,7 @@ export default function BookingDetailPage() {
       );
       setHasReviewed(true);
       setShowReviewModal(false);
-      
+
     } catch (err) {
       alert((err as Error).message);
     } finally {

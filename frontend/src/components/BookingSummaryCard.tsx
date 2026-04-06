@@ -1,4 +1,4 @@
-import { useTranslation } from "../../node_modules/react-i18next";
+import { useTranslation } from '../../node_modules/react-i18next';
 import { Calendar, Users, Moon, MapPin, Trash2, AlertTriangle } from "lucide-react";
 import { cn } from "./ui/utils";
 import { toImageUrl } from "../utils/format";
@@ -43,7 +43,7 @@ export default function BookingSummaryCard({
 }: BookingSummaryCardProps) {
   const { t } = useTranslation();
   const isCart = mode === "cart";
-  
+
   const checkIn = new Date(data.checkIn);
   const checkOut = new Date(data.checkOut);
   const nights = Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 3600 * 24)));

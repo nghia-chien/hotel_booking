@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
-import { useTranslation } from "../../node_modules/react-i18next";
+import { useTranslation } from '../../node_modules/react-i18next';
 import { apiRequest } from "../api/client";
 
 export default function ForgotPasswordPage() {

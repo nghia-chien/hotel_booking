@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { useTranslation } from '../../node_modules/react-i18next';
 import { Loader2, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "../components/ui/utils";
@@ -150,7 +150,7 @@ export default function PaymentHistoryPage() {
                   <div className="flex flex-col gap-2 items-end">
                     <StatusBadge status={payment.status} />
                     {payment.status === "PENDING" && (
-                      <button 
+                      <button
                         onClick={() => handlePayAgain(paymentId, bks.map(b => b._id || b.id))}
                         disabled={payLoadingId === paymentId}
                         className="text-[11px] font-bold uppercase tracking-wider bg-emerald-600 text-white px-3 py-1.5 rounded hover:bg-emerald-700 transition"

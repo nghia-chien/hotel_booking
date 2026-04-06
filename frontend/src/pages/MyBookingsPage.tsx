@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { useTranslation } from '../../node_modules/react-i18next';
 import { useCart } from "../context/CartContext";
 import { cn } from "../components/ui/utils";
 import PaymentHistoryPage from "./PaymentHistoryPage";
@@ -62,10 +62,10 @@ const MyBookingsPage = () => {
             roomId: item.roomId,
             checkIn: item.checkIn,
             checkOut: item.checkOut,
-            guestInfo: { 
+            guestInfo: {
               fullName: "User",
-              email: "user@example.com", 
-              phone: "123456789" 
+              email: "user@example.com",
+              phone: "123456789"
             }
           });
           return res._id || res.id;

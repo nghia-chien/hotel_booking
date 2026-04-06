@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Star } from "lucide-react";
-import { useTranslation } from "../../node_modules/react-i18next";
+import { useTranslation } from '../../node_modules/react-i18next';
 import { apiRequest } from "../api/client";
 import { Button } from "../components/ui/button";
 import RoomGallery from "../components/RoomGallery";
@@ -153,7 +153,7 @@ export default function RoomDetail() {
                 <span className="ml-1 text-xs font-bold text-gray-900">
                   {room.avgRating || 0}
                 </span>
-              <span className="text-xs text-gray-400">({room.totalReviews || 0} {t('header.reviews')})</span>
+                <span className="text-xs text-gray-400">({room.totalReviews || 0} {t('header.reviews')})</span>
               </div>
             </div>
 
@@ -165,14 +165,14 @@ export default function RoomDetail() {
 
             {room.policies && (
               <div className="pt-2 border-t border-black/5 mt-2">
-              <h3 className="text-sm font-medium text-[#2C2C2C] mb-1">{t('roomDetail.policy')}</h3>
+                <h3 className="text-sm font-medium text-[#2C2C2C] mb-1">{t('roomDetail.policy')}</h3>
                 <p className="text-sm text-black/60">{room.policies}</p>
               </div>
             )}
 
             {room.amenities && room.amenities.length > 0 && (
               <div className="pt-2 border-t border-black/5 mt-2">
-              <h3 className="text-sm font-medium text-[#2C2C2C] mb-1">{t('roomDetail.amenities')}</h3>
+                <h3 className="text-sm font-medium text-[#2C2C2C] mb-1">{t('roomDetail.amenities')}</h3>
                 <p className="text-sm text-black/60">
                   {room.amenities.join(", ")}
                 </p>
@@ -183,7 +183,7 @@ export default function RoomDetail() {
           {/* Reviews Section */}
           <section className="bg-white border border-black/5 rounded-2xl p-6 shadow-sm space-y-6">
             <div className="flex items-center justify-between border-b border-gray-50 pb-4">
-            <h3 className="text-xl font-bold text-gray-900 italic">{t('roomDetail.reviews')}</h3>
+              <h3 className="text-xl font-bold text-gray-900 italic">{t('roomDetail.reviews')}</h3>
               <div className="text-right">
                 <div className="text-3xl font-black text-gray-900">{room.avgRating || 0}</div>
                 <div className="flex gap-0.5 justify-end">

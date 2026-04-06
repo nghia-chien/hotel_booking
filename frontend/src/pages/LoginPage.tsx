@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { useTranslation } from '../../node_modules/react-i18next';
 import { useAuthFeature } from "../features/auth/hooks";
 import { useAuth } from "../context/AuthContext";
 
@@ -20,7 +20,7 @@ const LoginPage = () => {
       const data = await executeLogin(email, password);
       // Update global context with session data
       saveSession(data.user, data.accessToken, data.refreshToken);
-      
+
       let redirectTo = "/";
       if (data.user.role === "admin" || data.user.role === "staff") {
         redirectTo = "/admin";
@@ -75,4 +75,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default LoginPage;

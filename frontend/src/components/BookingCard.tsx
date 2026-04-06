@@ -10,7 +10,7 @@ import { Calendar } from "./ui/calendar";
 import { apiRequest } from "../api/client";
 import { createBooking } from "../api/booking.api";
 import { useAuth } from "../context/AuthContext";
-import { useTranslation } from "../../node_modules/react-i18next";
+import { useTranslation } from '../../node_modules/react-i18next';
 import { useCart } from "../context/CartContext";
 
 interface PriceResponse {
@@ -107,7 +107,7 @@ export function BookingCard({
     return res.data._id;
   };
 
-   // add room to cart, go to MyBookings to pay later
+  // add room to cart, go to MyBookings to pay later
   const handleAddRoom = async () => {
     if (!user) {
       navigate("/login", { state: { from: { pathname: window.location.pathname } } });
@@ -129,7 +129,7 @@ export function BookingCard({
     }
   };
 
-   // book room + pay immediately via VNPay
+  // book room + pay immediately via VNPay
   const handleBookAndPayVNPay = async () => {
     if (!user) {
       navigate("/login", { state: { from: { pathname: window.location.pathname } } });
@@ -205,17 +205,17 @@ export function BookingCard({
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar 
-                mode="single" 
-                selected={checkIn} 
-                onSelect={setCheckIn} 
+              <Calendar
+                mode="single"
+                selected={checkIn}
+                onSelect={setCheckIn}
                 disabled={(date) => {
                   // Disable past dates
-                  if (date < new Date(new Date().setHours(0,0,0,0))) return true;
+                  if (date < new Date(new Date().setHours(0, 0, 0, 0))) return true;
                   // Disable booked dates
-                  return bookedDates.some((b: any) => 
-                    date >= new Date(b.checkIn.setHours(0,0,0,0)) && 
-                    date < new Date(b.checkOut.setHours(0,0,0,0))
+                  return bookedDates.some((b: any) =>
+                    date >= new Date(b.checkIn.setHours(0, 0, 0, 0)) &&
+                    date < new Date(b.checkOut.setHours(0, 0, 0, 0))
                   );
                 }}
               />
@@ -246,7 +246,7 @@ export function BookingCard({
                   // Must be after check-in
                   if (checkIn && date <= checkIn) return true;
                   // Must not be in the past
-                  if (date < new Date(new Date().setHours(0,0,0,0))) return true;
+                  if (date < new Date(new Date().setHours(0, 0, 0, 0))) return true;
                   // Must not overlap with a booking that starts after check-in
                   if (checkIn) {
                     const nextBooking = bookedDates
@@ -254,9 +254,9 @@ export function BookingCard({
                       .sort((a: any, b: any) => a.checkIn.getTime() - b.checkIn.getTime())[0];
                     if (nextBooking && date > nextBooking.checkIn) return true;
                   }
-                  return bookedDates.some((b: any) => 
-                    date > new Date(b.checkIn.setHours(0,0,0,0)) && 
-                    date <= new Date(b.checkOut.setHours(0,0,0,0))
+                  return bookedDates.some((b: any) =>
+                    date > new Date(b.checkIn.setHours(0, 0, 0, 0)) &&
+                    date <= new Date(b.checkOut.setHours(0, 0, 0, 0))
                   );
                 }}
               />

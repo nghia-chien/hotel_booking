@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
-import { 
-  User as UserIcon, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Camera, 
-  Lock, 
+import {
+  User as UserIcon,
+  Mail,
+  Phone,
+  MapPin,
+  Camera,
+  Lock,
   ShieldCheck,
   Loader2,
   CreditCard
 } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { useTranslation } from '../../node_modules/react-i18next';
 import { useAuthFeature } from "../features/auth/hooks";
 
 type ProfileFields = {
@@ -123,7 +123,7 @@ export default function ProfilePage() {
             <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} disabled={isUploading || authLoading} />
           </label>
         </div>
-        
+
         <div className="flex flex-col md:flex-row flex-1 items-center md:items-start justify-between gap-4">
           <div className="text-center md:text-left space-y-2">
             <h1 className="text-3xl font-bold text-gray-900">{user.fullName}</h1>
@@ -132,7 +132,7 @@ export default function ProfilePage() {
               <span className="flex items-center gap-1.5 capitalize"><ShieldCheck className="w-4 h-4" /> {user.role}</span>
             </div>
           </div>
-          <Link 
+          <Link
             to="/my-bookings"
             state={{ tab: "history" }}
             className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors font-semibold text-sm"
@@ -220,7 +220,7 @@ export default function ProfilePage() {
               <label className="text-sm font-medium text-gray-700">{t('profile.newPassword')}</label>
               <input
                 type="password"
-                {...regPassword("newPassword", { 
+                {...regPassword("newPassword", {
                   required: t('profile.validation.newPasswordRequired'),
                   minLength: { value: 6, message: t('profile.validation.passwordMinLength') }
                 })}
@@ -233,7 +233,7 @@ export default function ProfilePage() {
               <label className="text-sm font-medium text-gray-700">{t('profile.confirmNewPassword')}</label>
               <input
                 type="password"
-                {...regPassword("confirmPassword", { 
+                {...regPassword("confirmPassword", {
                   required: t('profile.validation.confirmPasswordRequired'),
                   validate: (val) => val === newPassword || t('profile.validation.passwordMismatch')
                 })}

@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useTranslation } from "../../node_modules/react-i18next";
+import { useTranslation } from '../../node_modules/react-i18next';
 
 
 const VNP_MESSAGES: Record<string, string> = {
@@ -24,14 +24,14 @@ const VNP_MESSAGES: Record<string, string> = {
 // Backend verify hash and update DB 
 export default function PaymentResultPage() {
   const [searchParams] = useSearchParams();
-  const navigate       = useNavigate();
-  const { t }          = useTranslation();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const status = searchParams.get("status");   // "success" | "failed"
-  const code   = searchParams.get("code") ?? "99";
+  const code = searchParams.get("code") ?? "99";
 
   const isSuccess = status === "success";
-  const message   = isSuccess
+  const message = isSuccess
     ? VNP_MESSAGES["00"]
     : (VNP_MESSAGES[code] ?? VNP_MESSAGES["99"]);
 

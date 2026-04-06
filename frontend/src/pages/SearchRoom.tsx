@@ -1,7 +1,6 @@
 import { useMemo, useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { useTranslation } from "react-i18next"
-
+import { useTranslation } from '../../node_modules/react-i18next';
 import BookingSearchForm from "../components/search/BookingSearchForm"
 import { FilterSidebar } from "../components/FilterSideBar"
 import { PropertyGrid } from "../components/property"
@@ -56,7 +55,7 @@ const RoomsPage = () => {
       1,
       Math.round(
         (searchParams.checkOut.getTime() - searchParams.checkIn.getTime()) /
-          (24 * 60 * 60 * 1000)
+        (24 * 60 * 60 * 1000)
       )
     )
   }, [searchParams])

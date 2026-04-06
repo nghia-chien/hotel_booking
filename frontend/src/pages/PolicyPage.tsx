@@ -1,7 +1,7 @@
 import { ShieldCheck, BookOpen, Clock, Archive } from "lucide-react";
-import { useTranslation } from "../../node_modules/react-i18next";
+import { useTranslation } from '../../node_modules/react-i18next';
 const PolicySection = ({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) => {
-  
+
   return (
     <section className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm space-y-4 hover:shadow-xl hover:scale-[1.01] transition-all group overflow-hidden relative">
       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-100 transition-colors"></div>
