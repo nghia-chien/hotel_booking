@@ -28,12 +28,12 @@ jobs:
 
       - name: Install Dependencies
         working-directory: ./frontend
-        run: npm install --legacy-peer-deps
+        run: yarn install
 
       - name: Build project
         working-directory: ./frontend
         run: |
-          npm run build
+          yarn build
           cp dist/index.html dist/404.html
 
       - name: Upload artifact
