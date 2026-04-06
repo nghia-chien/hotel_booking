@@ -19,6 +19,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
 import { cn } from './ui/utils';
+import logo from '@/assets/logo.png';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -52,9 +53,7 @@ export default function Navbar() {
         
         {/* LOGO */}
         <Link to="/" className="flex items-center gap-2 flex-shrink-0 group">
-          <div className="w-8 h-8 rounded-lg bg-[var(--color-primary-foreground)] flex items-center justify-center transition-transform group-hover:scale-110">
-            <Building2 className="w-4 h-4 text-[var(--color-primary)]" />
-          </div>  
+          <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg" />
           <span className="font-serif font-bold text-lg text-[var(--color-text-primary)] tracking-tight">
             HotelBooking
           </span>
