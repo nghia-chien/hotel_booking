@@ -44,7 +44,8 @@ dist-ssr/
 .cursor/
 .gemini/
 .cursorignore
-
+.agents
+.gitlap
 # ======================
 # Docs
 # ======================
@@ -54,3 +55,12 @@ docs/
 # Docker
 # ======================
 docker-data/
+
+# Playwright
+/test-results/
+/tests/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+/playwright.config.ts

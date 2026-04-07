@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from '../../../node_modules/react-i18next';
 import { format } from 'date-fns';
 import {
@@ -39,10 +39,25 @@ export default function BookingSearchForm({
   const isPage = variant === 'page';
   const isCompact = variant === 'compact';
 
-  const handleSearch = () => {
-    if (!checkIn || !checkOut) return;
-    onSearch({ checkIn, checkOut, guests });
-  };
+  const lastSearchRef = useRef<{ checkIn?: Date; checkOut?: Date; guests?: number }>({});
+
+  useEffect(() => {
+    if (checkIn && checkOut) {
+      const checkInTime = checkIn.getTime();
+      const checkOutTime = checkOut.getTime();
+      const prevCheckInTime = lastSearchRef.current.checkIn?.getTime();
+      const prevCheckOutTime = lastSearchRef.current.checkOut?.getTime();
+
+      if (
+        checkInTime !== prevCheckInTime ||
+        checkOutTime !== prevCheckOutTime ||
+        guests !== lastSearchRef.current.guests
+      ) {
+        lastSearchRef.current = { checkIn, checkOut, guests };
+        onSearch({ checkIn, checkOut, guests });
+      }
+    }
+  }, [checkIn, checkOut, guests, onSearch]);
 
   const FieldWrapper = ({
     label,
@@ -211,31 +226,6 @@ export default function BookingSearchForm({
           </Popover>
         </FieldWrapper>
 
-        {/* SEARCH BUTTON */}
-        <div className={cn('flex items-center', isHero || isPage ? 'px-2' : 'pl-2')}>
-          <Button
-            onClick={handleSearch}
-            disabled={loading || !checkIn || !checkOut}
-            className={cn(
-              'font-bold transition-colors disabled:opacity-60',
-              isHero || isPage
-                ? 'w-full h-full min-h-[52px] px-8 rounded-xl bg-[var(--color-primary)] text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-dark)]'
-                : 'h-10 px-4 rounded-lg'
-            )}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                {t('bookingSearch.searching')}
-              </>
-            ) : (
-              <>
-                <Search className="w-4 h-4 mr-2" />
-                {t('bookingSearch.searchButton')}
-              </>
-            )}
-          </Button>
-        </div>
       </div>
     </div>
   );

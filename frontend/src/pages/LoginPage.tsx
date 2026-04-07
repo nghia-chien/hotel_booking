@@ -2,11 +2,9 @@ import { type FormEvent, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from '../../node_modules/react-i18next';
 import { useAuthFeature } from "../features/auth/hooks";
-import { useAuth } from "../context/AuthContext";
 
 const LoginPage = () => {
   const { login: executeLogin, loading, error } = useAuthFeature();
-  const { saveSession } = useAuth(); // We still need global session management
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation() as { state?: { from?: any } };
@@ -17,12 +15,10 @@ const LoginPage = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      const data = await executeLogin(email, password);
-      // Update global context with session data
-      saveSession(data.user, data.accessToken, data.refreshToken);
+      const user = await executeLogin(email, password);
 
       let redirectTo = "/";
-      if (data.user.role === "admin" || data.user.role === "staff") {
+      if (user.role === "admin" || user.role === "staff") {
         redirectTo = "/admin";
       } else if (location.state?.from?.pathname && location.state.from.pathname !== "/login") {
         redirectTo = location.state.from.pathname;
@@ -61,7 +57,7 @@ const LoginPage = () => {
             required
           />
           <div className="mt-2 text-right">
-            <Link to="/forgot-password" size="sm" color="blue" className="text-sm text-blue-600 hover:underline">
+            <Link to="/forgot-password" className="text-sm text-blue-600 hover:underline">
               {t('login.forgotPassword')}
             </Link>
           </div>

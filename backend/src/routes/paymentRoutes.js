@@ -134,17 +134,17 @@ router.get("/my", authenticate, async (req, res, next) => {
       .sort({ createdAt: -1 })
       .populate({
         path: "booking",
-        select: "checkIn checkOut totalPrice status room roomType",
+        select: "checkIn checkOut guests totalPrice status room roomType",
         populate: [
-          { path: "room", select: "roomNumber" },
+          { path: "room", select: "roomNumber capacity images" },
           { path: "roomType", select: "name" }
         ]
       })
       .populate({
         path: "bookings",
-        select: "checkIn checkOut totalPrice status room roomType",
+        select: "checkIn checkOut guests totalPrice status room roomType",
         populate: [
-          { path: "room", select: "roomNumber" },
+          { path: "room", select: "roomNumber capacity images" },
           { path: "roomType", select: "name" }
         ]
       });

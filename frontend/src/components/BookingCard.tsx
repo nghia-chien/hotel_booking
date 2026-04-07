@@ -23,13 +23,20 @@ interface PriceResponse {
 }
 
 export function BookingCard({
-  roomId,
-  capacity
+  room
 }: {
-  roomId: string;
-  capacity: number;
+  room: {
+    _id: string;
+    capacity: number;
+    roomNumber: string;
+    roomType?: { name: string; basePrice?: number };
+    images?: string[];
+    amenities?: string[];
+  }
 }) {
-  const { t } = useTranslation()
+  const roomId = room._id;
+  const capacity = room.capacity;
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addToCart } = useCart();
@@ -72,28 +79,34 @@ export function BookingCard({
     setGuests((prev) => Math.max(1, Math.min(capacity, prev + delta)));
   };
 
-  const quotePrice = async () => {
-    if (!checkIn || !checkOut) return;
-    setPriceError(null);
-    setLoadingPrice(true);
-    try {
-      const params = new URLSearchParams({
-        checkIn: checkIn.toISOString(),
-        checkOut: checkOut.toISOString(),
-        guests: String(guests)
-      }).toString();
-      const res = await apiRequest<PriceResponse>(
-        `/api/public/rooms/${roomId}/price?${params}`,
-        "GET"
-      );
-      setPriceSummary(res.data);
-    } catch (err) {
-      setPriceError((err as Error).message);
+  useEffect(() => {
+    if (!checkIn || !checkOut) {
       setPriceSummary(null);
-    } finally {
-      setLoadingPrice(false);
+      return;
     }
-  };
+    const fetchPrice = async () => {
+      setPriceError(null);
+      setLoadingPrice(true);
+      try {
+        const params = new URLSearchParams({
+          checkIn: checkIn.toISOString(),
+          checkOut: checkOut.toISOString(),
+          guests: String(guests)
+        }).toString();
+        const res = await apiRequest<PriceResponse>(
+          `/api/public/rooms/${roomId}/price?${params}`,
+          "GET"
+        );
+        setPriceSummary(res.data);
+      } catch (err) {
+        setPriceError((err as Error).message);
+        setPriceSummary(null);
+      } finally {
+        setLoadingPrice(false);
+      }
+    };
+    void fetchPrice();
+  }, [checkIn, checkOut, guests, roomId]);
 
   const createBookingForThisRoom = async (): Promise<string | null> => {
     if (!checkIn || !checkOut) return null;
@@ -113,20 +126,23 @@ export function BookingCard({
       navigate("/login", { state: { from: { pathname: window.location.pathname } } });
       return;
     }
-    if (!checkIn || !checkOut) return;
-    setBookingError(null);
-    setBookingLoading(true);
-    try {
-      const bookingId = await createBookingForThisRoom();
-      if (!bookingId) return;
-      addToCart(bookingId);
-      setAddedMsg(t('bookingForm.addedToCart'));
-      setTimeout(() => setAddedMsg(null), 3000);
-    } catch (err) {
-      setBookingError((err as Error).message);
-    } finally {
-      setBookingLoading(false);
-    }
+    if (!checkIn || !checkOut || !priceSummary) return;
+
+    addToCart({
+      roomId: room._id,
+      roomTypeName: room.roomType?.name || 'Unknown',
+      roomNumber: room.roomNumber,
+      image: room.images?.[0],
+      checkIn: checkIn.toISOString(),
+      checkOut: checkOut.toISOString(),
+      guests,
+      totalPrice: priceSummary.totalPrice,
+      capacity: room.capacity,
+      amenities: room.amenities,
+    });
+
+    setAddedMsg(t('bookingForm.addedToCart'));
+    setTimeout(() => setAddedMsg(null), 3000);
   };
 
   // book room + pay immediately via VNPay
@@ -316,14 +332,11 @@ export function BookingCard({
         </div>
 
         <div className="grid grid-cols-1 gap-2">
-          <Button
-            variant="outline"
-            className="rounded-xl border-[#E8DFD8] bg-white hover:bg-[#F5F1ED]"
-            onClick={quotePrice}
-            disabled={!canQuote || loadingPrice}
-          >
-            {loadingPrice ? t('bookingForm.calculating') : t('bookingForm.quotePrice')}
-          </Button>
+          {loadingPrice && (
+            <div className="text-sm text-gray-500 py-1">
+              {t('bookingForm.calculating')}
+            </div>
+          )}
 
           {priceError && (
             <p className="text-sm text-red-600">{priceError}</p>

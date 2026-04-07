@@ -134,6 +134,17 @@ export default function PaymentHistoryPage() {
 
         {filtered.map(payment => {
           const bks = payment.bookings?.length ? payment.bookings : (payment.booking ? [payment.booking] : []);
+          
+          let paymentStatus = payment.status;
+          bks.forEach((b: any) => {
+            if (paymentStatus === 'CANCELLED' && b.status === 'Pending') {
+              b.status = 'Cancelled';
+            }
+            if (b.status === 'Cancelled' && paymentStatus === 'PENDING') {
+              paymentStatus = 'CANCELLED';
+            }
+          });
+
           const paymentId = (payment as any)._id || payment.id || '';
           return (
             <div key={paymentId} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
@@ -148,8 +159,8 @@ export default function PaymentHistoryPage() {
                     <p className="text-lg font-bold text-gray-900">${payment.amount.toLocaleString()}</p>
                   </div>
                   <div className="flex flex-col gap-2 items-end">
-                    <StatusBadge status={payment.status} />
-                    {payment.status === "PENDING" && (
+                    <StatusBadge status={paymentStatus} />
+                    {paymentStatus === "PENDING" && (
                       <button
                         onClick={() => handlePayAgain(paymentId, bks.map(b => b._id || b.id))}
                         disabled={payLoadingId === paymentId}

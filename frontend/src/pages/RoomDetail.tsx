@@ -232,7 +232,7 @@ export default function RoomDetail() {
         </div>
 
         <aside className="space-y-4">
-          <BookingCard roomId={room._id} capacity={room.capacity} />
+          <BookingCard room={room} />
           <div className="bg-white border border-black/5 rounded-xl p-5 shadow-sm space-y-3">
             <h3 className="text-lg font-semibold text-[#1F1F1F]">{t('roomDetail.basePrice')}</h3>
             <p className="text-2xl font-semibold text-[#2B2B2B]">
