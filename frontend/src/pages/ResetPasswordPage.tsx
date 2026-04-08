@@ -1,8 +1,12 @@
 import { type FormEvent, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../api/client";
+import { useTranslation } from "../../node_modules/react-i18next";
+import { useErrorHandler } from "../utils/errorHandling";
 
 export default function ResetPasswordPage() {
+  const { t } = useTranslation();
+  const { getErrorMessage } = useErrorHandler();
   const [params] = useSearchParams();
   const [token, setToken] = useState(params.get("token") ?? "");
   const [newPassword, setNewPassword] = useState("");
@@ -22,7 +26,7 @@ export default function ResetPasswordPage() {
       });
       setDone(true);
     } catch (err) {
-      setError((err as Error).message);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -31,7 +35,7 @@ export default function ResetPasswordPage() {
   return (
     <div className="max-w-md mx-auto bg-white border border-gray-100 shadow-sm rounded-2xl p-8 space-y-4">
       <div>
-        <h2 className="text-2xl font-bold mb-2">t('resetpassword.title').</h2>
+        <h2 className="text-2xl font-bold mb-2">{t('resetPassword.title')}</h2>
         <p className="text-sm text-gray-500">
           Dán token reset và đặt mật khẩu mới.
         </p>

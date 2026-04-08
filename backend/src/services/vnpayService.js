@@ -8,8 +8,8 @@ import {
 import Booking from "../models/Booking.js";
 import Payment from "../models/Payment.js";
 import Room from "../models/Room.js";
-import { createNotification } from "../utils/notificationHelper.js";
 import { format } from "date-fns";
+import * as BookingService from "./bookingService.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -141,13 +141,25 @@ export const handleVNPayReturn = async (query) => {
   const txnRef = query.vnp_TxnRef;
   const transactionNo = query.vnp_TransactionNo;
 
-  if (!verification.isSuccess) {
-    console.log("[VNPay] Return verify failed:", verification.message);
+  if (!verification.isSuccess || query.vnp_ResponseCode !== "00") {
+    console.log("[VNPay] Return verify failed or payment failed:", verification.message, query.vnp_ResponseCode);
     // Huỷ payment record nếu có
-    await Payment.findOneAndUpdate(
+    const failedPayment = await Payment.findOneAndUpdate(
       { vnpTxnRef: txnRef, status: "PENDING" },
-      { $set: { status: "FAILED", metadata: { vnpResponseCode: query.vnp_ResponseCode } } }
+      { $set: { status: query.vnp_ResponseCode === "24" ? "CANCELLED" : "FAILED", metadata: { vnpResponseCode: query.vnp_ResponseCode } } },
+      { new: true }
     );
+
+    if (failedPayment) {
+      // Đồng bộ trạng thái: huỷ các phòng đang Pending (do không thanh toán thành công)
+      const bookingIds = failedPayment.bookings?.length ? failedPayment.bookings : (failedPayment.booking ? [failedPayment.booking] : []);
+      if (bookingIds.length) {
+        await Booking.updateMany(
+          { _id: { $in: bookingIds }, status: "Pending" },
+          { $set: { status: "Cancelled", paymentStatus: "Failed" } }
+        );
+      }
+    }
     return { isSuccess: false, responseCode: query.vnp_ResponseCode };
   }
 
@@ -179,28 +191,11 @@ export const handleVNPayReturn = async (query) => {
   };
   await payment.save();
 
-  // Cập nhật bookings
+  // Cập nhật bookings thông qua Service chung
   const bookingIds = payment.bookings?.length ? payment.bookings : [payment.booking];
-  const bookings = await Booking.find({ _id: { $in: bookingIds } }).populate("room");
   await Promise.all(
-    bookings.map(async (b) => {
-      if (b.status === "Pending") {
-        b.status = "Confirmed";
-        b.paymentStatus = "Paid";
-        await b.save();
-
-        void createNotification(b.customer, "payment_success", {
-          transactionId: transactionNo,
-          amount: b.totalPrice,
-          bookingId: b._id
-        });
-        void createNotification(b.customer, "booking_confirmed", {
-          roomName: b.room?.roomNumber || "Phòng",
-          checkIn: b.checkIn ? format(new Date(b.checkIn), "dd/MM/yyyy") : "",
-          totalPrice: b.totalPrice,
-          bookingId: b._id
-        });
-      }
+    bookingIds.map(async (id) => {
+      await BookingService.processPaymentSuccess(id, transactionNo);
     })
   );
 
@@ -219,12 +214,33 @@ export const handleVNPayIpn = async (query) => {
   const verification = vnpay.verifyIpnCall(query);
 
   if (!verification.isSuccess) {
-    console.log("[VNPay] IPN verify failed:", verification.message);
+    console.log("[VNPay] IPN verify signature failed:", verification.message);
     return { RspCode: "97", Message: "Invalid signature" };
   }
 
   const txnRef = query.vnp_TxnRef;
   const transactionNo = query.vnp_TransactionNo;
+
+  if (query.vnp_ResponseCode !== "00") {
+    console.log("[VNPay] IPN payment failed:", query.vnp_ResponseCode);
+    const failedPayment = await Payment.findOneAndUpdate(
+      { vnpTxnRef: txnRef, status: "PENDING" },
+      { $set: { status: query.vnp_ResponseCode === "24" ? "CANCELLED" : "FAILED", metadata: { vnpResponseCode: query.vnp_ResponseCode, source: "ipn" } } },
+      { new: true }
+    );
+
+    if (failedPayment) {
+      // Đồng bộ trạng thái: huỷ phòng bị fail payment
+      const bookingIds = failedPayment.bookings?.length ? failedPayment.bookings : (failedPayment.booking ? [failedPayment.booking] : []);
+      if (bookingIds.length) {
+        await Booking.updateMany(
+          { _id: { $in: bookingIds }, status: "Pending" },
+          { $set: { status: "Cancelled", paymentStatus: "Failed" } }
+        );
+      }
+    }
+    return { RspCode: "00", Message: "Confirm Success" };
+  }
 
   // Idempotency
   const existing = await Payment.findOne({ vnpTxnRef: txnRef, status: "SUCCESS" });
@@ -254,28 +270,11 @@ export const handleVNPayIpn = async (query) => {
   };
   await payment.save();
 
-  // Cập nhật bookings
+  // Cập nhật bookings thông qua Service chung
   const bookingIds = payment.bookings?.length ? payment.bookings : [payment.booking];
-  const bookings = await Booking.find({ _id: { $in: bookingIds } }).populate("room");
   await Promise.all(
-    bookings.map(async (b) => {
-      if (b.status === "Pending") {
-        b.status = "Confirmed";
-        b.paymentStatus = "Paid";
-        await b.save();
-
-        void createNotification(b.customer, "payment_success", {
-          transactionId: transactionNo,
-          amount: b.totalPrice,
-          bookingId: b._id
-        });
-        void createNotification(b.customer, "booking_confirmed", {
-          roomName: b.room?.roomNumber || "Phòng",
-          checkIn: b.checkIn ? format(new Date(b.checkIn), "dd/MM/yyyy") : "",
-          totalPrice: b.totalPrice,
-          bookingId: b._id
-        });
-      }
+    bookingIds.map(async (id) => {
+      await BookingService.processPaymentSuccess(id, transactionNo);
     })
   );
 

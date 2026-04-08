@@ -1,17 +1,17 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useTranslation } from "../../../node_modules/react-i18next";
+import { useTranslation } from "react-i18next";
 import { apiRequest } from "../../api/client";
 import { toImageUrl } from "../../utils/format";
 import { cn } from "../../components/ui/utils";
-import { 
-  Plus, 
-  Pencil, 
-  Trash2, 
-  DoorOpen, 
-  Users, 
-  Wifi, 
-  ShieldCheck, 
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  DoorOpen,
+  Users,
+  Wifi,
+  ShieldCheck,
   Image as ImageIcon,
   CheckCircle2,
   X,
@@ -23,6 +23,7 @@ import {
 import { amenityCatalog } from "../../constants/amenities";
 import PropertyAmenityIcon from "../../components/ui/PropertyAmenityIcon";
 import { AdminPageHeader, AlertMessage } from "../../components/admin";
+import { useErrorHandler } from "../../utils/errorHandling";
 
 interface RoomType {
   _id: string;
@@ -47,6 +48,7 @@ interface ListResponse<T> {
 
 const AdminRoomsPage = () => {
   const { t } = useTranslation();
+  const { getErrorMessage } = useErrorHandler();
 
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -101,7 +103,7 @@ const AdminRoomsPage = () => {
         setRoomType(rt.data[0]._id);
       }
     } catch (err) {
-      setError((err as Error).message);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -165,7 +167,7 @@ const AdminRoomsPage = () => {
       resetForm();
       void load();
     } catch (err) {
-      setError((err as Error).message);
+      setError(getErrorMessage(err));
     }
   };
 
@@ -179,7 +181,7 @@ const AdminRoomsPage = () => {
       if (editingId === id) resetForm();
       void load();
     } catch (err) {
-      setError((err as Error).message);
+      setError(getErrorMessage(err));
     }
   };
 
@@ -320,12 +322,12 @@ const AdminRoomsPage = () => {
             <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] ml-1 block">
               {t('admin.rooms.images')}
             </label>
-            
+
             {editingId && existingImages.length > 0 && (
               <div className="bg-[var(--color-surface)] p-4 rounded-2xl border border-[var(--color-border)]">
                 <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-3 flex items-center gap-2">
-                  <ImageIcon className="w-3 h-3" /> 
-                  {t('admin.rooms.form.existingImages', { count: existingImages.length })} 
+                  <ImageIcon className="w-3 h-3" />
+                  {t('admin.rooms.form.existingImages', { count: existingImages.length })}
                   <span className="text-[var(--color-text-muted)] font-normal italic lowercase">
                     — {t('admin.rooms.form.clickToRemove')}
                   </span>
@@ -354,8 +356,8 @@ const AdminRoomsPage = () => {
                           }}
                           className={cn(
                             "absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full text-white flex items-center justify-center shadow-lg transition-all",
-                            isMarkedDelete 
-                              ? "bg-gray-500 hover:bg-black scale-110" 
+                            isMarkedDelete
+                              ? "bg-gray-500 hover:bg-black scale-110"
                               : "bg-red-500 opacity-0 group-hover:opacity-100 hover:scale-110"
                           )}
                         >
@@ -391,15 +393,15 @@ const AdminRoomsPage = () => {
                     className="absolute inset-0 opacity-0 cursor-pointer z-10"
                   />
                   <div className="w-10 h-10 bg-[var(--color-surface)] rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                     <Upload className="w-5 h-5 text-[var(--color-text-muted)]" />
+                    <Upload className="w-5 h-5 text-[var(--color-text-muted)]" />
                   </div>
                   <div>
-                     <p className="text-xs font-bold text-[var(--color-text-primary)]">
-                       {editingId ? t('admin.rooms.form.addNewImages') : t('admin.rooms.form.uploadImages')}
-                     </p>
-                     <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
-                       {t('admin.rooms.form.uploadNote')}
-                     </p>
+                    <p className="text-xs font-bold text-[var(--color-text-primary)]">
+                      {editingId ? t('admin.rooms.form.addNewImages') : t('admin.rooms.form.uploadImages')}
+                    </p>
+                    <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                      {t('admin.rooms.form.uploadNote')}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -418,7 +420,7 @@ const AdminRoomsPage = () => {
                           className="w-full h-full object-cover rounded-lg border border-white shadow-sm"
                         />
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                           <CheckCircle2 className="w-3 h-3 text-white" />
+                          <CheckCircle2 className="w-3 h-3 text-white" />
                         </div>
                       </div>
                     ))}
@@ -456,7 +458,7 @@ const AdminRoomsPage = () => {
           <h3 className="text-lg font-bold text-[var(--color-text-primary)]">
             {t('admin.rooms.list.title', { count: filteredRooms.length })}
           </h3>
-          
+
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
             <div className="relative w-full sm:w-auto">
               <Search className="w-4 h-4 text-[var(--color-text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
@@ -468,7 +470,7 @@ const AdminRoomsPage = () => {
                 className="pl-9 pr-4 py-2.5 bg-white border border-[var(--color-border)] rounded-xl text-sm focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] w-full sm:w-[220px]"
               />
             </div>
-            
+
             <div className="relative w-full sm:w-auto">
               <Filter className="w-4 h-4 text-[var(--color-text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
               <select
@@ -487,98 +489,98 @@ const AdminRoomsPage = () => {
 
         {loading ? (
           <div className="flex items-center justify-center py-20 bg-white rounded-3xl border border-[var(--color-border)]">
-             <div className="w-8 h-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRooms.map((room) => (
               <div key={room._id} className="group bg-white rounded-3xl p-5 shadow-[var(--shadow-sm)] border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:shadow-[var(--shadow-md)] transition-all flex flex-col gap-5 relative overflow-hidden">
                 <div className="w-full flex-shrink-0">
-                   <div className="aspect-[16/10] rounded-2xl overflow-hidden bg-[var(--color-surface)] relative">
-                      {room.images && room.images.length > 0 ? (
-                        <img
-                          src={toImageUrl(room.images[0])}
-                          alt={t('admin.rooms.list.roomAlt', { number: room.roomNumber })}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-[var(--color-text-muted)] gap-2">
-                           <ImageIcon className="w-8 h-8 opacity-20" />
-                           <span className="text-[10px] font-bold uppercase tracking-widest">
-                             {t('admin.rooms.list.noImage')}
-                           </span>
-                        </div>
-                      )}
-                      <div className="absolute top-3 left-3 flex gap-2">
-                         <span className={cn(
-                           "px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm",
-                           room.isActive ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
-                         )}>
-                           {room.isActive ? t('admin.rooms.list.active') : t('admin.rooms.list.inactive')}
-                         </span>
+                  <div className="aspect-[16/10] rounded-2xl overflow-hidden bg-[var(--color-surface)] relative">
+                    {room.images && room.images.length > 0 ? (
+                      <img
+                        src={toImageUrl(room.images[0])}
+                        alt={t('admin.rooms.list.roomAlt', { number: room.roomNumber })}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-[var(--color-text-muted)] gap-2">
+                        <ImageIcon className="w-8 h-8 opacity-20" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">
+                          {t('admin.rooms.list.noImage')}
+                        </span>
                       </div>
-                   </div>
+                    )}
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      <span className={cn(
+                        "px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm",
+                        room.isActive ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
+                      )}>
+                        {room.isActive ? t('admin.rooms.list.active') : t('admin.rooms.list.inactive')}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex-1 flex flex-col justify-between">
-                   <div>
-                      <div className="flex items-center justify-between gap-3 mb-2">
-                         <h4 className="text-xl font-bold text-[var(--color-text-primary)]">
-                           {t('admin.rooms.list.roomNumber', { number: room.roomNumber })}
-                         </h4>
-                         <span className="text-xs bg-[var(--color-surface)] px-2.5 py-1 rounded-md text-[var(--color-text-secondary)] font-medium">
-                            {room.roomType?.name}
-                         </span>
-                      </div>
+                  <div>
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <h4 className="text-xl font-bold text-[var(--color-text-primary)]">
+                        {t('admin.rooms.list.roomNumber', { number: room.roomNumber })}
+                      </h4>
+                      <span className="text-xs bg-[var(--color-surface)] px-2.5 py-1 rounded-md text-[var(--color-text-secondary)] font-medium">
+                        {room.roomType?.name}
+                      </span>
+                    </div>
 
-                      <div className="flex flex-col gap-2 mt-4 text-xs font-bold text-[var(--color-text-secondary)]">
-                         <div className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-2 rounded-lg border border-gray-100 w-max">
-                            <Users className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
-                            <span>{t('admin.rooms.list.maxCapacity', { count: room.capacity })}</span>
-                         </div>
-                         {room.amenities && room.amenities.length > 0 && (
-                           <div className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-2 rounded-lg border border-gray-100 max-w-full">
-                              <Wifi className="w-3.5 h-3.5 text-[var(--color-text-muted)] flex-shrink-0" />
-                              <span className="truncate">
-                                {room.amenities.map(a => t(amenityCatalog.find(ac => ac.key === a)?.labelKey || a)).join(", ")}
-                              </span>
-                           </div>
-                         )}
+                    <div className="flex flex-col gap-2 mt-4 text-xs font-bold text-[var(--color-text-secondary)]">
+                      <div className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-2 rounded-lg border border-gray-100 w-max">
+                        <Users className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+                        <span>{t('admin.rooms.list.maxCapacity', { count: room.capacity })}</span>
                       </div>
-
-                      {room.policies && (
-                        <p className="text-xs text-[var(--color-text-secondary)] italic leading-relaxed border-l-2 border-[var(--color-primary)] pl-3 mt-4 line-clamp-2">
-                           {room.policies}
-                        </p>
+                      {room.amenities && room.amenities.length > 0 && (
+                        <div className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-2 rounded-lg border border-gray-100 max-w-full">
+                          <Wifi className="w-3.5 h-3.5 text-[var(--color-text-muted)] flex-shrink-0" />
+                          <span className="truncate">
+                            {room.amenities.map(a => t(amenityCatalog.find(ac => ac.key === a)?.labelKey || a)).join(", ")}
+                          </span>
+                        </div>
                       )}
-                   </div>
-                   
-                   <div className="flex items-center justify-between mt-5 pt-4 border-t border-[var(--color-border)]">
-                      <div className="flex gap-2">
-                         <button
-                           className="p-2 border border-blue-100 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-colors"
-                           onClick={() => startEdit(room)}
-                           title={t('admin.rooms.list.editTitle')}
-                         >
-                           <Pencil className="w-4 h-4" />
-                         </button>
-                         <button
-                           className="p-2 border border-red-100 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-colors"
-                           onClick={() => remove(room._id)}
-                           title={t('admin.rooms.list.deleteTitle')}
-                         >
-                           <Trash2 className="w-4 h-4" />
-                         </button>
-                      </div>
-                      
-                      <Link 
-                        to={`/roomdetail/${room._id}`}
-                        target="_blank"
-                        className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors inline-flex items-center gap-1"
+                    </div>
+
+                    {room.policies && (
+                      <p className="text-xs text-[var(--color-text-secondary)] italic leading-relaxed border-l-2 border-[var(--color-primary)] pl-3 mt-4 line-clamp-2">
+                        {room.policies}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between mt-5 pt-4 border-t border-[var(--color-border)]">
+                    <div className="flex gap-2">
+                      <button
+                        className="p-2 border border-blue-100 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-colors"
+                        onClick={() => startEdit(room)}
+                        title={t('admin.rooms.list.editTitle')}
                       >
-                         {t('admin.rooms.list.viewClient')} <ChevronRight className="w-3 h-3" />
-                      </Link>
-                   </div>
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        className="p-2 border border-red-100 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-colors"
+                        onClick={() => remove(room._id)}
+                        title={t('admin.rooms.list.deleteTitle')}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <Link
+                      to={`/roomdetail/${room._id}`}
+                      target="_blank"
+                      className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors inline-flex items-center gap-1"
+                    >
+                      {t('admin.rooms.list.viewClient')} <ChevronRight className="w-3 h-3" />
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useTranslation } from '../../../node_modules/react-i18next';
-import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
+import { format, addDays } from 'date-fns';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Calendar as CalendarIcon,
   Users,
@@ -27,6 +28,8 @@ export default function BookingSearchForm({
   className,
 }: BookingSearchFormProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [checkIn, setCheckIn] = useState<Date | undefined>();
   const [checkOut, setCheckOut] = useState<Date | undefined>();
   const [guests, setGuests] = useState(2);
@@ -41,7 +44,16 @@ export default function BookingSearchForm({
 
   const handleSearch = () => {
     if (!checkIn || !checkOut) return;
-    onSearch({ checkIn, checkOut, guests });
+
+    if (location.pathname === '/') {
+      const params = new URLSearchParams();
+      params.set('checkIn', checkIn.toISOString());
+      params.set('checkOut', checkOut.toISOString());
+      params.set('guests', guests.toString());
+      navigate(`/rooms?${params.toString()}`);
+    } else {
+      onSearch({ checkIn, checkOut, guests });
+    }
   };
 
   const FieldWrapper = ({
@@ -75,9 +87,9 @@ export default function BookingSearchForm({
     <div
       className={cn(
         'bg-white',
-        isHero ? 'rounded-2xl p-2 shadow-[var(--shadow-xl)]' : 
-        isPage ? 'rounded-2xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] p-4' : 
-        'rounded-xl p-2 flex gap-2 items-center',
+        isHero ? 'rounded-2xl p-2 shadow-[var(--shadow-xl)]' :
+          isPage ? 'rounded-2xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] p-4' :
+            'rounded-xl p-2 flex gap-2 items-center',
         className
       )}
     >
@@ -86,9 +98,9 @@ export default function BookingSearchForm({
           'w-full',
           isHero
             ? 'grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] md:divide-x divide-gray-100' :
-          isPage
-            ? 'grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] gap-3'
-            : 'flex gap-2 items-center'
+            isPage
+              ? 'grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] gap-3'
+              : 'flex gap-2 items-center'
         )}
       >
         {/* FIELD 1: Check-in */}
@@ -117,6 +129,9 @@ export default function BookingSearchForm({
                 selected={checkIn}
                 onSelect={(d) => {
                   setCheckIn(d);
+                  if (d && (!checkOut || d >= checkOut)) {
+                    setCheckOut(addDays(d, 1));
+                  }
                   setCheckInOpen(false);
                 }}
                 disabled={(date) => date < new Date()}

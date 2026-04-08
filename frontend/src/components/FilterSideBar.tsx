@@ -1,4 +1,4 @@
-import { useTranslation } from "../../node_modules/react-i18next";
+import { useTranslation } from 'react-i18next';
 import { Star } from "lucide-react";
 import { Slider } from "./ui/slider";
 import { Checkbox } from "./ui/checkbox";

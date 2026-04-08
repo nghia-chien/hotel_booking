@@ -1,25 +1,22 @@
 import { type FormEvent, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useTranslation } from "../../node_modules/react-i18next";
-import { useAuth } from "../context/AuthContext";
+import { useTranslation } from 'react-i18next';
+import { useAuthFeature } from "../features/auth/hooks";
 
 const LoginPage = () => {
-  const { login } = useAuth();
+  const { login: executeLogin, loading, error } = useAuthFeature();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const location = useLocation() as { state?: { from?: Location } };
+  const location = useLocation() as { state?: { from?: any } };
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
     try {
-      const user = await login(email, password);
+      const user = await executeLogin(email, password);
+
       let redirectTo = "/";
       if (user.role === "admin" || user.role === "staff") {
         redirectTo = "/admin";
@@ -28,9 +25,7 @@ const LoginPage = () => {
       }
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
+      // Error handled by hook's toast
     }
   };
 

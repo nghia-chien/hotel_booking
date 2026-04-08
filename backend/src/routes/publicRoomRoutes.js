@@ -124,7 +124,7 @@ router.get("/:id/booked-dates", async (req, res, next) => {
   try {
     const Room = (await import("../models/Room.js")).default;
     const Booking = (await import("../models/Booking.js")).default;
-    
+
     const room = await Room.findById(req.params.id);
     if (!room) {
       return res.status(404).json({ success: false, message: "Room not found" });
@@ -132,7 +132,7 @@ router.get("/:id/booked-dates", async (req, res, next) => {
 
     const bookings = await Booking.find({
       room: room._id,
-      status: { $in: ["Pending", "Confirmed", "CheckedIn"] },
+      status: { $in: ["Pending", "Paid", "CheckedIn"] },
       // Only get bookings from today onwards to optimize
       checkOut: { $gte: new Date() }
     }).select("checkIn checkOut");

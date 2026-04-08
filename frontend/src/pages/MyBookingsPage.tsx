@@ -1,166 +1,200 @@
-import { useEffect, useState } from "react";
-import { apiRequest } from "../api/client";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useTranslation } from "../../node_modules/react-i18next";
-
-interface Booking {
-  _id: string;
-  status: string;
-  paymentStatus: string;
-  checkIn: string;
-  checkOut: string;
-  totalPrice: number;
-}
-
-interface BookingsResponse {
-  success: boolean;
-  data: Booking[];
-}
+import { useEffect, useState, useCallback } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
+import { useCart } from "../context/CartContext";
+import { cn } from "../components/ui/utils";
+import PaymentHistoryPage from "./PaymentHistoryPage";
+import { AlertTriangle, Loader2 } from "lucide-react";
+import BookingSummaryCard from "../components/BookingSummaryCard";
+import { useBookingFeature } from "../features/booking/hooks";
+import { usePaymentFeature } from "../features/payment/hooks";
+import { useRoomFeature } from "../features/room/hooks";
 
 const MyBookingsPage = () => {
   const { t } = useTranslation();
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { cartItems, cartCount, removeFromCart, clearCart } = useCart();
+  const { createNewBooking } = useBookingFeature();
+  const { createVNPayOrder, loading: payLoading } = usePaymentFeature();
+  const { checkAvailability, loading: checkingAvailability } = useRoomFeature();
+
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState<"cart" | "history">(
+    (location.state as any)?.tab === "history" || cartCount === 0 ? "history" : "cart"
+  );
+
+  const [conflicts, setConflicts] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [payLoading, setPayLoading] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const location = useLocation() as { state?: { message?: string } };
-  const navigate = useNavigate();
-
-  const loadBookings = async () => {
-    setError(null);
-    setSelectedIds([]);
-    setMessage(null);
-    setLoading(true);
-    try {
-      const res = await apiRequest<BookingsResponse>(
-        "/api/bookings/me",
-        "GET",
-        undefined,
-        { auth: true }
-      );
-      setBookings(res.data);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const performCheckAvailability = useCallback(async () => {
+    if (cartItems.length === 0) return;
+    const results = await Promise.all(
+      cartItems.map(async (item) => {
+        const res = await checkAvailability({
+          roomId: item.roomId,
+          checkIn: item.checkIn,
+          checkOut: item.checkOut,
+          guests: item.guests
+        });
+        // res is SearchResultItem[], if it contains the roomId, it's available
+        const isAvailable = res.some((r: any) =>
+          (r.room?._id === item.roomId) || (r.room?.id === item.roomId)
+        );
+        return { roomId: item.roomId, available: isAvailable };
+      })
+    );
+    const conflictIds = new Set(
+      results.filter((r) => !r.available).map((r) => r.roomId)
+    );
+    setConflicts(conflictIds);
+  }, [cartItems, checkAvailability]);
 
   useEffect(() => {
-    void loadBookings();
-  }, []);
-
-  useEffect(() => {
-    if (location.state?.message) {
-      setMessage(location.state.message);
+    if (activeTab === "cart") {
+      void performCheckAvailability();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeTab, performCheckAvailability]);
 
-  const handleCancel = async (id: string) => {
+  const handlePay = async () => {
+    const payableItems = cartItems.filter(item => !conflicts.has(item.roomId));
+    if (payableItems.length === 0) return;
+
     setError(null);
-    setMessage(null);
     try {
-      await apiRequest(`/api/bookings/${id}/cancel`, "POST", null, {
-        auth: true
-      });
-      setMessage(t('myBookings.cancelSuccess'));
-      void loadBookings();
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  };
-
-  const eligibleForPay = (b: Booking) =>
-    b.status === "Pending" && b.paymentStatus === "Pending";
-
-  const toggleSelected = (id: string, checked: boolean) => {
-    setSelectedIds((prev) => {
-      if (checked) return Array.from(new Set([...prev, id]));
-      return prev.filter((x) => x !== id);
-    });
-  };
-
-  const handlePayVNPay = async (bookingIds: string[]) => {
-    setError(null);
-    setMessage(null);
-    setPayLoading(true);
-    try {
-      const resp = await apiRequest<{
-        success: boolean;
-        data: { paymentUrl: string; txnRef: string };
-      }>(
-        "/api/payments/vnpay/create-order",
-        "POST",
-        { bookingIds },
-        { auth: true }
+      const bookingResults = await Promise.all(
+        payableItems.map(async (item) => {
+          const res = await createNewBooking({
+            roomId: item.roomId,
+            checkIn: item.checkIn,
+            checkOut: item.checkOut,
+            guests: item.guests,
+            guestInfo: {
+              fullName: "User",
+              email: "user@example.com",
+              phone: "123456789"
+            }
+          });
+          return res._id || res.id;
+        })
       );
 
-      if (resp.success && resp.data.paymentUrl) {
-        window.location.assign(resp.data.paymentUrl);
-      } else {
-        throw new Error("Can not get URL payment");
-      }
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(e.response?.data?.message || e.message || "Error in MyBookings handlePayVNPay");
-    } finally {
-      setPayLoading(false);
+      const paymentUrl = await createVNPayOrder(bookingResults);
+      clearCart();
+      window.location.assign(paymentUrl);
+    } catch (err: any) {
+      clearCart();
+      setError(err.message || "Quá trình thanh toán thất bại");
     }
   };
+
+  const totalPrice = cartItems
+    .filter(i => !conflicts.has(i.roomId))
+    .reduce((sum, i) => sum + i.totalPrice, 0);
+
+  const hasConflicts = conflicts.size > 0;
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">{t('myBookings.title')}</h1>
-      {loading && <p>{t('myBookings.loading')}</p>}
-      {error && <p className="text-red-600 mb-2">{error}</p>}
-      {message && <p className="text-green-600 mb-2">{message}</p>}
+    <div className="max-w-4xl mx-auto py-8 px-4">
+      <h1 className="text-3xl font-bold font-serif text-[#1F1F1F] mb-6">{t('myBookings.title')}</h1>
 
-      <div className="space-y-3">
-        {bookings.map((b) => (
-          <div key={b._id} onClick={() => navigate(`/my-bookings/${b._id}`)} className="border border-gray-100 bg-white rounded-2xl p-4 flex justify-between shadow-sm hover:border-blue-400 transition cursor-pointer group">
-            <div>
-              {eligibleForPay(b) && (
-                <div className="flex items-center gap-2 mb-2" onClick={(e) => e.stopPropagation()}>
-                  <input type="checkbox" checked={selectedIds.includes(b._id)} onChange={(e) => toggleSelected(b._id, e.target.checked)} />
-                  <span className="text-sm text-black/60">{t('myBookings.unpaid')}</span>
-                </div>
-              )}
-              <p className="font-semibold">
-                {new Date(b.checkIn).toLocaleDateString()} – {new Date(b.checkOut).toLocaleDateString()}
-              </p>
-              <p className="text-sm text-gray-600">{t('myBookings.status', { status: b.status, payment: b.paymentStatus })}</p>
-              <p className="text-sm">{t('myBookings.total')} <span className="font-semibold">{b.totalPrice.toLocaleString("vi-VN")} $</span></p>
-            </div>
-            <div className="flex flex-col gap-2 items-end">
-              {eligibleForPay(b) && (
-                <button onClick={(e) => { e.stopPropagation(); handlePayVNPay([b._id]); }} disabled={payLoading} className="text-sm bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition disabled:opacity-60">
-                  {t('myBookings.pay')}
-                </button>
-              )}
-              {(b.status === "Pending" || b.status === "Confirmed") && (
-                <button onClick={(e) => { e.stopPropagation(); handleCancel(b._id); }} className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 transition">
-                  {t('myBookings.cancel')}
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-        {!loading && bookings.length === 0 && <p className="text-gray-600">{t('myBookings.noBookings')}</p>}
+      <div className="flex border-b border-gray-200 mb-6">
+        <button
+          className={cn(
+            "px-6 py-3 font-medium text-sm transition-colors relative",
+            activeTab === "cart" ? "text-emerald-600" : "text-gray-500 hover:text-gray-700"
+          )}
+          onClick={() => setActiveTab("cart")}
+        >
+          Giỏ hàng {cartCount > 0 && <span className="ml-1 bg-emerald-100 text-emerald-700 text-xs font-bold px-1.5 py-0.5 rounded-full">{cartCount}</span>}
+          {activeTab === "cart" && <span className="absolute bottom-[-1px] left-0 {w-full} h-[2px] bg-emerald-600 rounded-t-full" />}
+        </button>
+        <button
+          className={cn(
+            "px-6 py-3 font-medium text-sm transition-colors relative",
+            activeTab === "history" ? "text-indigo-600" : "text-gray-500 hover:text-gray-700"
+          )}
+          onClick={() => setActiveTab("history")}
+        >
+          {t('myBookings.tabHistory')}
+          {activeTab === "history" && <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-indigo-600 rounded-t-full" />}
+        </button>
       </div>
 
-      {selectedIds.length > 0 && (
-        <div className="mt-4 flex items-center justify-end gap-3">
-          <button className="text-sm bg-gray-200 px-3 py-1 rounded-lg hover:bg-gray-300 transition disabled:opacity-60" disabled={payLoading} onClick={() => setSelectedIds([])}>
-            {t('myBookings.deselect')}
-          </button>
-          <button className="text-sm bg-[#2C2C2C] text-white px-4 py-2 rounded-lg hover:bg-black transition disabled:opacity-60" disabled={payLoading} onClick={() => handlePayVNPay(selectedIds)}>
-            {payLoading ? t('myBookings.paying') : t('myBookings.paySelected', { count: selectedIds.length })}
-          </button>
+      {error && <div className="p-4 bg-red-50 text-red-700 rounded-xl mb-4 border border-red-100">{error}</div>}
+
+      {activeTab === "cart" && (
+        <div className="animate-in fade-in duration-300">
+          {cartItems.length === 0 ? (
+            <div className="text-center py-12 bg-gray-50 rounded-2xl border border-gray-100">
+              <p className="text-gray-500 mb-4">{t('cart.empty')}</p>
+              <Link to="/rooms" className="text-emerald-600 font-medium hover:underline">{t('cart.emptyHint')}</Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {checkingAvailability && (
+                <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Đang kiểm tra tình trạng phòng...
+                </div>
+              )}
+
+              {hasConflicts && !checkingAvailability && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-2xl flex gap-3">
+                  <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-red-800">Một số phòng đã được người khác đặt</p>
+                    <p className="text-sm text-red-600 mt-1">
+                      Các phòng bị đánh dấu đỏ không thể thanh toán. Vui lòng xóa chúng khỏi giỏ và chọn phòng khác.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {cartItems.map((item) => (
+                <BookingSummaryCard
+                  key={item.roomId}
+                  mode="cart"
+                  data={{
+                    roomId: item.roomId,
+                    roomNumber: item.roomNumber,
+                    roomTypeName: item.roomTypeName,
+                    image: item.image,
+                    checkIn: item.checkIn,
+                    checkOut: item.checkOut,
+                    guests: item.guests,
+                    capacity: item.capacity,
+                    totalPrice: item.totalPrice
+                  }}
+                  conflict={conflicts.has(item.roomId)}
+                  onRemove={removeFromCart}
+                />
+              ))}
+
+              <div className="sticky bottom-6 mt-4 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-xl p-4 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs text-gray-500">
+                    {cartItems.filter(i => !conflicts.has(i.roomId)).length} phòng có thể thanh toán
+                  </p>
+                  <p className="text-xl font-bold text-gray-900">${totalPrice.toLocaleString("en-US")}</p>
+                </div>
+                <button
+                  onClick={handlePay}
+                  disabled={payLoading || cartItems.filter(i => !conflicts.has(i.roomId)).length === 0}
+                  className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm whitespace-nowrap"
+                >
+                  {payLoading ? (
+                    <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý...</span>
+                  ) : (
+                    `Thanh toán ${cartItems.filter(i => !conflicts.has(i.roomId)).length} phòng`
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
+      )}
+
+      {activeTab === "history" && (
+        <PaymentHistoryPage />
       )}
     </div>
   );

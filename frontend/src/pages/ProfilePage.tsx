@@ -1,21 +1,20 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Camera, 
-  Lock, 
+import {
+  User as UserIcon,
+  Mail,
+  Phone,
+  MapPin,
+  Camera,
+  Lock,
   ShieldCheck,
-  AlertCircle,
-  CheckCircle2,
   Loader2,
   CreditCard
 } from "lucide-react";
-import { useTranslation } from "../../node_modules/react-i18next";
+import { useTranslation } from 'react-i18next';
+import { useAuthFeature } from "../features/auth/hooks";
+
 type ProfileFields = {
   fullName: string;
   phone: string;
@@ -29,11 +28,10 @@ type PasswordFields = {
 };
 
 export default function ProfilePage() {
-  const { user, updateProfile, changePassword, uploadAvatar } = useAuth();
+  const { user, updateProfile, changePassword, uploadAvatar, loading: authLoading } = useAuthFeature();
   const [isUploading, setIsUploading] = useState(false);
-  const [profileMsg, setProfileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [passwordMsg, setPasswordMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const { t } = useTranslation();
+
   const {
     register: regProfile,
     handleSubmit: handleProfileSubmit,
@@ -57,26 +55,22 @@ export default function ProfilePage() {
   const newPassword = watch("newPassword");
 
   const onProfileSubmit = async (data: ProfileFields) => {
-    setProfileMsg(null);
     try {
       await updateProfile(data);
-      setProfileMsg({ type: "success", text: "Cập nhật thông tin thành công!" });
     } catch (err) {
-      setProfileMsg({ type: "error", text: (err as Error).message });
+      // Handled by hook
     }
   };
 
   const onPasswordSubmit = async (data: PasswordFields) => {
-    setPasswordMsg(null);
     try {
       await changePassword({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       });
-      setPasswordMsg({ type: "success", text: "Đổi mật khẩu thành công!" });
       resetPasswordForm();
     } catch (err) {
-      setPasswordMsg({ type: "error", text: (err as Error).message });
+      // Handled by hook
     }
   };
 
@@ -88,7 +82,7 @@ export default function ProfilePage() {
     try {
       await uploadAvatar(file);
     } catch (err) {
-      alert((err as Error).message);
+      // Handled by hook
     } finally {
       setIsUploading(false);
     }
@@ -108,7 +102,7 @@ export default function ProfilePage() {
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
   const avatarUrl = user.avatar ? (user.avatar.startsWith("http") ? user.avatar : `${API_URL}${user.avatar}`) : null;
 
-return (
+  return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row items-center gap-8 bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
         <div className="relative group">
@@ -118,7 +112,7 @@ return (
             ) : (
               getInitials(user.fullName)
             )}
-            {isUploading && (
+            {(isUploading || authLoading) && (
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-white animate-spin" />
               </div>
@@ -126,10 +120,10 @@ return (
           </div>
           <label className="absolute bottom-0 right-0 p-2 bg-blue-600 text-white rounded-full cursor-pointer shadow-lg hover:bg-blue-700 transition-transform active:scale-95">
             <Camera className="w-5 h-5" />
-            <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} disabled={isUploading} />
+            <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} disabled={isUploading || authLoading} />
           </label>
         </div>
-        
+
         <div className="flex flex-col md:flex-row flex-1 items-center md:items-start justify-between gap-4">
           <div className="text-center md:text-left space-y-2">
             <h1 className="text-3xl font-bold text-gray-900">{user.fullName}</h1>
@@ -138,8 +132,9 @@ return (
               <span className="flex items-center gap-1.5 capitalize"><ShieldCheck className="w-4 h-4" /> {user.role}</span>
             </div>
           </div>
-          <Link 
-            to="/payment-history"
+          <Link
+            to="/my-bookings"
+            state={{ tab: "history" }}
             className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors font-semibold text-sm"
           >
             <CreditCard className="w-4 h-4" />
@@ -149,18 +144,17 @@ return (
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Profile Info Section */}
         <section className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm space-y-6">
           <div className="flex items-center gap-2 border-b border-gray-50 pb-4">
-            <User className="w-5 h-5 text-blue-600" />
-            <h2 className="text-xl font-bold text-gray-900">{t('profile.title')}</h2> {/* Dùng "Hồ sơ cá nhân" thay cho "Thông tin cá nhân" */}
+            <UserIcon className="w-5 h-5 text-blue-600" />
+            <h2 className="text-xl font-bold text-gray-900">{t('profile.title')}</h2>
           </div>
 
           <form onSubmit={handleProfileSubmit(onProfileSubmit)} className="space-y-4">
             <div className="space-y-1">
               <label className="text-sm font-medium text-gray-700">{t('profile.fullName')}</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   {...regProfile("fullName", { required: t('profile.validation.nameRequired') })}
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
@@ -194,27 +188,17 @@ return (
               </div>
             </div>
 
-            {profileMsg && (
-              <div className={`p-3 rounded-xl flex items-center gap-2 text-sm ${
-                profileMsg.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-red-50 text-red-700 border border-red-100"
-              }`}>
-                {profileMsg.type === "success" ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                {profileMsg.text}
-              </div>
-            )}
-
             <button
               type="submit"
-              disabled={isProfileSubmitting}
+              disabled={isProfileSubmitting || authLoading}
               className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {isProfileSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {t('profile.saveChanges')} {/* Cần thêm vào i18n */}
+              {(isProfileSubmitting || authLoading) && <Loader2 className="w-4 h-4 animate-spin" />}
+              {t('profile.saveChanges')}
             </button>
           </form>
         </section>
 
-        {/* Change Password Section */}
         <section className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm space-y-6">
           <div className="flex items-center gap-2 border-b border-gray-50 pb-4">
             <Lock className="w-5 h-5 text-blue-600" />
@@ -236,7 +220,7 @@ return (
               <label className="text-sm font-medium text-gray-700">{t('profile.newPassword')}</label>
               <input
                 type="password"
-                {...regPassword("newPassword", { 
+                {...regPassword("newPassword", {
                   required: t('profile.validation.newPasswordRequired'),
                   minLength: { value: 6, message: t('profile.validation.passwordMinLength') }
                 })}
@@ -249,7 +233,7 @@ return (
               <label className="text-sm font-medium text-gray-700">{t('profile.confirmNewPassword')}</label>
               <input
                 type="password"
-                {...regPassword("confirmPassword", { 
+                {...regPassword("confirmPassword", {
                   required: t('profile.validation.confirmPasswordRequired'),
                   validate: (val) => val === newPassword || t('profile.validation.passwordMismatch')
                 })}
@@ -258,21 +242,12 @@ return (
               {passwordErrors.confirmPassword && <p className="text-xs text-red-500">{passwordErrors.confirmPassword.message}</p>}
             </div>
 
-            {passwordMsg && (
-              <div className={`p-3 rounded-xl flex items-center gap-2 text-sm ${
-                passwordMsg.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-red-50 text-red-700 border border-red-100"
-              }`}>
-                {passwordMsg.type === "success" ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                {passwordMsg.text}
-              </div>
-            )}
-
             <button
               type="submit"
-              disabled={isPasswordSubmitting}
+              disabled={isPasswordSubmitting || authLoading}
               className="w-full py-2.5 bg-gray-900 hover:bg-black text-white font-semibold rounded-xl transition-all shadow-md shadow-gray-900/10 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {isPasswordSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              {(isPasswordSubmitting || authLoading) && <Loader2 className="w-4 h-4 animate-spin" />}
               {t('profile.changePassword')}
             </button>
           </form>

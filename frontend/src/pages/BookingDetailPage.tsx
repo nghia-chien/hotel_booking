@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useTranslation } from "../../node_modules/react-i18next";
+import { useTranslation } from 'react-i18next';
 import { apiRequest } from "../api/client";
 import {
   Calendar,
@@ -20,6 +20,7 @@ import {
 import { QRCodeSVG } from "qrcode.react";
 import { format, differenceInDays } from "date-fns";
 import { StatusBadge } from "../components/admin";
+import { useErrorHandler } from "../utils/errorHandling";
 
 interface Room {
   _id: string;
@@ -40,13 +41,14 @@ interface Booking {
   checkOut: string;
   guests: number;
   totalPrice: number;
-  status: "Pending" | "Confirmed" | "CheckedIn" | "CheckedOut" | "Cancelled";
+  status: "Pending" | "Paid" | "CheckedIn" | "CheckedOut" | "Cancelled" | "Expired";
   paymentStatus: string;
   createdAt: string;
 };
 
 export default function BookingDetailPage() {
-  const { t } = useTranslation(); 
+  const { t } = useTranslation();
+  const { getErrorMessage } = useErrorHandler();
   const { id } = useParams();
   const navigate = useNavigate();
   const [booking, setBooking] = useState<Booking | null>(null);
@@ -58,8 +60,7 @@ export default function BookingDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
-
-  const loadBooking = async () => {
+  const loadBooking = useCallback(async () => {
     try {
       const res = await apiRequest<{ success: boolean; data: Booking }>(
         `/api/bookings/${id}`,
@@ -69,11 +70,11 @@ export default function BookingDetailPage() {
       );
       setBooking(res.data);
     } catch (err) {
-      setError((err as Error).message);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   const checkReview = async () => {
     try {
@@ -112,9 +113,9 @@ export default function BookingDetailPage() {
       );
       setHasReviewed(true);
       setShowReviewModal(false);
-      
+
     } catch (err) {
-      alert((err as Error).message);
+      alert(getErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -142,7 +143,7 @@ export default function BookingDetailPage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err) {
-      alert((err as Error).message);
+      alert(getErrorMessage(err));
     } finally {
       setDownloading(false);
     }
@@ -267,7 +268,7 @@ export default function BookingDetailPage() {
 
         {/* Right Column: Actions & QR */}
         <div className="space-y-6">
-          {(booking.status === "Confirmed" || booking.status === "CheckedIn") && (
+          {(booking.status === "Paid" || booking.status === "CheckedIn") && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center space-y-4">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <QrCode className="w-5 h-5 text-gray-400" />
@@ -282,7 +283,7 @@ export default function BookingDetailPage() {
             </div>
           )}
 
-          {(booking.status === "Confirmed" || booking.status === "CheckedIn" || booking.status === "CheckedOut") && (
+          {(booking.status === "Paid" || booking.status === "CheckedIn" || booking.status === "CheckedOut") && (
             <button
               onClick={handleDownloadInvoice}
               disabled={downloading}
@@ -317,6 +318,7 @@ export default function BookingDetailPage() {
             </p>
             <p className="font-bold text-blue-900">{t('bookingDetail.support.hotline')} 1900 1234</p>
           </div>
+
         </div>
       </div>
 
@@ -391,6 +393,7 @@ export default function BookingDetailPage() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

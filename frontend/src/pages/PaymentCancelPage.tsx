@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "../../node_modules/react-i18next";
+import { useTranslation } from 'react-i18next';
 import { Button } from "../components/ui/button";
 
 export default function PaymentCancelPage() {

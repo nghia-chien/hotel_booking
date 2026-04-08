@@ -10,7 +10,8 @@ import { Calendar } from "./ui/calendar";
 import { apiRequest } from "../api/client";
 import { createBooking } from "../api/booking.api";
 import { useAuth } from "../context/AuthContext";
-import { useTranslation } from "../../node_modules/react-i18next"
+import { useTranslation } from 'react-i18next';
+import { useCart } from "../context/CartContext";
 
 interface PriceResponse {
   success: boolean;
@@ -22,15 +23,24 @@ interface PriceResponse {
 }
 
 export function BookingCard({
-  roomId,
-  capacity
+  room
 }: {
-  roomId: string;
-  capacity: number;
+  room: {
+    _id: string;
+    capacity: number;
+    roomNumber: string;
+    roomType?: { name: string; basePrice?: number };
+    images?: string[];
+    amenities?: string[];
+  }
 }) {
-  const { t } = useTranslation()
+  const roomId = room._id;
+  const capacity = room.capacity;
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { addToCart } = useCart();
+  const [addedMsg, setAddedMsg] = useState<string | null>(null);
   const [checkIn, setCheckIn] = useState<Date>();
   const [checkOut, setCheckOut] = useState<Date>();
   const [guests, setGuests] = useState(2);
@@ -52,10 +62,13 @@ export function BookingCard({
           `/api/public/rooms/${roomId}/booked-dates`,
           "GET"
         );
-        setBookedDates(res.data.map(b => ({
-          checkIn: new Date(b.checkIn),
-          checkOut: new Date(b.checkOut)
-        })));
+        setBookedDates(res.data.map(b => {
+          const ci = new Date(b.checkIn);
+          ci.setHours(0, 0, 0, 0);
+          const co = new Date(b.checkOut);
+          co.setHours(0, 0, 0, 0);
+          return { checkIn: ci, checkOut: co };
+        }));
       } catch (err) {
         console.error("Failed to fetch booked dates:", err);
       }
@@ -69,28 +82,34 @@ export function BookingCard({
     setGuests((prev) => Math.max(1, Math.min(capacity, prev + delta)));
   };
 
-  const quotePrice = async () => {
-    if (!checkIn || !checkOut) return;
-    setPriceError(null);
-    setLoadingPrice(true);
-    try {
-      const params = new URLSearchParams({
-        checkIn: checkIn.toISOString(),
-        checkOut: checkOut.toISOString(),
-        guests: String(guests)
-      }).toString();
-      const res = await apiRequest<PriceResponse>(
-        `/api/public/rooms/${roomId}/price?${params}`,
-        "GET"
-      );
-      setPriceSummary(res.data);
-    } catch (err) {
-      setPriceError((err as Error).message);
+  useEffect(() => {
+    if (!checkIn || !checkOut) {
       setPriceSummary(null);
-    } finally {
-      setLoadingPrice(false);
+      return;
     }
-  };
+    const fetchPrice = async () => {
+      setPriceError(null);
+      setLoadingPrice(true);
+      try {
+        const params = new URLSearchParams({
+          checkIn: checkIn.toISOString(),
+          checkOut: checkOut.toISOString(),
+          guests: String(guests)
+        }).toString();
+        const res = await apiRequest<PriceResponse>(
+          `/api/public/rooms/${roomId}/price?${params}`,
+          "GET"
+        );
+        setPriceSummary(res.data);
+      } catch (err) {
+        setPriceError((err as Error).message);
+        setPriceSummary(null);
+      } finally {
+        setLoadingPrice(false);
+      }
+    };
+    void fetchPrice();
+  }, [checkIn, checkOut, guests, roomId]);
 
   const createBookingForThisRoom = async (): Promise<string | null> => {
     if (!checkIn || !checkOut) return null;
@@ -104,29 +123,32 @@ export function BookingCard({
     return res.data._id;
   };
 
-   // add room to cart, go to MyBookings to pay later
+  // add room to cart, go to MyBookings to pay later
   const handleAddRoom = async () => {
     if (!user) {
       navigate("/login", { state: { from: { pathname: window.location.pathname } } });
       return;
     }
-    if (!checkIn || !checkOut) return;
-    setBookingError(null);
-    setBookingLoading(true);
-    try {
-      const bookingId = await createBookingForThisRoom();
-      if (!bookingId) return;
-      navigate("/my-bookings", {
-        state: { message: "Đã thêm phòng chờ thanh toán." }
-      });
-    } catch (err) {
-      setBookingError((err as Error).message);
-    } finally {
-      setBookingLoading(false);
-    }
+    if (!checkIn || !checkOut || !priceSummary) return;
+
+    addToCart({
+      roomId: room._id,
+      roomTypeName: room.roomType?.name || 'Unknown',
+      roomNumber: room.roomNumber,
+      image: room.images?.[0],
+      checkIn: checkIn.toISOString(),
+      checkOut: checkOut.toISOString(),
+      guests,
+      totalPrice: priceSummary.totalPrice,
+      capacity: room.capacity,
+      amenities: room.amenities,
+    });
+
+    setAddedMsg(t('bookingForm.addedToCart'));
+    setTimeout(() => setAddedMsg(null), 3000);
   };
 
-   // book room + pay immediately via VNPay
+  // book room + pay immediately via VNPay
   const handleBookAndPayVNPay = async () => {
     if (!user) {
       navigate("/login", { state: { from: { pathname: window.location.pathname } } });
@@ -202,17 +224,22 @@ export function BookingCard({
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar 
-                mode="single" 
-                selected={checkIn} 
-                onSelect={setCheckIn} 
+              <Calendar
+                mode="single"
+                selected={checkIn}
+                onSelect={setCheckIn}
                 disabled={(date) => {
+                  const d = new Date(date);
+                  d.setHours(0, 0, 0, 0);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+
                   // Disable past dates
-                  if (date < new Date(new Date().setHours(0,0,0,0))) return true;
+                  if (d < today) return true;
+
                   // Disable booked dates
-                  return bookedDates.some((b: any) => 
-                    date >= new Date(b.checkIn.setHours(0,0,0,0)) && 
-                    date < new Date(b.checkOut.setHours(0,0,0,0))
+                  return bookedDates.some((b) =>
+                    d >= b.checkIn && d < b.checkOut
                   );
                 }}
               />
@@ -240,20 +267,27 @@ export function BookingCard({
                 selected={checkOut}
                 onSelect={setCheckOut}
                 disabled={(date) => {
+                  const d = new Date(date);
+                  d.setHours(0, 0, 0, 0);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+
                   // Must be after check-in
-                  if (checkIn && date <= checkIn) return true;
+                  if (checkIn && d <= checkIn) return true;
                   // Must not be in the past
-                  if (date < new Date(new Date().setHours(0,0,0,0))) return true;
+                  if (d < today) return true;
+
                   // Must not overlap with a booking that starts after check-in
                   if (checkIn) {
                     const nextBooking = bookedDates
-                      .filter((b: any) => b.checkIn > checkIn)
-                      .sort((a: any, b: any) => a.checkIn.getTime() - b.checkIn.getTime())[0];
-                    if (nextBooking && date > nextBooking.checkIn) return true;
+                      .filter((b) => b.checkIn > checkIn)
+                      .sort((a, b) => a.checkIn.getTime() - b.checkIn.getTime())[0];
+                    if (nextBooking && d > nextBooking.checkIn) return true;
                   }
-                  return bookedDates.some((b: any) => 
-                    date > new Date(b.checkIn.setHours(0,0,0,0)) && 
-                    date <= new Date(b.checkOut.setHours(0,0,0,0))
+
+                  // General overlap check
+                  return bookedDates.some((b) =>
+                    d > b.checkIn && d <= b.checkOut
                   );
                 }}
               />
@@ -313,14 +347,11 @@ export function BookingCard({
         </div>
 
         <div className="grid grid-cols-1 gap-2">
-          <Button
-            variant="outline"
-            className="rounded-xl border-[#E8DFD8] bg-white hover:bg-[#F5F1ED]"
-            onClick={quotePrice}
-            disabled={!canQuote || loadingPrice}
-          >
-            {loadingPrice ? t('bookingForm.calculating') : t('bookingForm.quotePrice')}
-          </Button>
+          {loadingPrice && (
+            <div className="text-sm text-gray-500 py-1">
+              {t('bookingForm.calculating')}
+            </div>
+          )}
 
           {priceError && (
             <p className="text-sm text-red-600">{priceError}</p>
@@ -344,7 +375,7 @@ export function BookingCard({
               onClick={handleAddRoom}
               disabled={!canQuote || bookingLoading}
             >
-              {bookingLoading ? t('bookingForm.processing') : t('bookingForm.addRoom')}
+              {bookingLoading ? t('bookingForm.processing') : t('bookingForm.addToCart')}
             </Button>
             <Button
               className="rounded-xl bg-[#2C2C2C] hover:bg-[#3A3A3A] text-white"
@@ -354,6 +385,12 @@ export function BookingCard({
               {bookingLoading ? t('bookingForm.processing') : t('bookingForm.bookAndPay')}
             </Button>
           </div>
+
+          {addedMsg && (
+            <div className="text-sm text-emerald-600 font-medium py-1 text-center">
+              {addedMsg}
+            </div>
+          )}
 
           {bookingError && (
             <p className="text-sm text-red-600">{bookingError}</p>

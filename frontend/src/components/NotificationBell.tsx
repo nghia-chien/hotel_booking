@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from "react";
-import { useTranslation } from "../../node_modules/react-i18next";
+import { useTranslation } from 'react-i18next';
 import { Bell, CheckCircle2, XCircle, CreditCard, RefreshCw, Star } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiRequest } from "../api/client";
+import { useAuth } from "../context/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { vi, enUS } from "date-fns/locale"; // Import locales you need
 
@@ -29,6 +30,7 @@ export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Determine date-fns locale based on i18next language
   const dateLocale = i18n.language === "vi" ? vi : enUS;
@@ -48,11 +50,34 @@ export default function NotificationBell() {
     }
   };
 
-  // useEffect(() => {
-  //   void fetchSummary();
-  //   const interval = setInterval(fetchSummary, 60000); // Polling 60s
-  //   return () => clearInterval(interval);
-  // }, []);
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
+    void fetchSummary();
+    const interval = setInterval(fetchSummary, 60000); // Polling 60s
+    return () => clearInterval(interval);
+  }, [user]);
+
+  useEffect(() => {
+    if (isOpen && user) {
+      const handleOpen = async () => {
+        if (unreadCount > 0) {
+          try {
+            await apiRequest("/api/notifications/read-all", "PATCH", undefined, { auth: true });
+            setUnreadCount(0);
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+          } catch (err) {
+            console.error("Failed to mark all as read", err);
+          }
+        }
+        void fetchSummary();
+      };
+      void handleOpen();
+    }
+  }, [isOpen, user]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -88,7 +113,7 @@ export default function NotificationBell() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 hover:bg-white/10 rounded-full transition-all duration-300"
       >
@@ -144,15 +169,15 @@ export default function NotificationBell() {
                   <Bell className="w-6 h-6 opacity-20" />
                 </div>
                 <div>
-                   <p className="text-xs font-bold text-gray-500">{t('notifications.emptyTitle')}</p>
-                   <p className="text-[10px] text-gray-400">{t('notifications.emptyDesc')}</p>
+                  <p className="text-xs font-bold text-gray-500">{t('notifications.empty')}</p>
+                  <p className="text-[10px] text-gray-400">{t('notifications.emptyDesc')}</p>
                 </div>
               </div>
             )}
           </div>
 
-          <Link 
-            to="/notifications" 
+          <Link
+            to="/notifications"
             onClick={() => setIsOpen(false)}
             className="block text-center p-3 text-xs font-black text-blue-600 hover:bg-blue-600 hover:text-white transition-all border-t border-gray-50 uppercase tracking-widest bg-gray-50/50"
           >

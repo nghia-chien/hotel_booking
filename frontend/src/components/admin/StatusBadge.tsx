@@ -1,9 +1,10 @@
-import { useTranslation } from "../../../node_modules/react-i18next";
+import { useTranslation } from "react-i18next";
 import { cn } from "../ui/utils";
 
 type BookingStatus =
-  | "Confirmed"
+  | "Paid"
   | "Pending"
+  | "Expired"
   | "Cancelled"
   | "CheckedIn"
   | "CheckedOut";
@@ -19,11 +20,12 @@ const STATUS_CONFIGS: Record<
   BookingStatus,
   { bg: string; text: string; labelKey: string }
 > = {
-  Confirmed:  { bg: "bg-emerald-50", text: "text-emerald-700", labelKey: "statusBadge.Confirmed" },
-  Pending:    { bg: "bg-amber-50",   text: "text-amber-700",   labelKey: "statusBadge.Pending" },
-  Cancelled:  { bg: "bg-red-50",     text: "text-red-700",     labelKey: "statusBadge.Cancelled" },
-  CheckedIn:  { bg: "bg-blue-50",    text: "text-blue-700",    labelKey: "statusBadge.CheckedIn" },
-  CheckedOut: { bg: "bg-gray-50",    text: "text-gray-700",    labelKey: "statusBadge.CheckedOut" },
+  Paid: { bg: "bg-emerald-50", text: "text-emerald-700", labelKey: "statusBadge.Paid" },
+  Pending: { bg: "bg-amber-50", text: "text-amber-700", labelKey: "statusBadge.Pending" },
+  Expired: { bg: "bg-orange-50", text: "text-orange-700", labelKey: "statusBadge.Expired" },
+  Cancelled: { bg: "bg-red-50", text: "text-red-700", labelKey: "statusBadge.Cancelled" },
+  CheckedIn: { bg: "bg-blue-50", text: "text-blue-700", labelKey: "statusBadge.CheckedIn" },
+  CheckedOut: { bg: "bg-gray-50", text: "text-gray-700", labelKey: "statusBadge.CheckedOut" },
 };
 
 const FALLBACK = { bg: "bg-gray-50", text: "text-gray-700" };
@@ -34,7 +36,7 @@ export function StatusBadge({
   className,
 }: StatusBadgeProps) {
   const { t } = useTranslation();
-  
+
   const config = STATUS_CONFIGS[status as BookingStatus];
 
   return (

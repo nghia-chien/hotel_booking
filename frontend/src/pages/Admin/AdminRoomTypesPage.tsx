@@ -1,17 +1,18 @@
 import { type FormEvent, useState } from "react";
-import { useTranslation } from "../../../node_modules/react-i18next";
+import { useTranslation } from "react-i18next";
 import { apiRequest } from "../../api/client";
 import { useAdminData } from "../../hooks/useAdminData";
-import { 
-  Plus, 
-  Pencil, 
-  Trash2, 
-  Layers, 
-  DollarSign, 
-  Users, 
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Layers,
+  DollarSign,
+  Users,
   X,
 } from "lucide-react";
 import { AdminPageHeader, AlertMessage } from "../../components/admin";
+import { useErrorHandler } from "../../utils/errorHandling";
 
 interface RoomType {
   _id: string;
@@ -23,6 +24,7 @@ interface RoomType {
 
 const AdminRoomTypesPage = () => {
   const { t } = useTranslation();
+  const { getErrorMessage } = useErrorHandler();
 
   const {
     data: itemsData,
@@ -33,7 +35,7 @@ const AdminRoomTypesPage = () => {
     setSuccess: setMessage,
     reload: load,
   } = useAdminData<RoomType[]>({ path: "/api/room-types" });
-  
+
   const items = itemsData ?? [];
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -79,7 +81,7 @@ const AdminRoomTypesPage = () => {
       resetForm();
       void load();
     } catch (err) {
-      setError((err as Error).message);
+      setError(getErrorMessage(err));
     }
   };
 
@@ -95,7 +97,7 @@ const AdminRoomTypesPage = () => {
       if (editingId === id) resetForm();
       void load();
     } catch (err) {
-      setError((err as Error).message);
+      setError(getErrorMessage(err));
     }
   };
 
@@ -201,10 +203,10 @@ const AdminRoomTypesPage = () => {
         <h3 className="text-lg font-bold text-[var(--color-text-primary)] px-2">
           {t('admin.roomTypes.list.title')}
         </h3>
-        
+
         {loading ? (
           <div className="flex items-center justify-center py-20 bg-white rounded-3xl border border-[var(--color-border)]">
-             <div className="w-8 h-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -216,35 +218,35 @@ const AdminRoomTypesPage = () => {
                       <Layers className="w-5 h-5" />
                     </div>
                     <div className="flex gap-2">
-                       <button
-                         className="p-2.5 bg-[var(--color-surface)] text-[var(--color-text-primary)] rounded-xl hover:bg-gray-200 transition-colors"
-                         onClick={() => startEdit(rt)}
-                         title={t('admin.roomTypes.list.edit')}
-                       >
-                         <Pencil className="w-4 h-4" />
-                       </button>
-                       <button
-                         className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors"
-                         onClick={() => remove(rt._id)}
-                         title={t('admin.roomTypes.list.delete')}
-                       >
-                         <Trash2 className="w-4 h-4" />
-                       </button>
+                      <button
+                        className="p-2.5 bg-[var(--color-surface)] text-[var(--color-text-primary)] rounded-xl hover:bg-gray-200 transition-colors"
+                        onClick={() => startEdit(rt)}
+                        title={t('admin.roomTypes.list.edit')}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors"
+                        onClick={() => remove(rt._id)}
+                        title={t('admin.roomTypes.list.delete')}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                  
+
                   <h4 className="text-lg font-bold text-[var(--color-text-primary)] mb-2">{rt.name}</h4>
                   <div className="flex flex-wrap gap-4 mb-4">
-                     <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-text-secondary)]">
-                        <DollarSign className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
-                        <span>{t('admin.roomTypes.list.priceFormat', { price: rt.basePrice.toLocaleString() })}</span>
-                     </div>
-                     <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-text-secondary)]">
-                        <Users className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
-                        <span>{t('admin.roomTypes.list.maxGuests', { count: rt.defaultCapacity })}</span>
-                     </div>
+                    <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-text-secondary)]">
+                      <DollarSign className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+                      <span>{t('admin.roomTypes.list.priceFormat', { price: rt.basePrice.toLocaleString() })}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-text-secondary)]">
+                      <Users className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+                      <span>{t('admin.roomTypes.list.maxGuests', { count: rt.defaultCapacity })}</span>
+                    </div>
                   </div>
-                  
+
                   {rt.description && (
                     <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed italic line-clamp-3">
                       "{rt.description}"
@@ -253,7 +255,7 @@ const AdminRoomTypesPage = () => {
                 </div>
               </div>
             ))}
-            
+
             {!loading && items.length === 0 && (
               <div className="md:col-span-2 text-center py-20 bg-white rounded-3xl border-2 border-dashed border-[var(--color-border)]">
                 <p className="text-[var(--color-text-muted)] font-medium italic">

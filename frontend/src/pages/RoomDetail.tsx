@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Star } from "lucide-react";
-import { useTranslation } from "../../node_modules/react-i18next";
+import { useTranslation } from 'react-i18next';
 import { apiRequest } from "../api/client";
+import { useErrorHandler } from "../utils/errorHandling";
 import { Button } from "../components/ui/button";
 import RoomGallery from "../components/RoomGallery";
 import { BookingCard } from "../components/BookingCard";
@@ -49,6 +50,7 @@ export default function RoomDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { getErrorMessage } = useErrorHandler();
 
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,7 +73,7 @@ export default function RoomDetail() {
         );
         setRoom(res.data);
       } catch (err) {
-        setError((err as Error).message);
+        setError(getErrorMessage(err));
       } finally {
         setLoading(false);
       }
@@ -153,7 +155,7 @@ export default function RoomDetail() {
                 <span className="ml-1 text-xs font-bold text-gray-900">
                   {room.avgRating || 0}
                 </span>
-              <span className="text-xs text-gray-400">({room.totalReviews || 0} {t('header.reviews')})</span>
+                <span className="text-xs text-gray-400">({room.totalReviews || 0} {t('header.reviews')})</span>
               </div>
             </div>
 
@@ -165,14 +167,14 @@ export default function RoomDetail() {
 
             {room.policies && (
               <div className="pt-2 border-t border-black/5 mt-2">
-              <h3 className="text-sm font-medium text-[#2C2C2C] mb-1">{t('roomDetail.policy')}</h3>
+                <h3 className="text-sm font-medium text-[#2C2C2C] mb-1">{t('roomDetail.policy')}</h3>
                 <p className="text-sm text-black/60">{room.policies}</p>
               </div>
             )}
 
             {room.amenities && room.amenities.length > 0 && (
               <div className="pt-2 border-t border-black/5 mt-2">
-              <h3 className="text-sm font-medium text-[#2C2C2C] mb-1">{t('roomDetail.amenities')}</h3>
+                <h3 className="text-sm font-medium text-[#2C2C2C] mb-1">{t('roomDetail.amenities')}</h3>
                 <p className="text-sm text-black/60">
                   {room.amenities.join(", ")}
                 </p>
@@ -183,7 +185,7 @@ export default function RoomDetail() {
           {/* Reviews Section */}
           <section className="bg-white border border-black/5 rounded-2xl p-6 shadow-sm space-y-6">
             <div className="flex items-center justify-between border-b border-gray-50 pb-4">
-            <h3 className="text-xl font-bold text-gray-900 italic">{t('roomDetail.reviews')}</h3>
+              <h3 className="text-xl font-bold text-gray-900 italic">{t('roomDetail.reviews')}</h3>
               <div className="text-right">
                 <div className="text-3xl font-black text-gray-900">{room.avgRating || 0}</div>
                 <div className="flex gap-0.5 justify-end">
@@ -232,7 +234,7 @@ export default function RoomDetail() {
         </div>
 
         <aside className="space-y-4">
-          <BookingCard roomId={room._id} capacity={room.capacity} />
+          <BookingCard room={room} />
           <div className="bg-white border border-black/5 rounded-xl p-5 shadow-sm space-y-3">
             <h3 className="text-lg font-semibold text-[#1F1F1F]">{t('roomDetail.basePrice')}</h3>
             <p className="text-2xl font-semibold text-[#2B2B2B]">

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useTranslation } from "../../../node_modules/react-i18next";
+import { useTranslation } from "react-i18next";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import type { View, Messages } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
@@ -9,8 +9,9 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import { apiRequest } from "../../api/client";
 import { cn } from "../../components/ui/utils";
 import { useData } from "../../context/DataContext";
-import { 
-  Calendar as CalendarIcon, 
+import { useErrorHandler } from "../../utils/errorHandling";
+import {
+  Calendar as CalendarIcon,
   X,
   Clock,
   Zap,
@@ -57,15 +58,17 @@ interface CalendarData {
 }
 
 const statusColors: Record<string, string> = {
-  Confirmed: "#10B981", 
-  Pending: "#F59E0B",   
-  Cancelled: "#EF4444", 
-  CheckedIn: "#3B82F6", 
+  Paid: "#10B981",
+  Pending: "#F59E0B",
+  Expired: "#F97316",
+  Cancelled: "#EF4444",
+  CheckedIn: "#3B82F6",
   CheckedOut: "#6B7280",
 };
 
 export default function AdminCalendar() {
   const { t, i18n } = useTranslation();
+  const { getErrorMessage } = useErrorHandler();
   const { calendarState, setCalendarState } = useData();
   const { currentDate, view } = calendarState;
 
@@ -119,7 +122,7 @@ export default function AdminCalendar() {
 
       setEvents(allEvents);
     } catch (err) {
-      console.error(err);
+      console.error(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -176,9 +179,9 @@ export default function AdminCalendar() {
                   onClick={() => setView(v)}
                   className={cn(
                     "px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                    view === v 
-                    ? "bg-black text-white shadow-lg" 
-                    : "text-[var(--color-text-secondary)] hover:bg-gray-200"
+                    view === v
+                      ? "bg-black text-white shadow-lg"
+                      : "text-[var(--color-text-secondary)] hover:bg-gray-200"
                   )}
                 >
                   {t(`admin.calendar.view.${v}`)}
@@ -217,7 +220,7 @@ export default function AdminCalendar() {
           .rbc-btn-group button.rbc-active { background: black; color: white; }
           .rbc-toolbar-label { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 20px; color: var(--color-text-primary); }
         `}</style>
-        
+
         <Calendar
           localizer={localizer}
           events={events}
@@ -240,57 +243,57 @@ export default function AdminCalendar() {
             <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
               <div className="p-6 pb-2 flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                   <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center shadow-sm">
-                      <Zap className="w-4 h-4 text-black" />
-                   </div>
-                   <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
-                     {t('admin.calendar.modal.title')}
-                   </span>
+                  <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center shadow-sm">
+                    <Zap className="w-4 h-4 text-black" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
+                    {t('admin.calendar.modal.title')}
+                  </span>
                 </div>
                 <button onClick={() => setSelectedEvent(null)} className="p-2 hover:bg-[var(--color-surface)] rounded-full transition-colors group">
                   <X className="w-4 h-4 text-[var(--color-text-muted)] group-hover:text-black" />
                 </button>
               </div>
-              
+
               <div className="p-8 pt-4 space-y-6">
                 <div>
                   <h3 className="font-serif text-2xl font-bold text-[var(--color-text-primary)] leading-tight">
                     {selectedEvent.guestName}
                   </h3>
                   <div className="flex items-center gap-2 mt-2">
-                     <span className="px-2 py-0.5 bg-black text-white text-[9px] font-black rounded-md tracking-tighter uppercase font-mono">
-                        {t('admin.calendar.modal.roomPrefix')} {selectedEvent.roomNumber}
-                     </span>
-                     <span className="text-xs font-bold text-[var(--color-text-secondary)]">{selectedEvent.roomName}</span>
+                    <span className="px-2 py-0.5 bg-black text-white text-[9px] font-black rounded-md tracking-tighter uppercase font-mono">
+                      {t('admin.calendar.modal.roomPrefix')} {selectedEvent.roomNumber}
+                    </span>
+                    <span className="text-xs font-bold text-[var(--color-text-secondary)]">{selectedEvent.roomName}</span>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 gap-3">
                   <div className="flex items-center justify-between p-4 bg-[var(--color-surface)] rounded-3xl border border-[var(--color-border)]">
                     <div className="flex items-center gap-3">
-                       <CalendarIcon className="w-4 h-4 text-[var(--color-text-muted)]" />
-                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
-                         {t('admin.calendar.modal.time')}
-                       </span>
+                      <CalendarIcon className="w-4 h-4 text-[var(--color-text-muted)]" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
+                        {t('admin.calendar.modal.time')}
+                      </span>
                     </div>
                     <span className="text-xs font-black text-[var(--color-text-primary)]">
                       {format(selectedEvent.start, "dd/MM")} - {format(selectedEvent.end, "dd/MM/yyyy")}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-4 bg-[var(--color-surface)] rounded-3xl border border-[var(--color-border)]">
-                     <div className="flex items-center gap-3">
-                        <Clock className="w-4 h-4 text-[var(--color-text-muted)]" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
-                          {t('admin.calendar.modal.status')}
-                        </span>
-                     </div>
-                     <StatusBadge status={selectedEvent.status} variant="tag" />
+                    <div className="flex items-center gap-3">
+                      <Clock className="w-4 h-4 text-[var(--color-text-muted)]" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
+                        {t('admin.calendar.modal.status')}
+                      </span>
+                    </div>
+                    <StatusBadge status={selectedEvent.status} variant="tag" />
                   </div>
                 </div>
 
                 <div className="pt-4 flex gap-4">
-                  <Link 
+                  <Link
                     to={`/admin/bookings?id=${selectedEvent.id}`}
                     className="flex-1 bg-[var(--color-primary)] hover:opacity-90 text-black font-black uppercase tracking-[0.2em] py-4 rounded-2xl text-center text-[10px] shadow-lg shadow-[var(--color-primary)]/20 transition-all flex items-center justify-center gap-2"
                     onClick={() => setSelectedEvent(null)}
@@ -306,17 +309,17 @@ export default function AdminCalendar() {
 
       {/* Legend */}
       <div className="flex flex-wrap items-center justify-center gap-6 p-6 bg-white rounded-3xl border border-[var(--color-border)] shadow-[var(--shadow-sm)]">
-         <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mr-2">
-           {t('admin.calendar.legend.note')}
-         </span>
-         {Object.entries(statusColors).map(([status, color]) => (
-           <div key={status} className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: color }}></div>
-              <span className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider">
-                {t(`admin.calendar.status.${status}`, status)}
-              </span>
-           </div>
-         ))}
+        <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mr-2">
+          {t('admin.calendar.legend.note')}
+        </span>
+        {Object.entries(statusColors).map(([status, color]) => (
+          <div key={status} className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: color }}></div>
+            <span className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider">
+              {t(`admin.calendar.status.${status}`, status)}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

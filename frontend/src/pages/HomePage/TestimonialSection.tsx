@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useTranslation } from '../../../node_modules/react-i18next'; 
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import StarRating from '../../components/ui/StarRating';
 import { cn } from '../../components/ui/utils';

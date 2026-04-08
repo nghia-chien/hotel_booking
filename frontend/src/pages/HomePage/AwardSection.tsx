@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from '../../../node_modules/react-i18next'; 
+import { useTranslation } from 'react-i18next';
 import StarRating from '../../components/ui/StarRating';
 
 export default function AwardSection() {
   const navigate = useNavigate();
-  const { t } = useTranslation(); 
+  const { t } = useTranslation();
 
   return (
     <section
