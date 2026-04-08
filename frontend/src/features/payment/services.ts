@@ -1,5 +1,5 @@
 import { apiRequest } from '../../api/client';
-import type { Payment } from './types';
+
 
 export const paymentService = {
   createVNPayOrder: async (bookingIds: string[]) => {

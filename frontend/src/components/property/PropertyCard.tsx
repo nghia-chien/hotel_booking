@@ -1,12 +1,12 @@
 import { useTranslation } from 'react-i18next';
-import { MapPin, ShoppingCart } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import type { PropertyCardProps } from '../../types/property';
 import { Badge, PropertyAmenityIcon, StarRating } from '../ui';
 import { cn } from '../ui/utils';
 import { toImageUrl } from '../../utils/format';
 
 export default function PropertyCard({
-  id,
+  id: _id,
   image,
   roomNumber,
   roomType,

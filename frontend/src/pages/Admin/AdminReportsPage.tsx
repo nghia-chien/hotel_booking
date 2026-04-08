@@ -12,7 +12,7 @@ import {
 import { AdminPageHeader, AlertMessage } from "../../components/admin";
 import { useTranslation } from "react-i18next";
 import { useErrorHandler } from "../../utils/errorHandling";
-import { Calendar } from '../../components/ui/calendar';
+
 
 interface OccupancyDay {
   date: string;
