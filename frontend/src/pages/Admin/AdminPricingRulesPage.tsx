@@ -1,18 +1,19 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { useTranslation } from "../../../node_modules/react-i18next"; 
+import { useTranslation } from "react-i18next";
 import { apiRequest } from "../../api/client";
-import { 
-  Plus, 
-  Trash2, 
-  Calendar, 
-  Tag, 
+import {
+  Plus,
+  Trash2,
+  Calendar,
+  Tag,
   Tent,
-  Percent, 
-  DollarSign, 
+  Percent,
+  DollarSign,
   Clock,
   ArrowRight
 } from "lucide-react";
 import { AdminPageHeader, AlertMessage } from "../../components/admin";
+import { useErrorHandler } from "../../utils/errorHandling";
 
 interface RoomType {
   _id: string;
@@ -38,8 +39,9 @@ interface ListResponse<T> {
 
 const AdminPricingRulesPage = () => {
   const { t, i18n } = useTranslation();
+  const { getErrorMessage } = useErrorHandler();
   const dateLocale = i18n.language === "vi" ? "vi-VN" : "en-US";
-  
+
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const [rules, setRules] = useState<PricingRule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,7 +81,7 @@ const AdminPricingRulesPage = () => {
         setRoomType(rt.data[0]._id);
       }
     } catch (err) {
-      setError((err as Error).message);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -92,8 +94,8 @@ const AdminPricingRulesPage = () => {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (new Date(startDate) > new Date(endDate)) {
-        setError(t('admin.pricingRules.msg.dateError'));
-        return;
+      setError(t('admin.pricingRules.msg.dateError'));
+      return;
     }
 
     setError(null);
@@ -121,7 +123,7 @@ const AdminPricingRulesPage = () => {
       setApplyHolidays(false);
       void load();
     } catch (err) {
-      setError((err as Error).message);
+      setError(getErrorMessage(err));
     }
   };
 
@@ -136,7 +138,7 @@ const AdminPricingRulesPage = () => {
       setMessage(t('admin.pricingRules.msg.deleteSuccess'));
       void load();
     } catch (err) {
-      setError((err as Error).message);
+      setError(getErrorMessage(err));
     }
   };
 
@@ -298,10 +300,10 @@ const AdminPricingRulesPage = () => {
         <h3 className="text-lg font-bold text-[var(--color-text-primary)] px-2">
           {t('admin.pricingRules.list.title')}
         </h3>
-        
+
         {loading ? (
           <div className="flex items-center justify-center py-20 bg-white rounded-3xl border border-[var(--color-border)]">
-             <div className="w-8 h-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -322,43 +324,43 @@ const AdminPricingRulesPage = () => {
 
                 <h4 className="text-lg font-bold text-[var(--color-text-primary)] mb-1">{r.name}</h4>
                 <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-4">{r.roomType?.name}</p>
-                
+
                 <div className="bg-[var(--color-surface)] rounded-2xl p-4 space-y-3">
-                   <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-[var(--color-text-muted)] uppercase tracking-widest">
-                        {t('admin.pricingRules.list.duration')}
-                      </span>
-                      <div className="flex items-center gap-2 text-[var(--color-text-primary)]">
-                         <span>{new Date(r.startDate).toLocaleDateString(dateLocale)}</span>
-                         <ArrowRight className="w-3 h-3" />
-                         <span>{new Date(r.endDate).toLocaleDateString(dateLocale)}</span>
-                      </div>
-                   </div>
-                   <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-[var(--color-text-muted)] uppercase tracking-widest">
-                        {t('admin.pricingRules.list.priceChange')}
-                      </span>
-                      <span className="px-2.5 py-1 bg-[var(--color-primary)] rounded-lg text-black">
-                         {r.priceType === "percentage" ? `+${r.value}%` : `+${r.value.toLocaleString()} USD`}
-                      </span>
-                   </div>
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-[var(--color-text-muted)] uppercase tracking-widest">
+                      {t('admin.pricingRules.list.duration')}
+                    </span>
+                    <div className="flex items-center gap-2 text-[var(--color-text-primary)]">
+                      <span>{new Date(r.startDate).toLocaleDateString(dateLocale)}</span>
+                      <ArrowRight className="w-3 h-3" />
+                      <span>{new Date(r.endDate).toLocaleDateString(dateLocale)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-[var(--color-text-muted)] uppercase tracking-widest">
+                      {t('admin.pricingRules.list.priceChange')}
+                    </span>
+                    <span className="px-2.5 py-1 bg-[var(--color-primary)] rounded-lg text-black">
+                      {r.priceType === "percentage" ? `+${r.value}%` : `+${r.value.toLocaleString()} USD`}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="mt-4 flex gap-3">
-                   {r.applyWeekend && (
-                     <span className="flex items-center gap-1 text-[10px] font-black uppercase text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
-                        <Clock className="w-3 h-3" /> {t('admin.pricingRules.list.tagWeekend')}
-                     </span>
-                   )}
-                   {r.applyHolidays && (
-                     <span className="flex items-center gap-1 text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
-                        <Calendar className="w-3 h-3" /> {t('admin.pricingRules.list.tagHoliday')}
-                     </span>
-                   )}
+                  {r.applyWeekend && (
+                    <span className="flex items-center gap-1 text-[10px] font-black uppercase text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+                      <Clock className="w-3 h-3" /> {t('admin.pricingRules.list.tagWeekend')}
+                    </span>
+                  )}
+                  {r.applyHolidays && (
+                    <span className="flex items-center gap-1 text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
+                      <Calendar className="w-3 h-3" /> {t('admin.pricingRules.list.tagHoliday')}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
-            
+
             {!loading && rules.length === 0 && (
               <div className="md:col-span-2 text-center py-20 bg-white rounded-3xl border-2 border-dashed border-[var(--color-border)]">
                 <p className="text-[var(--color-text-muted)] font-medium italic">

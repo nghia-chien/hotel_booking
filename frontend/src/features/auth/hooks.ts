@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import { useErrorHandler } from '../../utils/errorHandling';
 
 export const useAuthFeature = () => {
   const { 
@@ -12,6 +13,7 @@ export const useAuthFeature = () => {
     changePassword: contextChangePassword,
     uploadAvatar: contextUploadAvatar
   } = useAuth();
+  const { getErrorMessage } = useErrorHandler();
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +26,7 @@ export const useAuthFeature = () => {
       toast.success('Đăng nhập thành công!');
       return data;
     } catch (err: any) {
-      const msg = err.message || 'Đăng nhập thất bại';
+      const msg = getErrorMessage(err);
       setError(msg);
       toast.error(msg);
       throw err;
@@ -40,7 +42,7 @@ export const useAuthFeature = () => {
       await contextRegister(fullName, email, password);
       toast.success('Đăng ký tài khoản thành công!');
     } catch (err: any) {
-      const msg = err.message || 'Đăng ký thất bại';
+      const msg = getErrorMessage(err);
       setError(msg);
       toast.error(msg);
       throw err;
@@ -61,7 +63,7 @@ export const useAuthFeature = () => {
       await contextUpdateProfile(data);
       toast.success('Cập nhật thông tin thành công!');
     } catch (err: any) {
-      const msg = err.message || 'Cập nhật thất bại';
+      const msg = getErrorMessage(err);
       setError(msg);
       toast.error(msg);
       throw err;
@@ -77,7 +79,7 @@ export const useAuthFeature = () => {
       await contextChangePassword(data);
       toast.success('Đổi mật khẩu thành công!');
     } catch (err: any) {
-      const msg = err.message || 'Đổi mật khẩu thất bại';
+      const msg = getErrorMessage(err);
       setError(msg);
       toast.error(msg);
       throw err;
@@ -94,7 +96,7 @@ export const useAuthFeature = () => {
       toast.success('Tải ảnh đại diện thành công!');
       return url;
     } catch (err: any) {
-      const msg = err.message || 'Tải ảnh thất bại';
+      const msg = getErrorMessage(err);
       setError(msg);
       toast.error(msg);
       throw err;

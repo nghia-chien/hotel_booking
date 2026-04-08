@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Bell, CheckCircle2, XCircle, CreditCard, RefreshCw, Star, Trash2, CheckCircle, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useTranslation } from '../../node_modules/react-i18next';
+import { useTranslation } from 'react-i18next';
 import { formatDistanceToNow } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
 import { useNotificationFeature } from "../features/notification/hooks";

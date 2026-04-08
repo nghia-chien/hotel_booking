@@ -10,6 +10,7 @@ const validate = (schema, data) => {
   if (error) {
     const err = new Error("Validation error");
     err.statusCode = 400;
+    err.errorCode = "VALIDATION_ERROR";
     err.details = error.details;
     throw err;
   }
@@ -21,10 +22,10 @@ export const createRoomType = async (req, res, next) => {
     const data = validate(createRoomTypeSchema, req.body);
     const exists = await RoomType.findOne({ name: data.name });
     if (exists) {
-      return res.status(409).json({
-        success: false,
-        message: "Room type name already exists"
-      });
+      const err = new Error("Room type name already exists");
+      err.statusCode = 409;
+      err.errorCode = "ROOM_TYPE_EXISTS";
+      throw err;
     }
 
     const roomType = await RoomType.create(data);
@@ -67,10 +68,10 @@ export const getRoomTypeById = async (req, res, next) => {
   try {
     const roomType = await RoomType.findById(req.params.id);
     if (!roomType) {
-      return res.status(404).json({
-        success: false,
-        message: "Room type not found"
-      });
+      const err = new Error("Room type not found");
+      err.statusCode = 404;
+      err.errorCode = "ROOM_TYPE_NOT_FOUND";
+      throw err;
     }
     res.json({ success: true, data: roomType });
   } catch (error) {
@@ -89,10 +90,10 @@ export const updateRoomType = async (req, res, next) => {
     );
 
     if (!roomType) {
-      return res.status(404).json({
-        success: false,
-        message: "Room type not found"
-      });
+      const err = new Error("Room type not found");
+      err.statusCode = 404;
+      err.errorCode = "ROOM_TYPE_NOT_FOUND";
+      throw err;
     }
 
     res.json({ success: true, data: roomType });
@@ -105,10 +106,10 @@ export const deleteRoomType = async (req, res, next) => {
   try {
     const roomType = await RoomType.findByIdAndDelete(req.params.id);
     if (!roomType) {
-      return res.status(404).json({
-        success: false,
-        message: "Room type not found"
-      });
+      const err = new Error("Room type not found");
+      err.statusCode = 404;
+      err.errorCode = "ROOM_TYPE_NOT_FOUND";
+      throw err;
     }
 
     res.status(204).send();

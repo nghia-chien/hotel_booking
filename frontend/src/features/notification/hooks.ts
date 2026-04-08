@@ -2,10 +2,12 @@ import { useState, useCallback, useMemo } from 'react';
 import { notificationService } from './services';
 import type { Notification } from './types';
 import toast from 'react-hot-toast';
+import { useErrorHandler } from '../../utils/errorHandling';
 
 export const useNotificationFeature = () => {
   const [loading, setLoading] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { getErrorMessage } = useErrorHandler();
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
@@ -13,7 +15,7 @@ export const useNotificationFeature = () => {
       const response = await notificationService.getNotifications();
       setNotifications(response.data);
     } catch (err: any) {
-      toast.error(err.message || 'Không thể tải thông báo');
+      toast.error(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -26,7 +28,7 @@ export const useNotificationFeature = () => {
         prev.map(n => (n.id === id ? { ...n, isRead: true } : n))
       );
     } catch (err: any) {
-      toast.error(err.message || 'Cập nhật trạng thái thất bại');
+      toast.error(getErrorMessage(err));
     }
   }, []);
 
@@ -36,7 +38,7 @@ export const useNotificationFeature = () => {
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       toast.success('Đã đọc tất cả thông báo');
     } catch (err: any) {
-      toast.error(err.message || 'Cập nhật trạng thái thất bại');
+      toast.error(getErrorMessage(err));
     }
   }, []);
 
@@ -46,7 +48,7 @@ export const useNotificationFeature = () => {
       setNotifications(prev => prev.filter(n => n.id !== id));
       toast.success('Đã xóa thông báo');
     } catch (err: any) {
-      toast.error(err.message || 'Xóa thông báo thất bại');
+      toast.error(getErrorMessage(err));
     }
   }, []);
 

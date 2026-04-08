@@ -64,3 +64,4 @@ docker-data/
 /playwright/.cache/
 /playwright/.auth/
 /playwright.config.ts
+TECHNICAL_REVIEW.md

@@ -1,5 +1,5 @@
-import { useTranslation } from '../../../node_modules/react-i18next';
-import { Heart, MapPin, ShoppingCart } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { MapPin, ShoppingCart } from 'lucide-react';
 import type { PropertyCardProps } from '../../types/property';
 import { Badge, PropertyAmenityIcon, StarRating } from '../ui';
 import { cn } from '../ui/utils';
@@ -8,19 +8,19 @@ import { toImageUrl } from '../../utils/format';
 export default function PropertyCard({
   id,
   image,
-  name,
-  location,
+  roomNumber,
+  roomType,
+  // location,           thêm địa chỉ phòng sau này ( hà nội . hcm  ....)
   pricePerNight,
   totalPrice,
   priceLabel,
   rating,
   amenities,
-  isFavorited,
+
   variant = 'default',
   onViewDetails,
   onBook,
   onAddToCart,
-  onFavorite,
   className,
 }: PropertyCardProps) {
   const { t } = useTranslation();
@@ -28,7 +28,7 @@ export default function PropertyCard({
   const isFeatured = variant === 'featured';
   const isCompact = variant === 'compact';
 
-  const displayPrice = pricePerNight ?? totalPrice ?? 0;
+  const displayPrice = totalPrice ?? pricePerNight ?? 0;
   const displayLabel = priceLabel ?? (pricePerNight != null ? t('propertyCard.perNight') : t('propertyCard.totalPrice'));
 
   return (
@@ -50,7 +50,7 @@ export default function PropertyCard({
       >
         <img
           src={toImageUrl(image)}
-          alt={name}
+          alt={roomNumber}
           className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
         />
 
@@ -60,40 +60,36 @@ export default function PropertyCard({
           </Badge>
         )}
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onFavorite?.(id);
-          }}
-          className="absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-sm hover:scale-110 transition-transform duration-200"
-        >
-          <Heart
-            className={cn('w-4 h-4', isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-500')}
-          />
-        </button>
       </div>
 
       {/* BODY */}
       <div className={cn(isCompact ? 'p-3 space-y-1.5' : 'p-4 space-y-2')}>
-        <div className="flex items-center gap-1">
-          <MapPin className="w-3 h-3 text-[var(--color-text-muted)] flex-shrink-0" />
-          <span className="text-xs text-[var(--color-text-muted)] truncate">{location}</span>
+        <div className="flex items-center justify-between gap-2">
+          <h3
+            className={cn(
+              'font-bold text-[var(--color-text-primary)] line-clamp-1',
+              isCompact ? 'text-sm' : 'text-base'
+            )}
+          >
+            {t('propertyCard.roomnumber')} {roomNumber}
+          </h3>
+
+          <span className="text-xs text-[var(--color-text-muted)] truncate shrink-0">
+            {roomType}
+          </span>
         </div>
 
-        <h3
-          className={cn(
-            'font-semibold text-[var(--color-text-primary)] line-clamp-1',
-            isCompact ? 'text-xs' : 'text-sm'
-          )}
-        >
-          {name}
-        </h3>
-
+        {/* Hàng 2: Amenities ở dưới */}
         {amenities && amenities.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap pt-1">
             {amenities.slice(0, 3).map((a) => (
               <PropertyAmenityIcon key={a} amenityId={a} size="sm" />
             ))}
+            {amenities.length > 3 && (
+              <span className="text-[10px] text-[var(--color-text-muted)]">
+                +{amenities.length - 3}
+              </span>
+            )}
           </div>
         )}
 

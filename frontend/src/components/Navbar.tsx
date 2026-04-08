@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from '../../node_modules/react-i18next';
+import { useTranslation } from 'react-i18next';
 import {
   Building2,
   ChevronDown,
@@ -53,7 +53,7 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full bg-white backdrop-blur-sm border-b border-[var(--color-border)] shadow-sm">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4 md:gap-8">
-        
+
         {/* LOGO */}
         <Link to="/" className="flex items-center gap-2 flex-shrink-0 group">
           <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg" />
@@ -66,9 +66,9 @@ export default function Navbar() {
         <nav className="hidden md:flex items-center gap-1 flex-1">
           {/* <NavLinkItem to="/">{t('header.home')}</NavLinkItem> */}
           <NavLinkItem to="/rooms">{t('header.searchRoom')}</NavLinkItem>
-          
+
           {user && !isStaffOrAdmin && <NavLinkItem to="/my-bookings">{t('header.myBookings')}</NavLinkItem>}
-          
+
           {isStaffOrAdmin && (
             <div className="relative" ref={adminMenuRef}>
               <button
@@ -78,7 +78,7 @@ export default function Navbar() {
                 {t('header.manage')}
                 <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", isAdminOpen && "rotate-180")} />
               </button>
-              
+
               {isAdminOpen && (
                 <div className="absolute left-0 top-full mt-2 w-56 bg-white rounded-xl shadow-[var(--shadow-lg)] border border-[var(--color-border)] py-2 z-50">
                   <DropdownLink to="/admin" icon={LayoutDashboard} onClick={() => setIsAdminOpen(false)}>{t('header.dashboard')}</DropdownLink>
@@ -104,7 +104,7 @@ export default function Navbar() {
 
         {/* ACTIONS */}
         <div className="flex items-center gap-2 md:gap-3">
-          <button 
+          <button
             onClick={toggleLanguage}
             className="flex items-center px-2 py-1.5 rounded-lg text-[10px] md:text-sm font-bold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface)] border border-[var(--color-border)] transition-colors cursor-pointer mr-1 uppercase"
           >

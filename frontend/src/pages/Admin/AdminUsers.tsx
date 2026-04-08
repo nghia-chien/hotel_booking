@@ -1,13 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
-import { useTranslation } from "../../../node_modules/react-i18next";
+import { useTranslation } from "react-i18next";
 import { getAdminUsers, updateUserRole, updateUserStatus } from "../../api/admin.api";
 import { useAuth } from "../../context/AuthContext";
 import { cn } from "../../components/ui/utils";
-import { 
-  Users, 
-  Search, 
-  ChevronLeft, 
-  ChevronRight, 
+import {
+  Users,
+  Search,
+  ChevronLeft,
+  ChevronRight,
   UserCheck,
   UserX,
   Loader2,
@@ -102,7 +102,7 @@ export default function AdminUsers() {
       <div className="bg-white p-6 rounded-3xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] flex flex-col md:flex-row gap-6">
         <div className="relative flex-1 group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary-dark)] transition-colors" />
-          <input 
+          <input
             type="text"
             placeholder={t('admin.users.searchPlaceholder')}
             value={search}
@@ -111,8 +111,8 @@ export default function AdminUsers() {
           />
         </div>
         <div className="flex items-center gap-4 bg-[var(--color-surface)] px-5 rounded-xl border border-[var(--color-border)]">
-           <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">{t('admin.users.sortLabel')}</span>
-           <span className="text-[10px] font-bold text-[var(--color-text-primary)]">{t('admin.users.sortDefault')}</span>
+          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">{t('admin.users.sortLabel')}</span>
+          <span className="text-[10px] font-bold text-[var(--color-text-primary)]">{t('admin.users.sortDefault')}</span>
         </div>
       </div>
 
@@ -137,33 +137,33 @@ export default function AdminUsers() {
                       <div className="flex items-center gap-4">
                         <div className={cn(
                           "w-12 h-12 rounded-[18px] flex items-center justify-center text-sm font-black border border-[var(--color-border)] shadow-sm transition-transform group-hover:scale-110",
-                          u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 
-                          u.role === 'staff' ? 'bg-blue-100 text-blue-700' : 
-                          'bg-[var(--color-primary)] text-black'
+                          u.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                            u.role === 'staff' ? 'bg-blue-100 text-blue-700' :
+                              'bg-[var(--color-primary)] text-black'
                         )}>
                           {getInitials(u.fullName)}
                         </div>
                         <div className="flex flex-col gap-0.5">
                           <span className="font-bold text-sm tracking-tight flex items-center gap-2">
-                             {u.fullName} {isSelf && <span className="text-[8px] bg-black text-white px-2 py-0.5 rounded-full font-black uppercase tracking-widest">{t('admin.users.selfTag')}</span>}
+                            {u.fullName} {isSelf && <span className="text-[8px] bg-black text-white px-2 py-0.5 rounded-full font-black uppercase tracking-widest">{t('admin.users.selfTag')}</span>}
                           </span>
                           <span className="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5 focus:text-[var(--color-primary-dark)]">
-                             <Mail className="w-3 h-3" /> {u.email}
+                            <Mail className="w-3 h-3" /> {u.email}
                           </span>
                         </div>
                       </div>
                     </td>
                     <td className="px-8 py-6">
                       <div className="relative inline-block group/select">
-                        <select 
+                        <select
                           disabled={isSelf || updatingId === u._id}
                           value={u.role}
                           onChange={(e) => handleRoleChange(u._id, e.target.value as any)}
                           className={cn(
                             "appearance-none text-[10px] font-black uppercase tracking-widest rounded-lg px-3 py-1.5 border border-transparent focus:ring-2 focus:ring-[var(--color-primary)] cursor-pointer disabled:cursor-not-allowed transition-all",
-                            u.role === 'admin' ? 'bg-purple-50 text-purple-700' : 
-                            u.role === 'staff' ? 'bg-blue-50 text-blue-700' : 
-                            'bg-gray-50 text-gray-700'
+                            u.role === 'admin' ? 'bg-purple-50 text-purple-700' :
+                              u.role === 'staff' ? 'bg-blue-50 text-blue-700' :
+                                'bg-gray-50 text-gray-700'
                           )}
                         >
                           <option value="user">{t('admin.users.roles.userCaps')}</option>
@@ -173,31 +173,31 @@ export default function AdminUsers() {
                       </div>
                     </td>
                     <td className="px-8 py-6 text-center">
-                       <StatusBadge isActive={u.isActive} onClick={() => handleStatusToggle(u._id, u.isActive)} disabled={isSelf || !!updatingId} />
+                      <StatusBadge isActive={u.isActive} onClick={() => handleStatusToggle(u._id, u.isActive)} disabled={isSelf || !!updatingId} />
                     </td>
                     <td className="px-8 py-6">
-                       <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-text-secondary)]">
-                             <Calendar className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
-                             {format(new Date(u.createdAt), "dd MMM, yyyy", { locale: dateLocale })}
-                          </div>
-                          <span className="text-[10px] font-mono text-[var(--color-text-muted)] uppercase ml-5 tracking-tighter">
-                             {t('admin.users.atTime', { time: format(new Date(u.createdAt), "HH:mm") })}
-                          </span>
-                       </div>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-text-secondary)]">
+                          <Calendar className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+                          {format(new Date(u.createdAt), "dd MMM, yyyy", { locale: dateLocale })}
+                        </div>
+                        <span className="text-[10px] font-mono text-[var(--color-text-muted)] uppercase ml-5 tracking-tighter">
+                          {t('admin.users.atTime', { time: format(new Date(u.createdAt), "HH:mm") })}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-8 py-6 text-right">
                       {updatingId === u._id ? (
                         <Loader2 className="w-5 h-5 animate-spin text-[var(--color-primary-dark)] ml-auto" />
                       ) : (
                         <div className="flex justify-end gap-2">
-                          <button 
+                          <button
                             disabled={isSelf}
                             onClick={() => handleStatusToggle(u._id, u.isActive)}
                             className={cn(
                               "p-3 rounded-xl transition-all border border-transparent hover:shadow-sm",
-                              u.isActive 
-                                ? "text-[var(--color-text-muted)] hover:bg-red-50 hover:text-red-500 hover:border-red-100" 
+                              u.isActive
+                                ? "text-[var(--color-text-muted)] hover:bg-red-50 hover:text-red-500 hover:border-red-100"
                                 : "text-[var(--color-text-muted)] hover:bg-emerald-50 hover:text-emerald-500 hover:border-emerald-100",
                               isSelf && "opacity-0"
                             )}
@@ -240,7 +240,7 @@ export default function AdminUsers() {
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              
+
               <div className="flex gap-2">
                 {[...Array(totalPages)].map((_, i) => (
                   <button
@@ -248,8 +248,8 @@ export default function AdminUsers() {
                     onClick={() => setPage(i + 1)}
                     className={cn(
                       "w-10 h-10 rounded-xl text-[10px] font-black transition-all",
-                      page === i + 1 
-                        ? "bg-black text-white shadow-xl shadow-black/10 scale-110" 
+                      page === i + 1
+                        ? "bg-black text-white shadow-xl shadow-black/10 scale-110"
                         : "bg-white border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-black"
                     )}
                   >
@@ -276,13 +276,13 @@ export default function AdminUsers() {
 function StatusBadge({ isActive, onClick, disabled }: { isActive: boolean; onClick: () => void; disabled: boolean }) {
   const { t } = useTranslation();
   return (
-    <button 
+    <button
       disabled={disabled}
       onClick={onClick}
       className={cn(
         "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
-        isActive 
-          ? "bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100" 
+        isActive
+          ? "bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100"
           : "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100",
         disabled && "opacity-50 cursor-not-allowed"
       )}

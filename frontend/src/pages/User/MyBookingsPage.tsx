@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { useTranslation } from "../../../node_modules/react-i18next";
+import { useTranslation } from "react-i18next";
 import { apiRequest } from "../../api/client";
+import { useErrorHandler } from "../../utils/errorHandling";
 
 interface Booking {
   _id: string;
@@ -17,6 +18,7 @@ interface BookingsResponse {
 
 const MyBookingsPage = () => {
   const { t, i18n } = useTranslation();
+  const { getErrorMessage } = useErrorHandler();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +39,7 @@ const MyBookingsPage = () => {
       );
       setBookings(res.data);
     } catch (err) {
-      setError((err as Error).message);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -49,7 +51,7 @@ const MyBookingsPage = () => {
 
   const handleCancel = async (id: string) => {
     if (!window.confirm(t('myBookings.confirmCancel'))) return;
-    
+
     setError(null);
     setMessage(null);
     try {
@@ -59,14 +61,14 @@ const MyBookingsPage = () => {
       setMessage(t('myBookings.cancelSuccess'));
       void loadBookings();
     } catch (err) {
-      setError((err as Error).message);
+      setError(getErrorMessage(err));
     }
   };
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">{t('myBookings.pageTitle')}</h1>
-      
+
       {loading && <p className="text-gray-500">{t('common.loading')}</p>}
       {error && <p className="text-red-600 mb-2">{error}</p>}
       {message && <p className="text-green-600 mb-2">{message}</p>}
@@ -94,7 +96,7 @@ const MyBookingsPage = () => {
             </div>
 
             <div className="flex flex-col gap-2 items-end">
-              {(b.status === "Pending" || b.status === "Confirmed") && (
+              {(b.status === "Pending" || b.status === "Paid") && (
                 <button
                   onClick={() => handleCancel(b._id)}
                   className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 transition-colors"

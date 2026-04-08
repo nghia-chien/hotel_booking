@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Star } from "lucide-react";
-import { useTranslation } from '../../node_modules/react-i18next';
+import { useTranslation } from 'react-i18next';
 import { apiRequest } from "../api/client";
+import { useErrorHandler } from "../utils/errorHandling";
 import { Button } from "../components/ui/button";
 import RoomGallery from "../components/RoomGallery";
 import { BookingCard } from "../components/BookingCard";
@@ -49,6 +50,7 @@ export default function RoomDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { getErrorMessage } = useErrorHandler();
 
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,7 +73,7 @@ export default function RoomDetail() {
         );
         setRoom(res.data);
       } catch (err) {
-        setError((err as Error).message);
+        setError(getErrorMessage(err));
       } finally {
         setLoading(false);
       }

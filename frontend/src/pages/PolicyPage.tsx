@@ -1,5 +1,5 @@
 import { ShieldCheck, BookOpen, Clock, Archive } from "lucide-react";
-import { useTranslation } from '../../node_modules/react-i18next';
+import { useTranslation } from 'react-i18next';
 const PolicySection = ({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) => {
 
   return (

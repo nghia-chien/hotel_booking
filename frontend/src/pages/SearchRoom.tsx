@@ -1,6 +1,6 @@
-import { useMemo, useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { useTranslation } from '../../node_modules/react-i18next';
+import { useMemo, useState, useEffect, useRef } from "react"
+import { useNavigate, useLocation } from "react-router-dom"
+import { useTranslation } from 'react-i18next';
 import BookingSearchForm from "../components/search/BookingSearchForm"
 import { FilterSidebar } from "../components/FilterSideBar"
 import { PropertyGrid } from "../components/property"
@@ -19,6 +19,7 @@ import type { Room } from "../features/room/types"
 const RoomsPage = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuthFeature()
   const { addToCart } = useCart()
 
@@ -40,14 +41,39 @@ const RoomsPage = () => {
     guests: number
   } | null>(null)
 
+  const initialSearchDone = useRef(false)
+
   const [minPrice, setMinPrice] = useState<number>(0)
   const [maxPrice, setMaxPrice] = useState<number>(1500)
   const [selectedAmenities, setSelectedAmenities] = useState<AmenityKey[]>([])
   const [minRating, setMinRating] = useState<number>(0)
 
   useEffect(() => {
-    if (!hasSearched) void fetchRooms()
+    if (!hasSearched && !initialSearchDone.current) void fetchRooms()
   }, [hasSearched, fetchRooms])
+
+  // Handle URL search params
+  useEffect(() => {
+    if (initialSearchDone.current) return;
+
+    const queryParams = new URLSearchParams(location.search)
+    const checkInStr = queryParams.get('checkIn')
+    const checkOutStr = queryParams.get('checkOut')
+    const guestsStr = queryParams.get('guests')
+
+    if (checkInStr && checkOutStr && guestsStr) {
+      const ci = new Date(checkInStr)
+      const co = new Date(checkOutStr)
+      const g = parseInt(guestsStr)
+
+      if (!isNaN(ci.getTime()) && !isNaN(co.getTime()) && !isNaN(g)) {
+        initialSearchDone.current = true
+        const params = { checkIn: ci, checkOut: co, guests: g }
+        setSearchParams(params)
+        handleSearch(params)
+      }
+    }
+  }, [location.search])
 
   const nights = useMemo(() => {
     if (!searchParams) return 1
@@ -158,8 +184,9 @@ const RoomsPage = () => {
   const mappedItems: PropertyCardProps[] = filteredResults.map(({ room, totalPrice }) => ({
     id: getRoomId(room),
     image: room.images?.[0] ?? '',
-    name: `${room.roomType?.name ?? 'Phòng'} · #${room.roomNumber}`,
-    location: room.roomType?.name ?? '',
+    roomNumber: room.roomNumber ?? 'Phòng',
+    roomType: room.roomType?.name ?? 'Khách sạn',
+    // location: room.roomType?.name ?? 'Khách sạn',
     pricePerNight: hasSearched ? totalPrice / nights : totalPrice,
     totalPrice: hasSearched ? totalPrice : undefined,
     priceLabel: hasSearched ? undefined : '/đêm',

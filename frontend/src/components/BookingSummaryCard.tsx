@@ -1,4 +1,4 @@
-import { useTranslation } from '../../node_modules/react-i18next';
+import { useTranslation } from 'react-i18next';
 import { Calendar, Users, Moon, MapPin, Trash2, AlertTriangle } from "lucide-react";
 import { cn } from "./ui/utils";
 import { toImageUrl } from "../utils/format";
@@ -28,8 +28,9 @@ export interface BookingSummaryCardProps {
 
 const statusColors: Record<string, string> = {
   Pending: "bg-amber-100 text-amber-800 border-amber-200",
-  Confirmed: "bg-blue-100 text-blue-800 border-blue-200",
-  CheckedIn: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  Paid: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  Expired: "bg-orange-100 text-orange-800 border-orange-200",
+  CheckedIn: "bg-blue-100 text-blue-800 border-blue-200",
   CheckedOut: "bg-gray-100 text-gray-800 border-gray-200",
   Cancelled: "bg-red-100 text-red-800 border-red-200",
 };

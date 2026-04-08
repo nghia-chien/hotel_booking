@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import { useTranslation } from '../../../node_modules/react-i18next';
-import { format } from 'date-fns';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { format, addDays } from 'date-fns';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Calendar as CalendarIcon,
   Users,
@@ -27,6 +28,8 @@ export default function BookingSearchForm({
   className,
 }: BookingSearchFormProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [checkIn, setCheckIn] = useState<Date | undefined>();
   const [checkOut, setCheckOut] = useState<Date | undefined>();
   const [guests, setGuests] = useState(2);
@@ -39,25 +42,19 @@ export default function BookingSearchForm({
   const isPage = variant === 'page';
   const isCompact = variant === 'compact';
 
-  const lastSearchRef = useRef<{ checkIn?: Date; checkOut?: Date; guests?: number }>({});
+  const handleSearch = () => {
+    if (!checkIn || !checkOut) return;
 
-  useEffect(() => {
-    if (checkIn && checkOut) {
-      const checkInTime = checkIn.getTime();
-      const checkOutTime = checkOut.getTime();
-      const prevCheckInTime = lastSearchRef.current.checkIn?.getTime();
-      const prevCheckOutTime = lastSearchRef.current.checkOut?.getTime();
-
-      if (
-        checkInTime !== prevCheckInTime ||
-        checkOutTime !== prevCheckOutTime ||
-        guests !== lastSearchRef.current.guests
-      ) {
-        lastSearchRef.current = { checkIn, checkOut, guests };
-        onSearch({ checkIn, checkOut, guests });
-      }
+    if (location.pathname === '/') {
+      const params = new URLSearchParams();
+      params.set('checkIn', checkIn.toISOString());
+      params.set('checkOut', checkOut.toISOString());
+      params.set('guests', guests.toString());
+      navigate(`/rooms?${params.toString()}`);
+    } else {
+      onSearch({ checkIn, checkOut, guests });
     }
-  }, [checkIn, checkOut, guests, onSearch]);
+  };
 
   const FieldWrapper = ({
     label,
@@ -90,9 +87,9 @@ export default function BookingSearchForm({
     <div
       className={cn(
         'bg-white',
-        isHero ? 'rounded-2xl p-2 shadow-[var(--shadow-xl)]' : 
-        isPage ? 'rounded-2xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] p-4' : 
-        'rounded-xl p-2 flex gap-2 items-center',
+        isHero ? 'rounded-2xl p-2 shadow-[var(--shadow-xl)]' :
+          isPage ? 'rounded-2xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] p-4' :
+            'rounded-xl p-2 flex gap-2 items-center',
         className
       )}
     >
@@ -101,9 +98,9 @@ export default function BookingSearchForm({
           'w-full',
           isHero
             ? 'grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] md:divide-x divide-gray-100' :
-          isPage
-            ? 'grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] gap-3'
-            : 'flex gap-2 items-center'
+            isPage
+              ? 'grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] gap-3'
+              : 'flex gap-2 items-center'
         )}
       >
         {/* FIELD 1: Check-in */}
@@ -132,6 +129,9 @@ export default function BookingSearchForm({
                 selected={checkIn}
                 onSelect={(d) => {
                   setCheckIn(d);
+                  if (d && (!checkOut || d >= checkOut)) {
+                    setCheckOut(addDays(d, 1));
+                  }
                   setCheckInOpen(false);
                 }}
                 disabled={(date) => date < new Date()}
@@ -226,6 +226,31 @@ export default function BookingSearchForm({
           </Popover>
         </FieldWrapper>
 
+        {/* SEARCH BUTTON */}
+        <div className={cn('flex items-center', isHero || isPage ? 'px-2' : 'pl-2')}>
+          <Button
+            onClick={handleSearch}
+            disabled={loading || !checkIn || !checkOut}
+            className={cn(
+              'font-bold transition-colors disabled:opacity-60',
+              isHero || isPage
+                ? 'w-full h-full min-h-[52px] px-8 rounded-xl bg-[var(--color-primary)] text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-dark)]'
+                : 'h-10 px-4 rounded-lg'
+            )}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                {t('bookingSearch.searching')}
+              </>
+            ) : (
+              <>
+                <Search className="w-4 h-4 mr-2" />
+                {t('bookingSearch.searchButton')}
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );

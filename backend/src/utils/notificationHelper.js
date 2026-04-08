@@ -1,16 +1,7 @@
-import nodemailer from "nodemailer";
 import User from "../models/User.js";
 import Notification from "../models/Notification.js";
-import dotenv from "dotenv";
-dotenv.config();
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
+import { emailQueue } from "./queue.js";
+import logger from "./logger.js";
 
 export const createNotification = async (userId, type, data) => {
   try {
@@ -84,7 +75,8 @@ export const createNotification = async (userId, type, data) => {
         break;
     }
 
-    const notificationPromise = Notification.create({
+    // Save notification to DB synchronously
+    await Notification.create({
       user: userId,
       type,
       title,
@@ -92,26 +84,19 @@ export const createNotification = async (userId, type, data) => {
       link
     });
 
-    const emailPromise = (async () => {
-      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.log("Email credentials not found, skipping email.");
-        return;
-      }
-      try {
-        await transporter.sendMail({
-          from: `"HotelBooking" <${process.env.EMAIL_USER}>`,
-          to: user.email,
-          subject: `[HotelBooking] ${title}`,
-          html: emailHtml
-        });
-        console.log(`Email sent successfully to ${user.email}`);
-      } catch (err) {
-        console.error("Email sending failed:", err);
-      }
-    })();
-
-    await Promise.all([notificationPromise, emailPromise]);
+    // Delegate email sending to BullMQ async job
+    const jobId = data.bookingId ? `${type}:${data.bookingId}` : undefined;
+    await emailQueue.add("send-email", {
+      to: user.email,
+      subject: `[HotelBooking] ${title}`,
+      html: emailHtml
+    }, {
+      jobId, // Idempotency check key
+      removeOnComplete: true
+    });
+    
+    logger.info(`Notification DB saved, email job enqueued for ${user.email}`);
   } catch (err) {
-    console.error("Notification creation failed:", err);
+    logger.error("Notification creation failed:", err);
   }
-};
+};

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useTranslation } from '../../node_modules/react-i18next';
+import { useTranslation } from 'react-i18next';
 
 const Footer = () => {
   const { t } = useTranslation();

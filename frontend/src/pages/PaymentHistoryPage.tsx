@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from '../../node_modules/react-i18next';
+import { useTranslation } from 'react-i18next';
 import { Loader2, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "../components/ui/utils";
 import BookingSummaryCard from "../components/BookingSummaryCard";
 import { usePaymentFeature } from "../features/payment/hooks";
+import { useErrorHandler } from "../utils/errorHandling";
 
 const StatusBadge = ({ status }: { status: string }) => {
   const { t } = useTranslation();
@@ -29,6 +30,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 export default function PaymentHistoryPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { getErrorMessage } = useErrorHandler();
   const { payments, loading, fetchMyPayments, createVNPayOrder } = usePaymentFeature();
   const [payLoadingId, setPayLoadingId] = useState<string | null>(null);
 
@@ -63,6 +65,7 @@ export default function PaymentHistoryPage() {
       const paymentUrl = await createVNPayOrder(bookingIds);
       window.location.assign(paymentUrl);
     } catch (err) {
+      alert(getErrorMessage(err));
       setPayLoadingId(null);
     }
   };
@@ -134,14 +137,18 @@ export default function PaymentHistoryPage() {
 
         {filtered.map(payment => {
           const bks = payment.bookings?.length ? payment.bookings : (payment.booking ? [payment.booking] : []);
-          
+
           let paymentStatus = payment.status;
+          let allBookingsPending = true;
           bks.forEach((b: any) => {
             if (paymentStatus === 'CANCELLED' && b.status === 'Pending') {
               b.status = 'Cancelled';
             }
-            if (b.status === 'Cancelled' && paymentStatus === 'PENDING') {
-              paymentStatus = 'CANCELLED';
+            if ((b.status === 'Cancelled' || b.status === 'Expired') && paymentStatus === 'PENDING') {
+              paymentStatus = 'FAILED';
+            }
+            if (b.status !== 'Pending') {
+              allBookingsPending = false;
             }
           });
 
@@ -160,7 +167,7 @@ export default function PaymentHistoryPage() {
                   </div>
                   <div className="flex flex-col gap-2 items-end">
                     <StatusBadge status={paymentStatus} />
-                    {paymentStatus === "PENDING" && (
+                    {paymentStatus === "PENDING" && allBookingsPending && (
                       <button
                         onClick={() => handlePayAgain(paymentId, bks.map(b => b._id || b.id))}
                         disabled={payLoadingId === paymentId}

@@ -10,7 +10,7 @@ import { Calendar } from "./ui/calendar";
 import { apiRequest } from "../api/client";
 import { createBooking } from "../api/booking.api";
 import { useAuth } from "../context/AuthContext";
-import { useTranslation } from '../../node_modules/react-i18next';
+import { useTranslation } from 'react-i18next';
 import { useCart } from "../context/CartContext";
 
 interface PriceResponse {
@@ -62,10 +62,13 @@ export function BookingCard({
           `/api/public/rooms/${roomId}/booked-dates`,
           "GET"
         );
-        setBookedDates(res.data.map(b => ({
-          checkIn: new Date(b.checkIn),
-          checkOut: new Date(b.checkOut)
-        })));
+        setBookedDates(res.data.map(b => {
+          const ci = new Date(b.checkIn);
+          ci.setHours(0, 0, 0, 0);
+          const co = new Date(b.checkOut);
+          co.setHours(0, 0, 0, 0);
+          return { checkIn: ci, checkOut: co };
+        }));
       } catch (err) {
         console.error("Failed to fetch booked dates:", err);
       }
@@ -226,12 +229,17 @@ export function BookingCard({
                 selected={checkIn}
                 onSelect={setCheckIn}
                 disabled={(date) => {
+                  const d = new Date(date);
+                  d.setHours(0, 0, 0, 0);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+
                   // Disable past dates
-                  if (date < new Date(new Date().setHours(0, 0, 0, 0))) return true;
+                  if (d < today) return true;
+
                   // Disable booked dates
-                  return bookedDates.some((b: any) =>
-                    date >= new Date(b.checkIn.setHours(0, 0, 0, 0)) &&
-                    date < new Date(b.checkOut.setHours(0, 0, 0, 0))
+                  return bookedDates.some((b) =>
+                    d >= b.checkIn && d < b.checkOut
                   );
                 }}
               />
@@ -259,20 +267,27 @@ export function BookingCard({
                 selected={checkOut}
                 onSelect={setCheckOut}
                 disabled={(date) => {
+                  const d = new Date(date);
+                  d.setHours(0, 0, 0, 0);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+
                   // Must be after check-in
-                  if (checkIn && date <= checkIn) return true;
+                  if (checkIn && d <= checkIn) return true;
                   // Must not be in the past
-                  if (date < new Date(new Date().setHours(0, 0, 0, 0))) return true;
+                  if (d < today) return true;
+
                   // Must not overlap with a booking that starts after check-in
                   if (checkIn) {
                     const nextBooking = bookedDates
-                      .filter((b: any) => b.checkIn > checkIn)
-                      .sort((a: any, b: any) => a.checkIn.getTime() - b.checkIn.getTime())[0];
-                    if (nextBooking && date > nextBooking.checkIn) return true;
+                      .filter((b) => b.checkIn > checkIn)
+                      .sort((a, b) => a.checkIn.getTime() - b.checkIn.getTime())[0];
+                    if (nextBooking && d > nextBooking.checkIn) return true;
                   }
-                  return bookedDates.some((b: any) =>
-                    date > new Date(b.checkIn.setHours(0, 0, 0, 0)) &&
-                    date <= new Date(b.checkOut.setHours(0, 0, 0, 0))
+
+                  // General overlap check
+                  return bookedDates.some((b) =>
+                    d > b.checkIn && d <= b.checkOut
                   );
                 }}
               />

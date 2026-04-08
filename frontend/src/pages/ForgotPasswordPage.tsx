@@ -1,10 +1,12 @@
 import { type FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
-import { useTranslation } from '../../node_modules/react-i18next';
+import { useTranslation } from 'react-i18next';
 import { apiRequest } from "../api/client";
+import { useErrorHandler } from "../utils/errorHandling";
 
 export default function ForgotPasswordPage() {
   const { t } = useTranslation();
+  const { getErrorMessage } = useErrorHandler();
 
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,7 +27,7 @@ export default function ForgotPasswordPage() {
 
       if (res.data?.resetToken) setResetToken(res.data.resetToken);
     } catch (err) {
-      setError((err as Error).message);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

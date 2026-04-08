@@ -38,10 +38,10 @@ export const createStripeCheckoutSession = async (req, res, next) => {
 
     const successUrl =
       process.env.STRIPE_SUCCESS_URL ||
-      "http://localhost:5173/my-bookings?payment=success";
+      "http://localhost:5173/hotel_booking/my-bookings?payment=success";
     const cancelUrl =
       process.env.STRIPE_CANCEL_URL ||
-      "http://localhost:5173/my-bookings?payment=cancel";
+      "http://localhost:5173/hotel_booking/my-bookings?payment=cancel";
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",

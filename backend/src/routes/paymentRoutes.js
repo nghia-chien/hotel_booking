@@ -14,7 +14,10 @@ const router = express.Router();
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const getBaseUrl = (req) => `${req.protocol}://${req.get("host")}`;
-const getFrontendUrl = () => process.env.FRONTEND_URL || "http://localhost:5173";
+const getFrontendUrl = () => {
+  const url = process.env.FRONTEND_URL || "http://localhost:5173";
+  return url.endsWith("/hotel_booking") ? url : `${url}/hotel_booking`;
+};
 
 // ─── POST /api/payments/vnpay/create-order ────────────────────────────────────
 
@@ -25,7 +28,7 @@ router.post("/vnpay/create-order", authenticate, async (req, res, next) => {
 
   try {
     const { bookingId, bookingIds } = req.body;
-    const ids    = bookingIds ?? bookingId;
+    const ids = bookingIds ?? bookingId;
     const ipAddr = getClientIp(req);
 
     console.log("[2] bookingIds:", ids, "| IP:", ipAddr);

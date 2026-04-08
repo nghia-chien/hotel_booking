@@ -13,8 +13,9 @@ export type PropertyCategory =
 export interface PropertyCardProps {
   id: string
   image: string
-  name: string
-  location: string
+  roomNumber: string
+  roomType: string
+  // location: string thêm địa chỉ phòng sau này ( hà nội . hcm  ....)
   pricePerNight: number
   capacity: number
   rating?: number

@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { apiRequest } from "../../api/client";
 import { cn } from "../../components/ui/utils";
-import { 
-  Star, 
-  MessageSquare, 
-  Eye, 
-  EyeOff, 
+import {
+  Star,
+  MessageSquare,
+  Eye,
+  EyeOff,
   Loader2,
   ChevronLeft,
   ChevronRight,
@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { AdminPageHeader } from "../../components/admin";
-import { useTranslation } from "../../../node_modules/react-i18next";
+import { useTranslation } from "react-i18next";
+import { useErrorHandler } from "../../utils/errorHandling";
 interface Review {
   _id: string;
   user: { fullName: string; email: string };
@@ -42,6 +43,7 @@ export default function AdminReviews() {
   const [limit] = useState(10);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const { t } = useTranslation();
+  const { getErrorMessage } = useErrorHandler();
   const fetchReviews = useCallback(async () => {
     setLoading(true);
     try {
@@ -54,7 +56,7 @@ export default function AdminReviews() {
       setReviews(res.data);
       setTotalCount(res.totalCount);
     } catch (err) {
-      console.error(err);
+      console.error(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -75,7 +77,7 @@ export default function AdminReviews() {
       );
       setReviews(reviews.map(r => r._id === reviewId ? { ...r, isVisible: !currentStatus } : r));
     } catch (err) {
-      alert((err as Error).message);
+      alert(getErrorMessage(err));
     } finally {
       setUpdatingId(null);
     }
@@ -83,7 +85,7 @@ export default function AdminReviews() {
 
   const totalPages = Math.ceil(totalCount / limit);
 
-return (
+  return (
     <div className="max-w-7xl mx-auto space-y-10 py-6 animate-in fade-in duration-500 pb-20 mt-12">
       {/* Header */}
       <AdminPageHeader
@@ -124,7 +126,7 @@ return (
                       </div>
                       <div className="flex flex-col gap-0.5">
                         <span className="font-bold text-sm tracking-tight group-hover:text-[var(--color-primary-dark)] transition-colors">
-                           {r.user?.fullName}
+                          {r.user?.fullName}
                         </span>
                         <span className="text-[9px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{r.user?.email}</span>
                       </div>
@@ -132,7 +134,7 @@ return (
                   </td>
                   <td className="px-8 py-6">
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl text-[10px] font-black uppercase tracking-tighter">
-                       <Home className="w-3.5 h-3.5 text-[var(--color-text-muted)]" /> {t('admin.reviews.roomName', { number: r.room?.roomNumber })}
+                      <Home className="w-3.5 h-3.5 text-[var(--color-text-muted)]" /> {t('admin.reviews.roomName', { number: r.room?.roomNumber })}
                     </div>
                   </td>
                   <td className="px-8 py-6">
@@ -143,37 +145,37 @@ return (
                   </td>
                   <td className="px-8 py-6 max-w-sm">
                     <div className="relative pl-6">
-                       <Quote className="absolute left-0 top-0 w-4 h-4 text-[var(--color-primary)] opacity-40 rotate-180" />
-                       <p className="text-xs text-[var(--color-text-secondary)] font-medium italic leading-relaxed line-clamp-2">
-                          {r.comment || t('admin.reviews.noComment')}
-                       </p>
+                      <Quote className="absolute left-0 top-0 w-4 h-4 text-[var(--color-primary)] opacity-40 rotate-180" />
+                      <p className="text-xs text-[var(--color-text-secondary)] font-medium italic leading-relaxed line-clamp-2">
+                        {r.comment || t('admin.reviews.noComment')}
+                      </p>
                     </div>
                     <div className="mt-2 ml-6 text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">
-                       {format(new Date(r.createdAt), "dd/MM/yyyy · HH:mm")}
+                      {format(new Date(r.createdAt), "dd/MM/yyyy · HH:mm")}
                     </div>
                   </td>
                   <td className="px-8 py-6 text-center">
                     <div className={cn(
                       "inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border",
-                      r.isVisible 
-                       ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
-                       : "bg-gray-100 text-gray-400 border-gray-200"
+                      r.isVisible
+                        ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                        : "bg-gray-100 text-gray-400 border-gray-200"
                     )}>
-                       <div className={cn("w-1.5 h-1.5 rounded-full", r.isVisible ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-gray-400")}></div>
-                       {r.isVisible ? t('admin.reviews.status.public') : t('admin.reviews.status.hidden')}
+                      <div className={cn("w-1.5 h-1.5 rounded-full", r.isVisible ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-gray-400")}></div>
+                      {r.isVisible ? t('admin.reviews.status.public') : t('admin.reviews.status.hidden')}
                     </div>
                   </td>
                   <td className="px-8 py-6 text-right">
                     {updatingId === r._id ? (
                       <Loader2 className="w-5 h-5 animate-spin text-[var(--color-primary-dark)] ml-auto" />
                     ) : (
-                      <button 
+                      <button
                         onClick={() => handleToggleVisibility(r._id, r.isVisible)}
                         className={cn(
                           "p-3 rounded-2xl transition-all border border-transparent shadow-sm",
-                          r.isVisible 
-                           ? "bg-red-50 text-red-600 hover:bg-red-100 border-red-100" 
-                           : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-100"
+                          r.isVisible
+                            ? "bg-red-50 text-red-600 hover:bg-red-100 border-red-100"
+                            : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-100"
                         )}
                         title={r.isVisible ? t('admin.reviews.action.hide') : t('admin.reviews.action.show')}
                       >
@@ -191,7 +193,7 @@ return (
         {!loading && reviews.length === 0 && (
           <div className="py-32 text-center">
             <div className="w-24 h-24 bg-[var(--color-surface)] rounded-full flex items-center justify-center mx-auto mb-6">
-               <MessageSquare className="w-10 h-10 text-[var(--color-text-muted)]" />
+              <MessageSquare className="w-10 h-10 text-[var(--color-text-muted)]" />
             </div>
             <h3 className="text-xl font-bold text-[var(--color-text-primary)]">{t('admin.reviews.emptyTitle')}</h3>
             <p className="text-[var(--color-text-secondary)] text-sm font-medium italic mt-2">{t('admin.reviews.noData')}</p>
@@ -212,7 +214,7 @@ return (
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              
+
               <div className="flex gap-2">
                 {[...Array(totalPages)].map((_, i) => (
                   <button
@@ -220,8 +222,8 @@ return (
                     onClick={() => setPage(i + 1)}
                     className={cn(
                       "w-10 h-10 rounded-xl text-[10px] font-black transition-all",
-                      page === i + 1 
-                        ? "bg-black text-white shadow-xl shadow-black/10 scale-110" 
+                      page === i + 1
+                        ? "bg-black text-white shadow-xl shadow-black/10 scale-110"
                         : "bg-white border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-black"
                     )}
                   >

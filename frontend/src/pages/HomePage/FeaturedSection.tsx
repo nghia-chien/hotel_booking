@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useTranslation } from '../../../node_modules/react-i18next';
+import { useTranslation } from 'react-i18next';
 import { PropertyCard, CategoryFilterTabs } from '../../components/property';
 import { toImageUrl } from '../../utils/format';
 import useAllRooms from '../../hooks/useAllRooms';
@@ -23,8 +23,9 @@ export default function FeaturedSection() {
     return rooms.map((room) => ({
       id: room._id,
       image: toImageUrl(room.images?.[0] ?? ''),
-      name: `${room.roomType?.name ?? 'Phòng'} #${room.roomNumber}`,
-      location: room.roomType?.name ?? 'Khách sạn',
+      roomNumber: room.roomNumber ?? 'Phòng',
+      roomType: room.roomType?.name ?? 'Khách sạn',
+      // location: room.roomType?.name ?? 'Khách sạn',
       pricePerNight: room.roomType?.basePrice ?? 0,
       capacity: room.capacity,
       rating: (room as any).avgRating ?? 4.5,
@@ -66,7 +67,7 @@ export default function FeaturedSection() {
       <div className="max-w-7xl mx-auto px-4">
         <header className="flex items-start justify-between mb-8">
           <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-2">{t('featured.badge')}</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-2">{t('featured.badge')}</p>
             <h2 className="font-serif text-3xl font-bold text-[var(--color-text-primary)]">{t('featured.title')}</h2>
             <p className="text-[var(--color-text-secondary)] text-sm mt-2">{t('featured.subtitle')}</p>
           </div>
@@ -91,7 +92,7 @@ export default function FeaturedSection() {
             <p className="text-[var(--color-text-secondary)]">Hiện chưa có phòng nào.</p>
           </div>
         ) : (
-          <div 
+          <div
             className="grid grid-rows-2 grid-flow-col gap-6 overflow-x-auto pb-8 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             style={{
               gridAutoColumns: "minmax(280px, calc((100% - 4 * 1.5rem) / 5))"

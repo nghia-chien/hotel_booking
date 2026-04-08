@@ -7,7 +7,12 @@
   "devDependencies": {
     "@playwright/test": "^1.59.1",
     "@types/node": "^25.5.2",
+    "concurrently": "^9.2.1",
     "gh-pages": "^6.3.0"
   },
-  "scripts": {}
+  "scripts": {
+    "server": "yarn --cwd backend dev",
+    "client": "yarn --cwd frontend dev",
+    "dev": "concurrently \"yarn server\" \"yarn client\""
+  }
 }

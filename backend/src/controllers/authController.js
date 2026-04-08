@@ -18,6 +18,7 @@ const validate = (schema, data) => {
   if (error) {
     const err = new Error("Validation error");
     err.statusCode = 400;
+    err.errorCode = "VALIDATION_ERROR";
     err.details = error.details;
     throw err;
   }
@@ -30,10 +31,10 @@ export const register = async (req, res, next) => {
 
     const existing = await User.findOne({ email: data.email });
     if (existing) {
-      return res.status(409).json({
-        success: false,
-        message: "Email already registered"
-      });
+      const err = new Error("Email already registered");
+      err.statusCode = 409;
+      err.errorCode = "EMAIL_EXISTS";
+      throw err;
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -76,18 +77,18 @@ export const login = async (req, res, next) => {
 
     const user = await User.findOne({ email: data.email });
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password"
-      });
+      const err = new Error("Invalid email or password");
+      err.statusCode = 401;
+      err.errorCode = "INVALID_CREDENTIALS";
+      throw err;
     }
 
     const isMatch = await bcrypt.compare(data.password, user.password);
     if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password"
-      });
+      const err = new Error("Invalid email or password");
+      err.statusCode = 401;
+      err.errorCode = "INVALID_CREDENTIALS";
+      throw err;
     }
 
     const accessToken = generateAccessToken(user);
@@ -124,15 +125,22 @@ export const refreshToken = async (req, res, next) => {
       });
     }
 
-    // Simple verify; no persistent blacklist for demo
+    // Gracefully handle token expiration
     const decoded = await new Promise((resolve, reject) => {
       import("jsonwebtoken").then(({ default: jwt }) => {
-        jwt.verify(token, process.env.JWT_REFRESH_SECRET, (err, payload) => {
-          if (err) reject(err);
+        jwt.verify(token, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET, (err, payload) => {
+          if (err) resolve(null); // Return null on error instead of throwing a 500
           else resolve(payload);
         });
       });
     });
+
+    if (!decoded) {
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token is expired or invalid"
+      });
+    }
 
     const user = await User.findById(decoded.sub);
     if (!user) {
@@ -208,10 +216,10 @@ export const resetPassword = async (req, res, next) => {
     });
 
     if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid or expired reset token"
-      });
+      const err = new Error("Invalid or expired reset token");
+      err.statusCode = 400;
+      err.errorCode = "INVALID_OR_EXPIRED_TOKEN";
+      throw err;
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -271,10 +279,10 @@ export const changePassword = async (req, res, next) => {
 
     const isMatch = await bcrypt.compare(data.currentPassword, user.password);
     if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Mật khẩu hiện tại không đúng"
-      });
+      const err = new Error("Current password incorrect");
+      err.statusCode = 401;
+      err.errorCode = "INCORRECT_PASSWORD";
+      throw err;
     }
 
     const salt = await bcrypt.genSalt(10);

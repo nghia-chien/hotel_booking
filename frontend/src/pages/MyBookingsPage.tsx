@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useTranslation } from '../../node_modules/react-i18next';
+import { useTranslation } from 'react-i18next';
 import { useCart } from "../context/CartContext";
 import { cn } from "../components/ui/utils";
 import PaymentHistoryPage from "./PaymentHistoryPage";
@@ -35,7 +35,11 @@ const MyBookingsPage = () => {
           checkOut: item.checkOut,
           guests: item.guests
         });
-        return { roomId: item.roomId, available: res?.available ?? true };
+        // res is SearchResultItem[], if it contains the roomId, it's available
+        const isAvailable = res.some((r: any) =>
+          (r.room?._id === item.roomId) || (r.room?.id === item.roomId)
+        );
+        return { roomId: item.roomId, available: isAvailable };
       })
     );
     const conflictIds = new Set(
@@ -62,6 +66,7 @@ const MyBookingsPage = () => {
             roomId: item.roomId,
             checkIn: item.checkIn,
             checkOut: item.checkOut,
+            guests: item.guests,
             guestInfo: {
               fullName: "User",
               email: "user@example.com",

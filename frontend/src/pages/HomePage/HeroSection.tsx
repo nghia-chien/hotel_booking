@@ -1,5 +1,5 @@
 import type { PropertySearchParams } from '../../types/property';
-import { useTranslation } from '../../../node_modules/react-i18next';
+import { useTranslation } from 'react-i18next';
 import BookingSearchForm from '../../components/search/BookingSearchForm';
 import bg from "@/assets/bg.jpg";
 interface HeroSectionProps {
