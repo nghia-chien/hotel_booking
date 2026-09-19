@@ -744,4 +744,18 @@ export const en = {
     hint: "Hint: click \"Get Quote\" to see the total amount before booking.",
     specialRequest: "Special requests (optional) — add in the next step"
   },
+  chatbot: {
+    title: "Booking assistant",
+    welcome: "Hi! Ask about bookings, dates, guests, or combo packages.",
+    placeholder: "e.g. I need 2 guests, April 20 2026, one room…",
+    send: "Send",
+    sending: "Thinking…",
+    close: "Close",
+    openLabel: "Open chat assistant",
+    error: "Could not reach the chatbot. Run yarn dev:chatbot in the backend folder (port 3001).",
+    suggestionsTitle: "Suggested packages",
+    intent: "Intent",
+    confidence: "Confidence",
+    trySuggestion: "Try",
+  },
 };

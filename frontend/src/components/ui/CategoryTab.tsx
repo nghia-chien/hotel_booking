@@ -17,17 +17,27 @@ export function CategoryTab({
 }: CategoryTabProps) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={cn(
-        'px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer whitespace-nowrap border',
+        'px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 cursor-pointer whitespace-nowrap border flex items-center gap-1.5 shadow-2xs',
         active
-          ? 'bg-[var(--color-primary-foreground)] text-white border-transparent'
-          : 'bg-white border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-gray-400 hover:text-[var(--color-text-primary)]',
+          ? 'bg-slate-900 text-white border-slate-900 shadow-md shadow-slate-900/10 scale-102'
+          : 'bg-white border-slate-200/80 text-slate-600 hover:border-slate-300 hover:text-slate-900 hover:bg-slate-50',
         className
       )}
     >
-      {label}
-      {count !== undefined && <span className="text-[10px] ml-1 opacity-60">({count})</span>}
+      <span>{label}</span>
+      {count !== undefined && (
+        <span
+          className={cn(
+            'text-xs px-1.5 py-0.5 rounded-full font-bold',
+            active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+          )}
+        >
+          {count}
+        </span>
+      )}
     </button>
   );
 }

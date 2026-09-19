@@ -743,4 +743,18 @@ export const vi = {
     hint: "Lưu ý: nhấn \"Xem báo giá\" để biết tổng tiền trước khi đặt.",
     specialRequest: "Yêu cầu đặc biệt (tùy chọn) — thêm ở bước tiếp theo"
   },
+  chatbot: {
+    title: "Trợ lý đặt phòng",
+    welcome: "Xin chào! Hỏi về đặt phòng, ngày nhận/trả, số khách hoặc gói combo.",
+    placeholder: "Ví dụ: Tôi cần 2 người, 20/04/2026, 1 phòng…",
+    send: "Gửi",
+    sending: "Đang xử lý…",
+    close: "Đóng",
+    openLabel: "Mở trợ lý chat",
+    error: "Không kết nối được chatbot. Hãy chạy yarn dev:chatbot trong thư mục backend (cổng 3001).",
+    suggestionsTitle: "Gợi ý gói",
+    intent: "Ý định",
+    confidence: "Độ tin cậy",
+    trySuggestion: "Thử",
+  },
 };

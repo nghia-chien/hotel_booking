@@ -34,7 +34,7 @@ export const getDashboardStats = async (req, res) => {
       Booking.aggregate([
         {
           $match: {
-            status: { $in: ["Confirmed", "CheckedIn", "CheckedOut"] },
+            status: { $in: ["Paid", "CheckedIn", "CheckedOut"] },
             createdAt: { $gte: startOfToday, $lte: endOfToday }
           }
         },
@@ -51,7 +51,7 @@ export const getDashboardStats = async (req, res) => {
 
       // 3b. num booking active today
       Booking.countDocuments({
-        status: { $in: ["Confirmed", "CheckedIn"] },
+        status: { $in: ["Paid", "CheckedIn"] },
         checkIn: { $lte: endOfToday },
         checkOut: { $gte: startOfToday }
       }),
@@ -63,7 +63,7 @@ export const getDashboardStats = async (req, res) => {
       Booking.aggregate([
         {
           $match: {
-            status: { $in: ["Confirmed", "CheckedIn", "CheckedOut"] },
+            status: { $in: ["Paid", "CheckedIn", "CheckedOut"] },
             createdAt: { $gte: sevenDaysAgo }
           }
         },

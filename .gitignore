@@ -65,3 +65,8 @@ docker-data/
 /playwright/.auth/
 /playwright.config.ts
 TECHNICAL_REVIEW.md
+BUSINESS_RULES.md
+hotel_booking_analysis.md
+IMMEDIATE_ACTION_ITEMS.md
+nghia-chien.github.io.json
+TECHNICAL_RULES.md

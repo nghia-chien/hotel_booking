@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { format, addDays } from 'date-fns';
+import { format, addDays, differenceInCalendarDays } from 'date-fns';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Calendar as CalendarIcon,
   Users,
   Search,
   Loader2,
+  Moon,
+  Plus,
+  Minus,
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
@@ -40,7 +43,8 @@ export default function BookingSearchForm({
 
   const isHero = variant === 'hero';
   const isPage = variant === 'page';
-  const isCompact = variant === 'compact';
+
+  const nights = checkIn && checkOut ? Math.max(1, differenceInCalendarDays(checkOut, checkIn)) : 0;
 
   const handleSearch = () => {
     if (!checkIn || !checkOut) return;
@@ -56,40 +60,15 @@ export default function BookingSearchForm({
     }
   };
 
-  const FieldWrapper = ({
-    label,
-    children,
-    className: fieldClassName,
-  }: {
-    label: string;
-    children: React.ReactNode;
-    className?: string;
-  }) => (
-    <div
-      className={cn(
-        isHero ? 'px-4 py-3' : isPage ? 'border border-[var(--color-border)] rounded-xl px-4 py-3 bg-white' : 'px-3 py-2',
-        fieldClassName
-      )}
-    >
-      <label
-        className={cn(
-          'block font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-1',
-          isHero || isPage ? 'text-[10px]' : 'sr-only'
-        )}
-      >
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-
   return (
     <div
       className={cn(
-        'bg-white',
-        isHero ? 'rounded-2xl p-2 shadow-[var(--shadow-xl)]' :
-          isPage ? 'rounded-2xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] p-4' :
-            'rounded-xl p-2 flex gap-2 items-center',
+        'transition-all duration-300',
+        isHero
+          ? 'bg-white/95 backdrop-blur-xl rounded-3xl p-3 shadow-2xl shadow-black/20 border border-white/40'
+          : isPage
+          ? 'bg-white rounded-2xl border border-slate-200/80 shadow-md p-3'
+          : 'bg-white rounded-xl p-2 flex gap-2 items-center border border-slate-200',
         className
       )}
     >
@@ -97,33 +76,50 @@ export default function BookingSearchForm({
         className={cn(
           'w-full',
           isHero
-            ? 'grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] md:divide-x divide-gray-100' :
-            isPage
-              ? 'grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] gap-3'
-              : 'flex gap-2 items-center'
+            ? 'grid grid-cols-1 md:grid-cols-[1.1fr_1.1fr_1fr_auto] gap-2 md:gap-0 md:divide-x divide-slate-100'
+            : isPage
+            ? 'grid grid-cols-1 md:grid-cols-[1.1fr_1.1fr_1fr_auto] gap-3'
+            : 'flex gap-2 items-center'
         )}
       >
         {/* FIELD 1: Check-in */}
-        <FieldWrapper label={t('bookingSearch.checkInLabel')} className={isCompact ? 'flex-1' : ''}>
+        <div
+          className={cn(
+            'group transition-colors rounded-2xl',
+            isHero ? 'px-5 py-3 hover:bg-slate-50/80 cursor-pointer' : isPage ? 'border border-slate-200 rounded-xl px-4 py-3 bg-white hover:border-slate-300' : 'px-2 py-1',
+            checkInOpen && 'bg-slate-50/80'
+          )}
+        >
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+            {t('bookingSearch.checkInLabel', 'Nhận phòng')}
+          </label>
           <Popover open={checkInOpen} onOpenChange={setCheckInOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-2 text-sm font-medium text-left w-full cursor-pointer"
+                className="flex items-center gap-2.5 text-left w-full cursor-pointer group-hover:text-slate-900 transition-colors"
               >
-                <CalendarIcon className="w-4 h-4 text-[var(--color-text-muted)]" />
-                <span
-                  className={
-                    checkIn
-                      ? 'text-[var(--color-text-primary)]'
-                      : 'text-[var(--color-text-muted)]'
-                  }
-                >
-                  {checkIn ? format(checkIn, 'dd MMM yyyy') : t('bookingSearch.selectDate')}
-                </span>
+                <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                  <CalendarIcon className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span
+                    className={cn(
+                      'text-sm font-semibold truncate',
+                      checkIn ? 'text-slate-900' : 'text-slate-400 font-normal'
+                    )}
+                  >
+                    {checkIn ? format(checkIn, 'dd MMM yyyy') : t('bookingSearch.selectDate', 'Chọn ngày')}
+                  </span>
+                  {checkIn && (
+                    <span className="text-[10px] text-slate-400">
+                      {format(checkIn, 'EEEE')}
+                    </span>
+                  )}
+                </div>
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-auto p-0">
+            <PopoverContent align="start" className="w-auto p-0 rounded-2xl shadow-xl border-slate-100">
               <Calendar
                 mode="single"
                 selected={checkIn}
@@ -133,34 +129,62 @@ export default function BookingSearchForm({
                     setCheckOut(addDays(d, 1));
                   }
                   setCheckInOpen(false);
+                  if (d && !checkOut) {
+                    setCheckOutOpen(true);
+                  }
                 }}
-                disabled={(date) => date < new Date()}
+                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
               />
             </PopoverContent>
           </Popover>
-        </FieldWrapper>
+        </div>
 
         {/* FIELD 2: Check-out */}
-        <FieldWrapper label={t('bookingSearch.checkOutLabel')} className={isCompact ? 'flex-1' : ''}>
+        <div
+          className={cn(
+            'group transition-colors rounded-2xl relative',
+            isHero ? 'px-5 py-3 hover:bg-slate-50/80 cursor-pointer' : isPage ? 'border border-slate-200 rounded-xl px-4 py-3 bg-white hover:border-slate-300' : 'px-2 py-1',
+            checkOutOpen && 'bg-slate-50/80'
+          )}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              {t('bookingSearch.checkOutLabel', 'Trả phòng')}
+            </label>
+            {nights > 0 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                <Moon className="w-2.5 h-2.5" />
+                {nights} đêm
+              </span>
+            )}
+          </div>
           <Popover open={checkOutOpen} onOpenChange={setCheckOutOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-2 text-sm font-medium text-left w-full cursor-pointer"
+                className="flex items-center gap-2.5 text-left w-full cursor-pointer group-hover:text-slate-900 transition-colors"
               >
-                <CalendarIcon className="w-4 h-4 text-[var(--color-text-muted)]" />
-                <span
-                  className={
-                    checkOut
-                      ? 'text-[var(--color-text-primary)]'
-                      : 'text-[var(--color-text-muted)]'
-                  }
-                >
-                  {checkOut ? format(checkOut, 'dd MMM yyyy') : t('bookingSearch.selectDate')}
-                </span>
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                  <CalendarIcon className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span
+                    className={cn(
+                      'text-sm font-semibold truncate',
+                      checkOut ? 'text-slate-900' : 'text-slate-400 font-normal'
+                    )}
+                  >
+                    {checkOut ? format(checkOut, 'dd MMM yyyy') : t('bookingSearch.selectDate', 'Chọn ngày')}
+                  </span>
+                  {checkOut && (
+                    <span className="text-[10px] text-slate-400">
+                      {format(checkOut, 'EEEE')}
+                    </span>
+                  )}
+                </div>
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-auto p-0">
+            <PopoverContent align="start" className="w-auto p-0 rounded-2xl shadow-xl border-slate-100">
               <Calendar
                 mode="single"
                 selected={checkOut}
@@ -174,80 +198,104 @@ export default function BookingSearchForm({
               />
             </PopoverContent>
           </Popover>
-        </FieldWrapper>
+        </div>
 
         {/* FIELD 3: Guests */}
-        <FieldWrapper label={t('bookingSearch.guestsLabel')} className={isCompact ? 'flex-1' : ''}>
+        <div
+          className={cn(
+            'group transition-colors rounded-2xl',
+            isHero ? 'px-5 py-3 hover:bg-slate-50/80 cursor-pointer' : isPage ? 'border border-slate-200 rounded-xl px-4 py-3 bg-white hover:border-slate-300' : 'px-2 py-1',
+            guestsOpen && 'bg-slate-50/80'
+          )}
+        >
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+            {t('bookingSearch.guestsLabel', 'Khách & Phòng')}
+          </label>
           <Popover open={guestsOpen} onOpenChange={setGuestsOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-2 text-sm font-medium w-full cursor-pointer"
+                className="flex items-center gap-2.5 text-left w-full cursor-pointer group-hover:text-slate-900 transition-colors"
               >
-                <Users className="w-4 h-4 text-[var(--color-text-muted)]" />
-                <span className="text-[var(--color-text-primary)]">
-                  {t('bookingSearch.guestsCount', { count: guests })}
-                </span>
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-semibold text-slate-900 truncate">
+                    {t('bookingSearch.guestsCount', { count: guests, defaultValue: `${guests} khách` })}
+                  </span>
+                  <span className="text-[10px] text-slate-400">1 phòng</span>
+                </div>
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-52">
-              <div className="p-3 space-y-3">
+            <PopoverContent align="start" className="w-64 p-4 rounded-2xl shadow-xl border-slate-100">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{t('bookingSearch.guestsLabel')}</span>
-                  <div className="flex items-center gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">Số lượng khách</p>
+                    <p className="text-xs text-slate-400">Người lớn & trẻ em</p>
+                  </div>
+                  <div className="flex items-center gap-2.5">
                     <button
+                      type="button"
                       onClick={() => setGuests((g) => Math.max(1, g - 1))}
                       disabled={guests <= 1}
-                      className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-sm font-bold disabled:opacity-40 hover:border-gray-400 transition-colors cursor-pointer"
+                      className="w-8 h-8 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 disabled:opacity-30 hover:border-slate-400 hover:bg-slate-50 transition-colors cursor-pointer"
                     >
-                      −
+                      <Minus className="w-3.5 h-3.5" />
                     </button>
-                    <span className="text-sm font-medium w-4 text-center">
+                    <span className="text-sm font-bold w-5 text-center text-slate-800">
                       {guests}
                     </span>
                     <button
+                      type="button"
                       onClick={() => setGuests((g) => Math.min(10, g + 1))}
                       disabled={guests >= 10}
-                      className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-sm font-bold disabled:opacity-40 hover:border-gray-400 transition-colors cursor-pointer"
+                      className="w-8 h-8 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 disabled:opacity-30 hover:border-slate-400 hover:bg-slate-50 transition-colors cursor-pointer"
                     >
-                      +
+                      <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  className="w-full"
-                  onClick={() => setGuestsOpen(false)}
-                >
-                  {t('bookingSearch.done')}
-                </Button>
+
+                <div className="pt-2 border-t border-slate-100 flex justify-end">
+                  <Button
+                    size="sm"
+                    className="w-full bg-slate-900 text-white hover:bg-slate-800 rounded-xl"
+                    onClick={() => setGuestsOpen(false)}
+                  >
+                    {t('bookingSearch.done', 'Xong')}
+                  </Button>
+                </div>
               </div>
             </PopoverContent>
           </Popover>
-        </FieldWrapper>
+        </div>
 
         {/* SEARCH BUTTON */}
-        <div className={cn('flex items-center', isHero || isPage ? 'px-2' : 'pl-2')}>
+        <div className={cn('flex items-center', isHero ? 'px-2 py-2 md:py-0' : isPage ? 'px-1' : 'pl-2')}>
           <Button
+            type="button"
             onClick={handleSearch}
             disabled={loading || !checkIn || !checkOut}
             className={cn(
-              'font-bold transition-colors disabled:opacity-60',
+              'relative font-bold transition-all duration-300 disabled:opacity-50 cursor-pointer shadow-md hover:shadow-lg active:scale-98 overflow-hidden group',
               isHero || isPage
-                ? 'w-full h-full min-h-[52px] px-8 rounded-xl bg-[var(--color-primary)] text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-dark)]'
-                : 'h-10 px-4 rounded-lg'
+                ? 'w-full h-full min-h-[54px] px-8 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white hover:from-slate-800 hover:to-indigo-900 border border-slate-700/50'
+                : 'h-10 px-5 rounded-xl bg-slate-900 text-white'
             )}
           >
+            <div className="absolute inset-0 bg-gradient-to-r from-amber-400/0 via-amber-400/20 to-amber-400/0 -translate-x-full group-hover:translate-x-full duration-1000 transition-transform" />
             {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                {t('bookingSearch.searching')}
-              </>
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                <span>{t('bookingSearch.searching', 'Đang tìm...')}</span>
+              </div>
             ) : (
-              <>
-                <Search className="w-4 h-4 mr-2" />
-                {t('bookingSearch.searchButton')}
-              </>
+              <div className="flex items-center gap-2">
+                <Search className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+                <span className="tracking-wide">{t('bookingSearch.searchButton', 'Tìm phòng ngay')}</span>
+              </div>
             )}
           </Button>
         </div>

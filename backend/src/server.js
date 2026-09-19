@@ -40,6 +40,7 @@ import logger from "./utils/logger.js";
 import crypto from "node:crypto";
 import { notFound, errorHandler } from "./middlewares/errorHandler.js";
 import { initBookingExpiryCron } from "./cron/bookingExpiryCron.js";
+import { initOutboxRetryCron } from "./cron/outboxRetryCron.js";
 import "./utils/queue.js"; // Initialize BullMQ workers
 
 dotenv.config();
@@ -162,8 +163,10 @@ const startServer = async () => {
     logger.info(`Server running on port ${PORT}`);
   });
   
-  // Khởi động job dọn dẹp các booking pending quá 10 phút
+  // Khởi động job dọn dẹp các booking pending quá 25 phút
   initBookingExpiryCron();
+  // Khởi động job retry gửi email từ Outbox
+  initOutboxRetryCron();
 };
 
 if (process.env.NODE_ENV !== "test") {
