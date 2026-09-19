@@ -194,7 +194,7 @@ describe("Booking API - double booking protection", () => {
     const payRes = await api
       .post(`/api/bookings/${createRes.body.data._id}/pay`)
       .set("Authorization", `Bearer ${userToken}`)
-      .send({ method: "mock", cardLast4: "4242" });
+      .send({ method: "vnpay", cardLast4: "4242" });
     expect(payRes.status).toBe(200);
     expect(payRes.body.data.booking.status).toBe("Paid");
     expect(payRes.body.data.booking.paymentStatus).toBe("Paid");

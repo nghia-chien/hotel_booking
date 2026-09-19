@@ -25,8 +25,8 @@ const paymentSchema = new mongoose.Schema(
     },
     method: {
       type: String,
-      enum: ["card", "bank_transfer", "cash", "mock", "stripe", "vnpay", "refund"],
-      default: "mock",
+      enum: ["card", "bank_transfer", "cash", "vnpay", "refund"],
+      default: "vnpay",
     },
     status: {
       type: String,

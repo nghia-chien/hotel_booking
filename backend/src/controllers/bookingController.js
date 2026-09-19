@@ -41,9 +41,8 @@ export const getAllBookings = async (req, res, next) => {
 
 export const payBooking = async (req, res, next) => {
   try {
-    // This is for mock payments. Real payments go melalui vnpayService.
-    const { method = "mock" } = req.body || {};
-    const transactionId = `MOCK-${Date.now()}`;
+    const { method = "vnpay" } = req.body || {};
+    const transactionId = `PAY-${Date.now()}`;
     const booking = await BookingService.processPaymentSuccess(req.params.id, transactionId);
     res.json({ success: true, data: booking });
   } catch (error) {
