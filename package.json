@@ -12,7 +12,8 @@
   },
   "scripts": {
     "server": "yarn --cwd backend dev",
+    "server:chatbot": "yarn --cwd backend dev:chatbot",
     "client": "yarn --cwd frontend dev",
-    "dev": "concurrently \"yarn server\" \"yarn client\""
+    "dev": "concurrently \"yarn server\" \"yarn server:chatbot\" \"yarn client\""
   }
 }

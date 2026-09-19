@@ -1,20 +1,25 @@
 {
-  "name": "hotel-booking-api",
+  "name": "hotelbooking-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Hotel management API server",
+  "main": "server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js"
+    "dev:chatbot": "tsx watch src/chatbotServer.ts",
+    "start:chatbot": "tsx src/chatbotServer.ts",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "test:api": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.cjs --runInBand"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@sentry/node": "^8.40.0",
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
+    "bullmq": "^5.29.0",
     "cloudinary": "^2.9.0",
     "cors": "^2.8.6",
     "date-fns": "^4.1.0",
@@ -24,9 +29,7 @@
     "express-validator": "^7.3.1",
     "helmet": "^8.0.0",
     "ioredis": "^5.4.1",
-    "bullmq": "^5.29.0",
-    "@sentry/node": "^8.40.0",
-    "jest": "^30.2.0",
+    "jest": "^30.2.2",
     "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.1.0",
@@ -37,15 +40,21 @@
     "nodemailer": "^8.0.3",
     "pdfkit": "^0.18.0",
     "react-router-dom": "^7.13.1",
-    "stripe": "^20.4.1",
     "supertest": "^7.2.2",
     "vnpay": "^2.4.4",
     "winston": "^3.17.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.10.0",
+    "@types/supertest": "^6.0.2",
     "autoprefixer": "^10.4.27",
     "nodemon": "^3.1.14",
     "postcss": "^8.5.8",
-    "tailwindcss": "^4.2.1"
+    "tailwindcss": "^4.2.1",
+    "ts-jest": "^29.2.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
   }
 }

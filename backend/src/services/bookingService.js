@@ -14,6 +14,8 @@ import { createNotification } from "../utils/notificationHelper.js";
 import Payment from "../models/Payment.js"; // Temporarily until payment repo created
 import { format } from "date-fns";
 
+import { acquireLock, releaseLock } from "../utils/lockHelper.js";
+
 const CANCELLATION_HOURS = 24;
 const DEFAULT_REFUND_PERCENTAGE = 100;
 
@@ -116,40 +118,49 @@ export const createBookingService = async (data, userId) => {
     throw err;
   }
 
-  const conflict = await existsOverlappingBooking(room._id, checkIn, checkOut);
-  if (conflict) {
-    const err = new Error("Room is already booked for the selected dates");
-    err.statusCode = 409;
-    err.errorCode = "ROOM_OCCUPIED";
-    throw err;
+  const lockKey = `booking:${room._id}:${checkIn.getTime()}-${checkOut.getTime()}`;
+  const lock = await acquireLock(lockKey, 15, 3, 200);
+
+  try {
+    const conflict = await existsOverlappingBooking(room._id, checkIn, checkOut);
+    if (conflict) {
+      const err = new Error("Room is already booked for the selected dates");
+      err.statusCode = 409;
+      err.errorCode = "ROOM_OCCUPIED";
+      throw err;
+    }
+
+    const totalPrice = await calculateBookingPrice(room.roomType._id, checkIn, checkOut);
+    const cancellationDeadline = new Date(checkIn.getTime() - CANCELLATION_HOURS * 60 * 60 * 1000);
+
+    const booking = await createBooking({
+      customer: userId,
+      room: room._id,
+      roomType: room.roomType._id,
+      checkIn,
+      checkOut,
+      guests: data.guests,
+      totalPrice,
+      status: "Pending",
+      paymentStatus: "Pending",
+      specialRequest: data.specialRequest,
+      cancellationDeadline,
+      refundPercentage: DEFAULT_REFUND_PERCENTAGE
+    });
+
+    return booking;
+  } finally {
+    if (lock) {
+      await releaseLock(lock);
+    }
   }
-
-  const totalPrice = await calculateBookingPrice(room.roomType._id, checkIn, checkOut);
-  const cancellationDeadline = new Date(checkIn.getTime() - CANCELLATION_HOURS * 60 * 60 * 1000);
-
-  const booking = await createBooking({
-    customer: userId,
-    room: room._id,
-    roomType: room.roomType._id,
-    checkIn,
-    checkOut,
-    guests: data.guests,
-    totalPrice,
-    status: "Pending",
-    paymentStatus: "Pending",
-    specialRequest: data.specialRequest,
-    cancellationDeadline,
-    refundPercentage: DEFAULT_REFUND_PERCENTAGE
-  });
-
-  return booking;
 };
 
 /**
  * Handle successful payment update to PAID
  */
-export const processPaymentSuccess = async (bookingId, transactionId) => {
-  const booking = await updateBookingStatus(bookingId, "Paid", "Paid");
+export const processPaymentSuccess = async (bookingId, transactionId, options = {}) => {
+  const booking = await updateBookingStatus(bookingId, "Paid", "Paid", options);
   if (booking) {
     void createNotification(booking.customer, "payment_success", {
       transactionId,
@@ -217,7 +228,7 @@ export const cancelBookingService = async (bookingId, userId, userRole, reason =
  * Background task to find and expire old PENDING bookings
  */
 export const expireOldBookingsService = async () => {
-  const expiredBookings = await findExpiredPendingBookings(10); // 10 minutes hold
+  const expiredBookings = await findExpiredPendingBookings(25); // 25 minutes hold (extended for payment flow)
   const results = [];
 
   for (const booking of expiredBookings) {

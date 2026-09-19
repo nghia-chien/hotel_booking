@@ -15,8 +15,11 @@ const router = express.Router();
 
 const getBaseUrl = (req) => `${req.protocol}://${req.get("host")}`;
 const getFrontendUrl = () => {
-  const url = process.env.FRONTEND_URL || "http://localhost:5173";
-  return url.endsWith("/hotel_booking") ? url : `${url}/hotel_booking`;
+  let url = (process.env.FRONTEND_URL || "http://localhost:5173").trim().replace(/\/+$/, "");
+  if (!url.includes("#")) {
+    url = `${url}/#`;
+  }
+  return url;
 };
 
 // ─── POST /api/payments/vnpay/create-order ────────────────────────────────────

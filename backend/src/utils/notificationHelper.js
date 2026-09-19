@@ -73,6 +73,19 @@ export const createNotification = async (userId, type, data) => {
           </div>
         `;
         break;
+      case "booking_expired":
+        title = "Booking Expired";
+        message = `Your booking for ${data.roomName || "room"} has expired due to payment timeout.`;
+        link = `/my-bookings/${data.bookingId}`;
+        emailHtml = `
+          <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h1 style="color: #666666;">Booking Expired</h1>
+            <p>Hi <b>${user.fullName}</b>,</p>
+            <p>Your pending booking for <b>${data.roomName}</b> has expired because payment was not completed within the hold duration.</p>
+            <p>Please make a new booking if you wish to reserve this room.</p>
+          </div>
+        `;
+        break;
     }
 
     // Save notification to DB synchronously
@@ -84,18 +97,45 @@ export const createNotification = async (userId, type, data) => {
       link
     });
 
-    // Delegate email sending to BullMQ async job
+    // Delegate email sending to BullMQ async job with fallback to Direct send & Outbox
     const jobId = data.bookingId ? `${type}:${data.bookingId}` : undefined;
-    await emailQueue.add("send-email", {
-      to: user.email,
-      subject: `[HotelBooking] ${title}`,
-      html: emailHtml
-    }, {
-      jobId, // Idempotency check key
-      removeOnComplete: true
-    });
-    
-    logger.info(`Notification DB saved, email job enqueued for ${user.email}`);
+    const emailSubject = `[HotelBooking] ${title}`;
+
+    try {
+      await emailQueue.add("send-email", {
+        to: user.email,
+        subject: emailSubject,
+        html: emailHtml
+      }, {
+        jobId, // Idempotency check key
+        removeOnComplete: true
+      });
+      logger.info(`Notification DB saved, email job enqueued for ${user.email}`);
+    } catch (queueErr) {
+      logger.warn(`Redis queue unavailable, attempting direct email fallback for ${user.email}`, { error: queueErr.message });
+      try {
+        const { sendDirectEmail } = await import("./queue.js");
+        await sendDirectEmail({ to: user.email, subject: emailSubject, html: emailHtml });
+        logger.info(`Email sent directly via fallback for ${user.email}`);
+      } catch (directErr) {
+        logger.error(`Direct email fallback failed, saving to OutboxEmail for ${user.email}`, { error: directErr.message });
+        try {
+          const { default: OutboxEmail } = await import("../models/OutboxEmail.js");
+          await OutboxEmail.create({
+            to: user.email,
+            subject: emailSubject,
+            html: emailHtml,
+            status: "PENDING",
+            retryCount: 0,
+            error: directErr.message,
+            nextRetryAt: new Date(Date.now() + 2 * 60 * 1000) // retry in 2 minutes
+          });
+          logger.info(`Email saved to Outbox for future retry: ${user.email}`);
+        } catch (outboxErr) {
+          logger.error(`CRITICAL: Outbox save failed for ${user.email}`, { error: outboxErr.message });
+        }
+      }
+    }
   } catch (err) {
     logger.error("Notification creation failed:", err);
   }

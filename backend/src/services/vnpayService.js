@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import {
   VNPay,
   ProductCode,
@@ -10,6 +11,31 @@ import Payment from "../models/Payment.js";
 import Room from "../models/Room.js";
 import { format } from "date-fns";
 import * as BookingService from "./bookingService.js";
+
+// Helper for session transaction execution with fallback for standalone Mongo
+const runInSessionTransaction = async (workFn) => {
+  let session;
+  try {
+    session = await mongoose.startSession();
+    session.startTransaction();
+    const result = await workFn(session);
+    await session.commitTransaction();
+    return result;
+  } catch (err) {
+    if (session && session.inTransaction()) {
+      await session.abortTransaction();
+    }
+    if (err.message && (err.message.includes("Transaction numbers are only allowed on a replica set") || err.code === 20)) {
+      console.warn("[VNPay Transaction] MongoDB standalone detected, executing operations without session transaction");
+      return await workFn(null);
+    }
+    throw err;
+  } finally {
+    if (session) {
+      await session.endSession();
+    }
+  }
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -143,64 +169,69 @@ export const handleVNPayReturn = async (query) => {
 
   if (!verification.isSuccess || query.vnp_ResponseCode !== "00") {
     console.log("[VNPay] Return verify failed or payment failed:", verification.message, query.vnp_ResponseCode);
-    // Huỷ payment record nếu có
-    const failedPayment = await Payment.findOneAndUpdate(
-      { vnpTxnRef: txnRef, status: "PENDING" },
-      { $set: { status: query.vnp_ResponseCode === "24" ? "CANCELLED" : "FAILED", metadata: { vnpResponseCode: query.vnp_ResponseCode } } },
-      { new: true }
+    
+    return await runInSessionTransaction(async (session) => {
+      const opts = session ? { session, new: true } : { new: true };
+      const failedPayment = await Payment.findOneAndUpdate(
+        { vnpTxnRef: txnRef, status: "PENDING" },
+        { $set: { status: query.vnp_ResponseCode === "24" ? "CANCELLED" : "FAILED", metadata: { vnpResponseCode: query.vnp_ResponseCode } } },
+        opts
+      );
+
+      if (failedPayment) {
+        const bookingIds = failedPayment.bookings?.length ? failedPayment.bookings : (failedPayment.booking ? [failedPayment.booking] : []);
+        if (bookingIds.length) {
+          await Booking.updateMany(
+            { _id: { $in: bookingIds }, status: "Pending" },
+            { $set: { status: "Cancelled", paymentStatus: "Failed" } },
+            session ? { session } : {}
+          );
+        }
+      }
+      return { isSuccess: false, responseCode: query.vnp_ResponseCode };
+    });
+  }
+
+  return await runInSessionTransaction(async (session) => {
+    // Idempotency check inside session
+    const opts = session ? { session } : {};
+    const existing = await Payment.findOne({ vnpTxnRef: txnRef, status: "SUCCESS" }, null, opts);
+    if (existing) {
+      console.log(`[VNPay] Return idempotent: txnRef=${txnRef}`);
+      return { isSuccess: true, alreadyProcessed: true };
+    }
+
+    const payment = await Payment.findOne({ vnpTxnRef: txnRef }, null, opts);
+    if (!payment) {
+      console.log(`[VNPay] Return: payment not found for txnRef=${txnRef}`);
+      return { isSuccess: false, responseCode: "02" };
+    }
+
+    // Update payment
+    payment.status = "SUCCESS";
+    payment.vnpTransactionNo = transactionNo;
+    payment.metadata = {
+      ...payment.metadata,
+      vnpResponseCode: query.vnp_ResponseCode,
+      vnpTransactionNo: transactionNo,
+      vnpBankCode: query.vnp_BankCode,
+      vnpCardType: query.vnp_CardType,
+      vnpPayDate: query.vnp_PayDate,
+      processedAt: new Date().toISOString(),
+    };
+    await payment.save(opts);
+
+    // Update bookings
+    const bookingIds = payment.bookings?.length ? payment.bookings : [payment.booking];
+    await Promise.all(
+      bookingIds.map(async (id) => {
+        await BookingService.processPaymentSuccess(id, transactionNo, opts);
+      })
     );
 
-    if (failedPayment) {
-      // Đồng bộ trạng thái: huỷ các phòng đang Pending (do không thanh toán thành công)
-      const bookingIds = failedPayment.bookings?.length ? failedPayment.bookings : (failedPayment.booking ? [failedPayment.booking] : []);
-      if (bookingIds.length) {
-        await Booking.updateMany(
-          { _id: { $in: bookingIds }, status: "Pending" },
-          { $set: { status: "Cancelled", paymentStatus: "Failed" } }
-        );
-      }
-    }
-    return { isSuccess: false, responseCode: query.vnp_ResponseCode };
-  }
-
-  // Idempotency — đã xử lý rồi
-  const existing = await Payment.findOne({ vnpTxnRef: txnRef, status: "SUCCESS" });
-  if (existing) {
-    console.log(`[VNPay] Return idempotent: txnRef=${txnRef}`);
-    return { isSuccess: true, alreadyProcessed: true };
-  }
-
-  // Tìm payment record
-  const payment = await Payment.findOne({ vnpTxnRef: txnRef });
-  if (!payment) {
-    console.log(`[VNPay] Return: payment not found for txnRef=${txnRef}`);
-    return { isSuccess: false, responseCode: "02" };
-  }
-
-  // Cập nhật payment
-  payment.status = "SUCCESS";
-  payment.vnpTransactionNo = transactionNo;
-  payment.metadata = {
-    ...payment.metadata,
-    vnpResponseCode: query.vnp_ResponseCode,
-    vnpTransactionNo: transactionNo,
-    vnpBankCode: query.vnp_BankCode,
-    vnpCardType: query.vnp_CardType,
-    vnpPayDate: query.vnp_PayDate,
-    processedAt: new Date().toISOString(),
-  };
-  await payment.save();
-
-  // Cập nhật bookings thông qua Service chung
-  const bookingIds = payment.bookings?.length ? payment.bookings : [payment.booking];
-  await Promise.all(
-    bookingIds.map(async (id) => {
-      await BookingService.processPaymentSuccess(id, transactionNo);
-    })
-  );
-
-  console.log(`[VNPay] Return success: txnRef=${txnRef} | bookings updated=${bookings.length}`);
-  return { isSuccess: true, paymentId: payment._id.toString() };
+    console.log(`[VNPay] Return success: txnRef=${txnRef} | bookings updated=${bookingIds.length}`);
+    return { isSuccess: true, paymentId: payment._id.toString() };
+  });
 };
 
 // ─── 3. IPN (server-to-server, backup) ───────────────────────────────────────
@@ -223,63 +254,67 @@ export const handleVNPayIpn = async (query) => {
 
   if (query.vnp_ResponseCode !== "00") {
     console.log("[VNPay] IPN payment failed:", query.vnp_ResponseCode);
-    const failedPayment = await Payment.findOneAndUpdate(
-      { vnpTxnRef: txnRef, status: "PENDING" },
-      { $set: { status: query.vnp_ResponseCode === "24" ? "CANCELLED" : "FAILED", metadata: { vnpResponseCode: query.vnp_ResponseCode, source: "ipn" } } },
-      { new: true }
+
+    return await runInSessionTransaction(async (session) => {
+      const opts = session ? { session, new: true } : { new: true };
+      const failedPayment = await Payment.findOneAndUpdate(
+        { vnpTxnRef: txnRef, status: "PENDING" },
+        { $set: { status: query.vnp_ResponseCode === "24" ? "CANCELLED" : "FAILED", metadata: { vnpResponseCode: query.vnp_ResponseCode, source: "ipn" } } },
+        opts
+      );
+
+      if (failedPayment) {
+        const bookingIds = failedPayment.bookings?.length ? failedPayment.bookings : (failedPayment.booking ? [failedPayment.booking] : []);
+        if (bookingIds.length) {
+          await Booking.updateMany(
+            { _id: { $in: bookingIds }, status: "Pending" },
+            { $set: { status: "Cancelled", paymentStatus: "Failed" } },
+            session ? { session } : {}
+          );
+        }
+      }
+      return { RspCode: "00", Message: "Confirm Success" };
+    });
+  }
+
+  return await runInSessionTransaction(async (session) => {
+    const opts = session ? { session } : {};
+    const existing = await Payment.findOne({ vnpTxnRef: txnRef, status: "SUCCESS" }, null, opts);
+    if (existing) {
+      console.log(`[VNPay] IPN idempotent: txnRef=${txnRef}`);
+      return { RspCode: "00", Message: "Success" };
+    }
+
+    const payment = await Payment.findOne({ vnpTxnRef: txnRef }, null, opts);
+    if (!payment) {
+      console.log(`[VNPay] IPN: payment not found txnRef=${txnRef}`);
+      return { RspCode: "01", Message: "Order not found" };
+    }
+
+    payment.status = "SUCCESS";
+    payment.vnpTransactionNo = transactionNo;
+    payment.metadata = {
+      ...payment.metadata,
+      vnpResponseCode: query.vnp_ResponseCode,
+      vnpTransactionNo: transactionNo,
+      vnpBankCode: query.vnp_BankCode,
+      vnpCardType: query.vnp_CardType,
+      vnpPayDate: query.vnp_PayDate,
+      processedAt: new Date().toISOString(),
+      source: "ipn",
+    };
+    await payment.save(opts);
+
+    const bookingIds = payment.bookings?.length ? payment.bookings : [payment.booking];
+    await Promise.all(
+      bookingIds.map(async (id) => {
+        await BookingService.processPaymentSuccess(id, transactionNo, opts);
+      })
     );
 
-    if (failedPayment) {
-      // Đồng bộ trạng thái: huỷ phòng bị fail payment
-      const bookingIds = failedPayment.bookings?.length ? failedPayment.bookings : (failedPayment.booking ? [failedPayment.booking] : []);
-      if (bookingIds.length) {
-        await Booking.updateMany(
-          { _id: { $in: bookingIds }, status: "Pending" },
-          { $set: { status: "Cancelled", paymentStatus: "Failed" } }
-        );
-      }
-    }
-    return { RspCode: "00", Message: "Confirm Success" };
-  }
-
-  // Idempotency
-  const existing = await Payment.findOne({ vnpTxnRef: txnRef, status: "SUCCESS" });
-  if (existing) {
-    console.log(`[VNPay] IPN idempotent: txnRef=${txnRef}`);
+    console.log(`[VNPay] IPN success: txnRef=${txnRef} | bookings updated=${bookingIds.length}`);
     return { RspCode: "00", Message: "Success" };
-  }
-
-  const payment = await Payment.findOne({ vnpTxnRef: txnRef });
-  if (!payment) {
-    console.log(`[VNPay] IPN: payment not found txnRef=${txnRef}`);
-    return { RspCode: "01", Message: "Order not found" };
-  }
-
-  // Cập nhật payment
-  payment.status = "SUCCESS";
-  payment.vnpTransactionNo = transactionNo;
-  payment.metadata = {
-    ...payment.metadata,
-    vnpResponseCode: query.vnp_ResponseCode,
-    vnpTransactionNo: transactionNo,
-    vnpBankCode: query.vnp_BankCode,
-    vnpCardType: query.vnp_CardType,
-    vnpPayDate: query.vnp_PayDate,
-    processedAt: new Date().toISOString(),
-    source: "ipn",
-  };
-  await payment.save();
-
-  // Cập nhật bookings thông qua Service chung
-  const bookingIds = payment.bookings?.length ? payment.bookings : [payment.booking];
-  await Promise.all(
-    bookingIds.map(async (id) => {
-      await BookingService.processPaymentSuccess(id, transactionNo);
-    })
-  );
-
-  console.log(`[VNPay] IPN success: txnRef=${txnRef} | bookings updated=${bookings.length}`);
-  return { RspCode: "00", Message: "Success" };
+  });
 };
 
 // ─── 4. Hoàn tiền ────────────────────────────────────────────────────────────

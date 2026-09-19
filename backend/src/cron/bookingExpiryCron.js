@@ -3,7 +3,7 @@ import { expireOldBookingsService } from "../services/bookingService.js";
 
 /**
  * Cron job to run every minute and expire PENDING bookings 
- * that have reached the 10-minute hold threshold.
+ * that have reached the 25-minute hold threshold.
  */
 export const initBookingExpiryCron = () => {
   // Runs every minute

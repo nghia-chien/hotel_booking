@@ -22,12 +22,12 @@ export const countBookings = async (filter) => {
   return await Booking.countDocuments(filter);
 };
 
-export const updateBookingStatus = async (id, status, paymentStatus = null) => {
+export const updateBookingStatus = async (id, status, paymentStatus = null, options = {}) => {
   const update = { status };
   if (paymentStatus) {
     update.paymentStatus = paymentStatus;
   }
-  return await Booking.findByIdAndUpdate(id, { $set: update }, { new: true });
+  return await Booking.findByIdAndUpdate(id, { $set: update }, { new: true, ...options });
 };
 
 export const findExpiredPendingBookings = async (minutes) => {

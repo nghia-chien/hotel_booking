@@ -8,7 +8,8 @@ export default defineConfig({
   base: "/hotel_booking/",
   server: {
      proxy: {
-      "/api": "http://localhost:3000"
+      "/api/chatbot": "http://localhost:3001",
+      "/api": "http://localhost:3000",
     },
     allowedHosts: true,  
   },
