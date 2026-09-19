@@ -12,7 +12,7 @@ A professional, modern, and full-featured hotel booking platform built with **No
 ### 👤 For Customers
 - **Search & Filter**: Find rooms by date, capacity, price, and amenities.
 - **Booking Flow**: Add multiple rooms to a user-specific cart and checkout seamlessly.
-- **Payment Integration**: Integrated with **VNPay** and **PayPal** for secure transactions.
+- **Payment Integration**: Integrated with **VNPay** for secure transactions.
 - **Notifications**: Get real-time updates on booking status and payments.
 - **Language**: Full support for **Vietnamese** and **English**.
 - **Profile**: Manage personal information, change passwords, and upload avatars.
@@ -43,7 +43,7 @@ A professional, modern, and full-featured hotel booking platform built with **No
 - **Security**: Helmet.js, Express Rate Limit (DDoS/Brute-force protection)
 - **Logging**: Structured JSON logging via **Winston** (RequestId tracing)
 - **Auth**: JWT with Access & Refresh Token mechanism
-- **Payment Gateways**: VNPay, PayPal
+- **Payment Gateways**: VNPay
 
 ---
 
